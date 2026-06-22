@@ -1,21 +1,12 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-
-const NOISE = `url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iMC44IiBudW1PY3RhdmVzPSIzIiBzdGl0Y2hUaWxlcz0ic3RpdGNoIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsdGVyPSJ1cmwoI24pIi8+PC9zdmc+")`
 
 export default function Home() {
   const rootRef = useRef<HTMLDivElement>(null)
   const cycleTimer = useRef<ReturnType<typeof setInterval> | null>(null)
-  const cineST = useRef<ScrollTrigger | null>(null)
-  const cineTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const cineWatch = useRef<ReturnType<typeof setInterval> | null>(null)
-  const cineRAF = useRef(0)
 
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger)
     const root = rootRef.current
     if (!root) return
 
@@ -103,112 +94,7 @@ export default function Home() {
       })
     }
 
-    // Cinematic GSAP
-    if (reduce) {
-      const c = root.querySelector<HTMLElement>('.cine')
-      if (c) c.style.display = 'none'
-      return () => { if (cycleTimer.current) clearInterval(cycleTimer.current) }
-    }
-
-    let introDone = false
-
-    const onMove = (e: MouseEvent) => {
-      if (root.scrollTop > window.innerHeight * 1.4) return
-      cancelAnimationFrame(cineRAF.current)
-      cineRAF.current = requestAnimationFrame(() => {
-        const cine = root.querySelector<HTMLElement>('.cine'); if (!cine) return
-        const card = cine.querySelector<HTMLElement>('.cine-card'); if (!card) return
-        const r = card.getBoundingClientRect()
-        card.style.setProperty('--mouse-x', e.clientX - r.left + 'px')
-        card.style.setProperty('--mouse-y', e.clientY - r.top + 'px')
-      })
-    }
-    window.addEventListener('mousemove', onMove)
-
-    const build = () => {
-      try {
-        const cine = root.querySelector<HTMLElement>('.cine'); if (!cine) return
-        if (cineST.current) { try { cineST.current.kill(true) } catch {} cineST.current = null }
-        const qa = (s: string) => Array.from(cine.querySelectorAll(s))
-        const q = (s: string) => cine.querySelector<HTMLElement>(s)
-
-        gsap.set(qa('.gsap-reveal'), { visibility: 'visible' })
-        gsap.set(q('.cine-card'), { y: window.innerHeight + 200, autoAlpha: 1, width: '88vw', height: '88vh', borderRadius: '36px' })
-        gsap.set(q('.cine-fs'), { autoAlpha: 0 })
-        gsap.set(qa('.cine-cap-1, .cine-cap-2, .cine-cap-3'), { autoAlpha: 0 })
-        const fi0 = q('.cine-fs-img')
-        if (fi0) {
-          fi0.style.clipPath = 'polygon(25% 25%,75% 25%,75% 75%,25% 75%)'
-          ;(fi0.style as unknown as Record<string, string>).webkitClipPath = 'polygon(25% 25%,75% 25%,75% 75%,25% 75%)'
-          fi0.style.backgroundSize = '170%'
-        }
-        gsap.set([q('.cine-hero-text'), q('.cine-grid'), q('.cine-hint')], { clearProps: 'opacity,filter,transform' })
-        gsap.set(cine, { backgroundColor: '#0d0b09' })
-
-        if (!introDone) {
-          introDone = true
-          gsap.set(qa('.cine-line, .cine-line2'), { autoAlpha: 0, y: 60, scale: 0.85, filter: 'blur(20px)' })
-          gsap.timeline({ delay: 0.2 }).to(qa('.cine-line, .cine-line2'), {
-            duration: 1.6, autoAlpha: 1, y: 0, scale: 1, filter: 'blur(0px)', ease: 'expo.out', stagger: 0.12,
-          })
-        } else {
-          gsap.set(qa('.cine-line, .cine-line2'), { autoAlpha: 1, y: 0, scale: 1, filter: 'blur(0px)' })
-        }
-
-        const docScrolls = (document.scrollingElement ?? document.documentElement).scrollHeight > window.innerHeight + 40
-        const stCfg = docScrolls
-          ? { trigger: cine, start: 'top top', end: '+=6000', pin: true, scrub: 1 }
-          : { trigger: cine, scroller: root, start: 'top top', end: '+=6000', pin: true, pinType: 'transform' as const, scrub: 0.6 }
-
-        const fi = q('.cine-fs-img')
-        const proxy = { p: 25, z: 170 }
-        const setFs = () => {
-          if (!fi) return
-          const a = proxy.p, b = 100 - a
-          fi.style.clipPath = `polygon(${a}% ${a}%,${b}% ${a}%,${b}% ${b}%,${a}% ${b}%)`
-          ;(fi.style as unknown as Record<string, string>).webkitClipPath = fi.style.clipPath
-          fi.style.backgroundSize = proxy.z + '%'
-        }
-
-        const tl = gsap.timeline({ scrollTrigger: stCfg })
-        tl
-          .to([q('.cine-hero-text'), q('.cine-grid'), q('.cine-hint')], { scale: 1.15, filter: 'blur(20px)', opacity: 0.15, ease: 'power2.inOut', duration: 2 }, 0)
-          .to(q('.cine-card'), { y: 0, ease: 'power3.inOut', duration: 2 }, 0)
-          .to(q('.cine-card'), { width: '100%', height: '100%', borderRadius: '0px', ease: 'power3.inOut', duration: 1.5 })
-          .set(q('.cine-fs'), { autoAlpha: 1 })
-          .to(proxy, { p: 0, z: 100, duration: 3, ease: 'power2.inOut', onUpdate: setFs }, '-=0.4')
-          .to({}, { duration: 0.8 })
-          .fromTo(q('.cine-cap-1'), { y: 40, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1.2, ease: 'power3.out' })
-          .fromTo(q('.cine-cap-2'), { y: 40, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1.2, ease: 'power3.out' }, '-=0.85')
-          .fromTo(q('.cine-cap-3'), { y: 50, autoAlpha: 0, scale: 0.9 }, { y: 0, autoAlpha: 1, scale: 1, duration: 1.4, ease: 'back.out(1.4)' }, '-=0.8')
-          .to({}, { duration: 2.4 })
-          .to([q('.cine-fs'), q('.cine-card')], { y: -window.innerHeight - 300, autoAlpha: 0, ease: 'power3.in', duration: 1.5 })
-          .to(q('.cine-grid'), { autoAlpha: 0, duration: 1.2 }, '<')
-
-        cineST.current = tl.scrollTrigger as ScrollTrigger
-        ScrollTrigger.refresh()
-      } catch {}
-    }
-
-    cineTimer.current = setTimeout(() => {
-      build()
-      let checks = 0
-      cineWatch.current = setInterval(() => {
-        checks++
-        const alive = cineST.current
-          && ScrollTrigger.getAll().includes(cineST.current)
-          && (cineST.current.trigger as HTMLElement)?.isConnected
-        if (!alive && root.querySelector('.cine')) build()
-        if (checks >= 16) clearInterval(cineWatch.current!)
-      }, 350)
-    }, 450)
-
     return () => {
-      window.removeEventListener('mousemove', onMove)
-      cancelAnimationFrame(cineRAF.current)
-      if (cineTimer.current) clearTimeout(cineTimer.current)
-      if (cineWatch.current) clearInterval(cineWatch.current)
-      if (cineST.current) try { cineST.current.kill(true) } catch {}
       if (cycleTimer.current) clearInterval(cycleTimer.current)
     }
   }, [])
@@ -229,128 +115,6 @@ export default function Home() {
           overflowX: 'hidden', overflowY: 'auto',
         } as React.CSSProperties}
       >
-
-        {/* ── CINEMATIC HERO ── */}
-        <section className="cine" style={{
-          position: 'relative', width: '100%', height: '100vh', overflow: 'hidden',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: '#0d0b09', color: '#fff', perspective: '1500px',
-        }}>
-          <div style={{
-            position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 60,
-            opacity: 0.05, mixBlendMode: 'overlay', background: NOISE,
-          } as React.CSSProperties} />
-
-          <div className="cine-grid" style={{
-            position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.5,
-            backgroundSize: '60px 60px',
-            backgroundImage: 'linear-gradient(to right,rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,.05) 1px,transparent 1px)',
-            WebkitMaskImage: 'radial-gradient(ellipse at center,#000 0%,transparent 70%)',
-            maskImage: 'radial-gradient(ellipse at center,#000 0%,transparent 70%)',
-          } as React.CSSProperties} />
-
-          <div className="cine-hero-text" style={{
-            position: 'absolute', zIndex: 10, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', textAlign: 'center',
-            width: '100%', padding: '0 16px', willChange: 'transform',
-          }}>
-            <h1 className="cine-line gsap-reveal" style={{
-              fontFamily: "'Archivo', sans-serif", fontWeight: 800,
-              fontSize: 'clamp(44px,8vw,104px)', letterSpacing: '-.035em', lineHeight: 0.98,
-              margin: '0 0 6px', color: '#fff', textShadow: '0 10px 36px rgba(0,0,0,.6)',
-            }}>
-              Greatness isn&apos;t found.
-            </h1>
-            <h1 className="cine-line2 gsap-reveal" style={{
-              fontFamily: "'Archivo', sans-serif", fontWeight: 900,
-              fontSize: 'clamp(44px,8vw,104px)', letterSpacing: '-.045em', lineHeight: 0.98,
-              margin: 0,
-              background: 'linear-gradient(180deg,#fff 0%,rgba(255,255,255,.38) 100%)',
-              WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 12px 24px rgba(0,0,0,.4))',
-            }}>
-              It&apos;s coached.
-            </h1>
-          </div>
-
-          <div style={{
-            position: 'absolute', inset: 0, zIndex: 20, display: 'flex',
-            alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', perspective: '1500px',
-          }}>
-            <div className="cine-card gsap-reveal" style={{
-              position: 'relative', overflow: 'hidden', display: 'flex',
-              alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto',
-              width: '88vw', height: '88vh', borderRadius: '36px',
-              background: 'linear-gradient(145deg,#2c241f 0%,#0e0b08 100%)',
-              boxShadow: '0 40px 100px -20px rgba(0,0,0,.9),0 20px 40px -20px rgba(0,0,0,.8),inset 0 1px 2px rgba(255,255,255,.14),inset 0 -2px 4px rgba(0,0,0,.8)',
-              border: '1px solid rgba(255,255,255,.05)',
-            }}>
-              <div className="cine-sheen" style={{
-                position: 'absolute', inset: 0, borderRadius: 'inherit', pointerEvents: 'none', zIndex: 50,
-                background: 'radial-gradient(800px circle at var(--mouse-x,50%) var(--mouse-y,50%),rgba(255,255,255,.07) 0%,transparent 40%)',
-                mixBlendMode: 'screen',
-              } as React.CSSProperties} />
-            </div>
-          </div>
-
-          <div className="cine-fs" style={{
-            position: 'absolute', inset: 0, zIndex: 30, overflow: 'hidden',
-            pointerEvents: 'none', perspective: '1200px',
-          }}>
-            <div className="cine-fs-img" style={{
-              position: 'absolute', inset: 0,
-              backgroundImage: "url('/cine-bg.png')",
-              backgroundSize: '170%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
-              clipPath: 'polygon(25% 25%,75% 25%,75% 75%,25% 75%)',
-            }} />
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'linear-gradient(180deg,rgba(8,7,6,.5) 0%,transparent 26%,transparent 40%,rgba(8,7,6,.86) 100%)',
-            }} />
-            <div className="cine-fs-cap" style={{
-              position: 'absolute', left: 0, right: 0, bottom: 'clamp(44px,8vh,92px)',
-              zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center',
-              textAlign: 'center', padding: '0 24px',
-            }}>
-              <h3 className="cine-cap-1" style={{
-                fontFamily: "'Archivo', sans-serif", fontWeight: 800,
-                fontSize: 'clamp(30px,4.6vw,64px)', letterSpacing: '-.025em', lineHeight: 1.02,
-                margin: '0 0 18px', color: '#fff', textShadow: '0 4px 28px rgba(0,0,0,.6)',
-              }}>
-                Coaching, on demand.
-              </h3>
-              <p className="cine-cap-2" style={{
-                fontFamily: "'Hanken Grotesk', sans-serif", fontSize: 'clamp(16px,1.7vw,22px)',
-                fontWeight: 400, lineHeight: 1.55, margin: '0 0 30px', color: 'rgba(255,255,255,.9)',
-                maxWidth: '620px', textShadow: '0 2px 14px rgba(0,0,0,.55)',
-                textWrap: 'balance',
-              } as React.CSSProperties}>
-                FARM connects athletes of every age with vetted trainers — in person, live video, or recorded feedback.{' '}
-                <span style={{ color: '#fff', fontWeight: 600 }}>85% of every session</span> goes straight to your coach.
-              </p>
-              <h2 className="cine-cap-3" style={{
-                fontFamily: "'Archivo', sans-serif", fontWeight: 900,
-                fontSize: 'clamp(56px,11vw,168px)', lineHeight: 0.78, letterSpacing: '-.05em',
-                margin: 0, color: '#fff', textShadow: '0 8px 44px rgba(0,0,0,.6)',
-              }}>
-                FARM
-              </h2>
-            </div>
-          </div>
-
-          <div className="cine-hint" style={{
-            position: 'absolute', bottom: '28px', left: '50%', transform: 'translateX(-50%)',
-            zIndex: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
-            color: 'rgba(255,255,255,.5)', fontFamily: "'Hanken Grotesk', sans-serif",
-            fontSize: '12px', letterSpacing: '.16em', textTransform: 'uppercase',
-            animation: 'cinePulse 2.4s ease-in-out infinite',
-          }}>
-            Scroll to begin
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </div>
-        </section>
 
         {/* ── NAV ── */}
         <nav style={{
