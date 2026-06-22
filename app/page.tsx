@@ -215,21 +215,6 @@ export default function Home() {
 
   return (
     <>
-      <style>{`
-        details > summary { list-style: none; }
-        details > summary::-webkit-details-marker { display: none; }
-        details[open] .faq-ind { transform: rotate(45deg); }
-        details[open] .faq-ans { animation: faqOpen .3s ease; }
-        @keyframes stripeShift { from { background-position: 0 0; } to { background-position: 0 320px; } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes floatY { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        @keyframes faqOpen { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
-        @keyframes cinePulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
-        .cine .gsap-reveal { visibility: hidden; }
-        @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
-      `}</style>
-
       <div
         ref={rootRef}
         style={{
