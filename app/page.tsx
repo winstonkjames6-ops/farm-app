@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import Link from 'next/link'
 
 export default function Home() {
   const rootRef = useRef<HTMLDivElement>(null)
@@ -232,6 +233,27 @@ export default function Home() {
                   transition: 'transform .15s ease,filter .15s ease',
                 }}>Search</a>
               </div>
+              <div style={{
+                display: 'flex', flexWrap: 'wrap', gap: '12px',
+                marginTop: '24px', animation: 'fadeUp .55s cubic-bezier(.2,.7,.2,1) both .6s',
+              }}>
+                <Link href="/parent-signup" style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  background: 'var(--accent)', color: 'var(--accent-ink)',
+                  padding: '15px 28px', borderRadius: 'var(--radius)',
+                  fontFamily: "'Hanken Grotesk',sans-serif", fontWeight: 700, fontSize: '15px',
+                  textDecoration: 'none', transition: 'transform .15s ease,filter .15s ease',
+                }}>Find a Trainer</Link>
+                <Link href="/trainer-signup" style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  background: 'transparent', color: 'var(--bg)',
+                  border: '1.5px solid rgba(244,241,234,.4)',
+                  padding: '13.5px 26px', borderRadius: 'var(--radius)',
+                  fontFamily: "'Hanken Grotesk',sans-serif", fontWeight: 600, fontSize: '15px',
+                  textDecoration: 'none', transition: 'border-color .15s ease,transform .15s ease',
+                }}>Apply as a Trainer</Link>
+              </div>
+
               <div style={{
                 display: 'var(--social-display)', alignItems: 'center', gap: '14px',
                 marginTop: '30px', animation: 'fadeIn .6s ease both .7s',
