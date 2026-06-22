@@ -1,0 +1,195 @@
+================================================================================
+FARM LANDING PAGE - SETUP GUIDE
+================================================================================
+
+All files are ready. Here's how to get running in 3 minutes:
+
+================================================================================
+STEP 1: COPY PROJECT FOLDER
+================================================================================
+
+Navigate to where you want the project:
+
+  cd ~/projects
+  (or wherever you keep code)
+
+Copy the entire farm-landing-page folder here.
+
+Or, if using git:
+
+  git clone <your-repo-url> farm-landing-page
+  cd farm-landing-page
+
+================================================================================
+STEP 2: INSTALL DEPENDENCIES
+================================================================================
+
+  npm install
+
+(This downloads React, Next.js, Tailwind, etc. Takes ~2 min on first run.)
+
+================================================================================
+STEP 3: RUN LOCALLY
+================================================================================
+
+  npm run dev
+
+Open browser:
+
+  http://localhost:3000
+
+You should see:
+- Orange FARM logo (top left)
+- Hero section with headline + two big buttons
+- How It Works (4 steps)
+- Why FARM (6 benefits)
+- FAQ (collapsible)
+- Final CTA + footer
+
+✓ If you see all of this, you're running!
+
+================================================================================
+STEP 4: OPTIONAL - ADD HERO IMAGE
+================================================================================
+
+Right now, hero section shows an emoji (🏅). To add a real image:
+
+1. Go to Unsplash.com
+2. Search "youth sports training" or "coach kid"
+3. Download an image (~2MB)
+4. Save to: farm-landing-page/public/hero.jpg
+
+That's it. The page will auto-load the image.
+
+================================================================================
+STEP 5: DEPLOY TO VERCEL (WHEN READY)
+================================================================================
+
+When you want to deploy:
+
+  npm install -g vercel
+  vercel
+
+Vercel will:
+- Auto-detect Next.js
+- Build the project
+- Deploy in ~60 seconds
+- Give you a live URL
+
+Then buy domain + point DNS (Vercel shows exact steps).
+
+================================================================================
+FILE STRUCTURE
+================================================================================
+
+farm-landing-page/
+├── app/
+│   ├── layout.tsx          ← Root layout (nav, body wrapper)
+│   ├── page.tsx            ← Main landing page (imports sections)
+│   └── globals.css         ← Global styles
+├── components/
+│   ├── Navbar.tsx          ← Header nav (logo + links + buttons)
+│   ├── Hero.tsx            ← Hero section
+│   ├── HowItWorks.tsx      ← 4-step process
+│   ├── WhyFARM.tsx         ← 6 benefits
+│   ├── FAQ.tsx             ← Collapsible FAQs
+│   └── CTA.tsx             ← Final CTA + footer
+├── public/
+│   └── (put images here)
+├── tailwind.config.ts      ← Color palette + sizes
+├── package.json            ← Dependencies
+├── tsconfig.json           ← TypeScript config
+├── next.config.js          ← Next.js config
+└── postcss.config.js       ← PostCSS config
+
+================================================================================
+COLORS
+================================================================================
+
+All colors are configured in tailwind.config.ts:
+
+  Orange Primary: #ff8c42        (buttons, accents)
+  Orange Hover:   #ff7a22        (darker on hover)
+  Dark BG:        #1a1a1a        (main background)
+  Dark Secondary: #2a2a2a        (card backgrounds)
+  Dark Tertiary:  #4a4a4a        (borders)
+  Text Primary:   #ffffff        (white text)
+  Text Secondary: #e0e0e0        (light gray)
+  Text Tertiary:  #a0a0a0        (medium gray)
+
+To change the orange: Edit tailwind.config.ts line 12-14.
+
+================================================================================
+MAKING CHANGES
+================================================================================
+
+Edit any file in /components/ → browser auto-refreshes.
+
+Example: Change "FARM" logo in Navbar.tsx line 17
+  <span className="text-orange-primary">FARM</span>
+      ↓
+  <span className="text-orange-primary">TRAIN</span>
+
+Save → browser updates instantly.
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+Once deployed:
+
+Week 1–2:
+  - Door-knock with farm.coach link
+  - Post in local Facebook parent groups
+  - Share with coaches you know
+  - Track how many click and signup
+
+Week 3:
+  - Build /auth/signup pages
+  - Parent & trainer signup forms
+
+Week 4:
+  - Build trainer profiles + booking
+  - Test end-to-end booking flow
+
+Week 5–8:
+  - Live validation (30 parents, 15+ bookings)
+  - Iterate based on feedback
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Q: npm install fails
+A: Make sure you have Node.js 18+ installed
+   Run: node --version
+   Install from: https://nodejs.org/
+
+Q: Port 3000 already in use
+A: Run on different port:
+   npm run dev -- -p 3001
+
+Q: Changes not showing up
+A: Clear browser cache (Cmd+Shift+R on Mac, Ctrl+Shift+R on Windows)
+
+Q: Tailwind styles not loading
+A: Stop dev server, delete .next folder, npm run dev again
+
+Q: Need to change CTA link destinations
+A: Edit links in components:
+   - Navbar.tsx line 30–31
+   - Hero.tsx line 54–55
+   - HowItWorks.tsx line 49
+   - CTA.tsx line 29–30
+
+================================================================================
+QUESTIONS?
+================================================================================
+
+- Landing page code: All in /components/
+- Styling: tailwind.config.ts + globals.css
+- Setup: This file + README.md
+- Performance: Already optimized (Next.js + Vercel)
+
+Good luck!
+================================================================================
