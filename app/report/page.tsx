@@ -95,6 +95,7 @@ export default function ReportPage() {
               style={{
                 width: '100%', maxWidth: '480px',
                 background: 'rgba(255,255,255,0.04)',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
                 border: '1px solid rgba(255,255,255,0.09)',
                 borderRadius: '18px', padding: '40px 36px',
               }}
@@ -152,7 +153,7 @@ export default function ReportPage() {
                         paddingRight: '36px',
                         cursor: 'pointer',
                         borderColor: reasonFocus ? ACCENT : 'rgba(255,255,255,0.1)',
-                        boxShadow: reasonFocus ? '0 0 0 3px rgba(223,225,4,0.1)' : 'none',
+                        boxShadow: reasonFocus ? '0 0 0 3px rgba(0,188,200,0.1)' : 'none',
                         color: reason ? '#fff' : 'rgba(255,255,255,0.3)',
                       }}
                     >
@@ -187,7 +188,7 @@ export default function ReportPage() {
                       resize: 'vertical',
                       minHeight: '120px',
                       borderColor: descFocus ? ACCENT : 'rgba(255,255,255,0.1)',
-                      boxShadow: descFocus ? '0 0 0 3px rgba(223,225,4,0.1)' : 'none',
+                      boxShadow: descFocus ? '0 0 0 3px rgba(0,188,200,0.1)' : 'none',
                     }}
                   />
                 </div>
@@ -201,12 +202,12 @@ export default function ReportPage() {
                     onDrop={(e) => { e.preventDefault(); setDragging(false); setFileDropped(true) }}
                     onClick={() => setFileDropped((v) => !v)}
                     style={{
-                      border: `1.5px dashed ${dragging ? ACCENT : fileDropped ? 'rgba(223,225,4,0.5)' : 'rgba(255,255,255,0.14)'}`,
+                      border: `1.5px dashed ${dragging ? ACCENT : fileDropped ? 'rgba(0,188,200,0.5)' : 'rgba(255,255,255,0.14)'}`,
                       borderRadius: '10px',
                       padding: '28px 20px',
                       textAlign: 'center',
                       cursor: 'pointer',
-                      background: dragging ? 'rgba(223,225,4,0.04)' : fileDropped ? 'rgba(223,225,4,0.03)' : 'rgba(255,255,255,0.02)',
+                      background: dragging ? 'rgba(0,188,200,0.04)' : fileDropped ? 'rgba(0,188,200,0.03)' : 'rgba(255,255,255,0.02)',
                       transition: 'all .15s ease',
                     }}
                   >
@@ -261,6 +262,7 @@ export default function ReportPage() {
               style={{
                 width: '100%', maxWidth: '480px',
                 background: 'rgba(255,255,255,0.04)',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
                 border: '1px solid rgba(255,255,255,0.09)',
                 borderRadius: '18px', padding: '40px 36px',
                 textAlign: 'center',
@@ -268,7 +270,7 @@ export default function ReportPage() {
             >
               <div style={{
                 width: '56px', height: '56px', borderRadius: '50%',
-                background: 'rgba(223,225,4,0.08)', border: '1px solid rgba(223,225,4,0.22)',
+                background: 'rgba(0,188,200,0.08)', border: '1px solid rgba(0,188,200,0.22)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 24px',
               }}>

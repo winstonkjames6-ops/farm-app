@@ -40,6 +40,7 @@ export default function ConsentPage() {
           style={{
             width: '100%', maxWidth: '480px',
             background: 'rgba(255,255,255,0.04)',
+            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid rgba(255,255,255,0.09)',
             borderRadius: '18px', padding: '40px 36px',
           }}
@@ -47,7 +48,7 @@ export default function ConsentPage() {
           {/* Icon */}
           <div style={{
             width: '52px', height: '52px', borderRadius: '50%',
-            background: 'rgba(223,225,4,0.08)', border: '1px solid rgba(223,225,4,0.2)',
+            background: 'rgba(0,188,200,0.08)', border: '1px solid rgba(0,188,200,0.2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             marginBottom: '24px',
           }}>
@@ -120,7 +121,7 @@ export default function ConsentPage() {
               <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                 <div style={{
                   width: '28px', height: '28px', borderRadius: '6px', flexShrink: 0,
-                  background: 'rgba(223,225,4,0.08)',
+                  background: 'rgba(0,188,200,0.08)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   {icon}

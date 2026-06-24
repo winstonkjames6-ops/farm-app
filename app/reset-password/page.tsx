@@ -73,7 +73,7 @@ function PasswordInput({ value, onChange, placeholder, focus, onFocus, onBlur }:
           ...inputBase,
           paddingRight: '46px',
           borderColor: focus ? '#00BCC8' : 'rgba(255,255,255,0.1)',
-          boxShadow: focus ? '0 0 0 3px rgba(223,225,4,0.12)' : 'none',
+          boxShadow: focus ? '0 0 0 3px rgba(0,188,200,0.12)' : 'none',
         }}
       />
       <button
@@ -150,6 +150,7 @@ export default function ResetPasswordPage() {
               style={{
                 width: '100%', maxWidth: '420px',
                 background: 'rgba(255,255,255,0.04)',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
                 border: '1px solid rgba(255,255,255,0.09)',
                 borderRadius: '18px', padding: '36px 32px',
               }}
@@ -221,6 +222,7 @@ export default function ResetPasswordPage() {
               style={{
                 width: '100%', maxWidth: '420px',
                 background: 'rgba(255,255,255,0.04)',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
                 border: '1px solid rgba(255,255,255,0.09)',
                 borderRadius: '18px', padding: '36px 32px',
                 textAlign: 'center',
@@ -229,7 +231,7 @@ export default function ResetPasswordPage() {
               {/* Check icon */}
               <div style={{
                 width: '56px', height: '56px', borderRadius: '50%',
-                background: 'rgba(223,225,4,0.1)', border: '1px solid rgba(223,225,4,0.25)',
+                background: 'rgba(0,188,200,0.1)', border: '1px solid rgba(0,188,200,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 24px',
               }}>

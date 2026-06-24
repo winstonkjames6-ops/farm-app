@@ -52,6 +52,7 @@ export default function EmailVerificationPage() {
           style={{
             width: '100%', maxWidth: '420px',
             background: 'rgba(255,255,255,0.04)',
+            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid rgba(255,255,255,0.09)',
             borderRadius: '18px', padding: '36px 32px',
             textAlign: 'center',
@@ -60,7 +61,7 @@ export default function EmailVerificationPage() {
           {/* Mail icon */}
           <div style={{
             width: '72px', height: '72px', borderRadius: '50%',
-            background: 'rgba(223,225,4,0.08)', border: '1px solid rgba(223,225,4,0.2)',
+            background: 'rgba(0,188,200,0.08)', border: '1px solid rgba(0,188,200,0.2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 28px',
           }}>
@@ -83,7 +84,7 @@ export default function EmailVerificationPage() {
           {resent ? (
             <div style={{
               padding: '12px 16px', borderRadius: '10px',
-              background: 'rgba(223,225,4,0.08)', border: '1px solid rgba(223,225,4,0.2)',
+              background: 'rgba(0,188,200,0.08)', border: '1px solid rgba(0,188,200,0.2)',
               marginBottom: '20px',
             }}>
               <p style={{ margin: 0, fontSize: '14px', color: '#00BCC8', fontWeight: 600 }}>

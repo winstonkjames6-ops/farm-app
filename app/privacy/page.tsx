@@ -197,6 +197,7 @@ export default function PrivacyPage() {
           <div style={{
             marginTop: '64px', padding: '28px 32px',
             background: 'rgba(255,255,255,0.03)',
+            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: '14px',
           }}>

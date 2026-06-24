@@ -45,7 +45,7 @@ function StepIcon({ state }: { state: 'done' | 'active' | 'locked' }) {
     return (
       <div style={{
         width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-        background: 'rgba(223,225,4,0.12)', border: `1.5px solid ${ACCENT}`,
+        background: 'rgba(0,188,200,0.12)', border: `1.5px solid ${ACCENT}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -59,7 +59,7 @@ function StepIcon({ state }: { state: 'done' | 'active' | 'locked' }) {
     return (
       <div style={{
         width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-        background: 'rgba(223,225,4,0.08)', border: `1.5px solid rgba(223,225,4,0.4)`,
+        background: 'rgba(0,188,200,0.08)', border: `1.5px solid rgba(0,188,200,0.4)`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <motion.span
@@ -134,6 +134,7 @@ export default function TrainerPendingPage() {
           style={{
             width: '100%', maxWidth: '460px',
             background: 'rgba(255,255,255,0.04)',
+            backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
             border: '1px solid rgba(255,255,255,0.09)',
             borderRadius: '18px', padding: '40px 36px',
           }}
@@ -145,7 +146,7 @@ export default function TrainerPendingPage() {
             transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1] }}
             style={{
               width: '64px', height: '64px', borderRadius: '50%',
-              background: 'rgba(223,225,4,0.08)', border: `1px solid rgba(223,225,4,0.22)`,
+              background: 'rgba(0,188,200,0.08)', border: `1px solid rgba(0,188,200,0.22)`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               marginBottom: '28px',
             }}
@@ -190,7 +191,7 @@ export default function TrainerPendingPage() {
                     position: 'absolute', left: '15px', top: '32px',
                     width: '1.5px', height: 'calc(100% - 8px)',
                     background: i === 0
-                      ? `linear-gradient(to bottom, ${ACCENT}, rgba(223,225,4,0.15))`
+                      ? `linear-gradient(to bottom, ${ACCENT}, rgba(0,188,200,0.15))`
                       : 'rgba(255,255,255,0.08)',
                   }} />
                 )}

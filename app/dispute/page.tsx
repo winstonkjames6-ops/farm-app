@@ -60,7 +60,7 @@ function TimelineIcon({ state }: { state: 'active' | 'pending' | 'locked' }) {
     return (
       <div style={{
         width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-        background: 'rgba(223,225,4,0.1)', border: `1.5px solid ${ACCENT}`,
+        background: 'rgba(0,188,200,0.1)', border: `1.5px solid ${ACCENT}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <motion.span
@@ -187,7 +187,7 @@ export default function DisputePage() {
                         position: 'absolute', left: '13px', top: '28px',
                         width: '1.5px', height: 'calc(100% - 4px)',
                         background: i === 0
-                          ? `linear-gradient(to bottom, ${ACCENT}, rgba(223,225,4,0.1))`
+                          ? `linear-gradient(to bottom, ${ACCENT}, rgba(0,188,200,0.1))`
                           : 'rgba(255,255,255,0.07)',
                       }} />
                     )}
@@ -220,6 +220,7 @@ export default function DisputePage() {
               {/* Form */}
               <div style={{
                 background: 'rgba(255,255,255,0.04)',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
                 border: '1px solid rgba(255,255,255,0.09)',
                 borderRadius: '18px', padding: '32px 30px',
               }}>
@@ -240,7 +241,7 @@ export default function DisputePage() {
                           ...inputStyle,
                           colorScheme: 'dark',
                           borderColor: focuses.date ? ACCENT : 'rgba(255,255,255,0.1)',
-                          boxShadow: focuses.date ? '0 0 0 3px rgba(223,225,4,0.1)' : 'none',
+                          boxShadow: focuses.date ? '0 0 0 3px rgba(0,188,200,0.1)' : 'none',
                         }}
                       />
                     </div>
@@ -257,7 +258,7 @@ export default function DisputePage() {
                         style={{
                           ...inputStyle,
                           borderColor: focuses.id ? ACCENT : 'rgba(255,255,255,0.1)',
-                          boxShadow: focuses.id ? '0 0 0 3px rgba(223,225,4,0.1)' : 'none',
+                          boxShadow: focuses.id ? '0 0 0 3px rgba(0,188,200,0.1)' : 'none',
                         }}
                       />
                     </div>
@@ -280,7 +281,7 @@ export default function DisputePage() {
                           paddingRight: '36px',
                           cursor: 'pointer',
                           borderColor: focuses.type ? ACCENT : 'rgba(255,255,255,0.1)',
-                          boxShadow: focuses.type ? '0 0 0 3px rgba(223,225,4,0.1)' : 'none',
+                          boxShadow: focuses.type ? '0 0 0 3px rgba(0,188,200,0.1)' : 'none',
                           color: disputeType ? '#fff' : 'rgba(255,255,255,0.3)',
                         }}
                       >
@@ -315,7 +316,7 @@ export default function DisputePage() {
                         resize: 'vertical',
                         minHeight: '120px',
                         borderColor: focuses.desc ? ACCENT : 'rgba(255,255,255,0.1)',
-                        boxShadow: focuses.desc ? '0 0 0 3px rgba(223,225,4,0.1)' : 'none',
+                        boxShadow: focuses.desc ? '0 0 0 3px rgba(0,188,200,0.1)' : 'none',
                       }}
                     />
                   </div>
@@ -349,6 +350,7 @@ export default function DisputePage() {
               style={{
                 width: '100%', maxWidth: '480px',
                 background: 'rgba(255,255,255,0.04)',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
                 border: '1px solid rgba(255,255,255,0.09)',
                 borderRadius: '18px', padding: '40px 36px',
                 textAlign: 'center',
@@ -356,7 +358,7 @@ export default function DisputePage() {
             >
               <div style={{
                 width: '56px', height: '56px', borderRadius: '50%',
-                background: 'rgba(223,225,4,0.08)', border: '1px solid rgba(223,225,4,0.22)',
+                background: 'rgba(0,188,200,0.08)', border: '1px solid rgba(0,188,200,0.22)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 24px',
               }}>
@@ -373,7 +375,7 @@ export default function DisputePage() {
               </h1>
               <div style={{
                 display: 'inline-block', padding: '6px 14px', borderRadius: '6px',
-                background: 'rgba(223,225,4,0.1)', border: '1px solid rgba(223,225,4,0.22)',
+                background: 'rgba(0,188,200,0.1)', border: '1px solid rgba(0,188,200,0.22)',
                 marginBottom: '16px',
               }}>
                 <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', letterSpacing: '.08em', color: ACCENT }}>

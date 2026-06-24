@@ -65,7 +65,8 @@ export default function MaintenancePage() {
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: '8px',
           padding: '8px 16px', borderRadius: '100px',
-          background: 'rgba(223,225,4,0.08)', border: '1px solid rgba(223,225,4,0.2)',
+          background: 'rgba(0,188,200,0.08)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(0,188,200,0.2)',
           marginBottom: '40px',
         }}>
           <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#00BCC8', flexShrink: 0 }} />

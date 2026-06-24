@@ -10,7 +10,7 @@ const T = {
   surface2: '#18181B',
   border: 'rgba(255,255,255,0.08)',
   yellow: '#00BCC8',
-  yellowBg: 'rgba(223,225,4,0.06)',
+  yellowBg: 'rgba(0,188,200,0.06)',
   ink: '#FAFAFA',
   ink2: '#A1A1AA',
   ink3: '#52525B',
@@ -198,7 +198,8 @@ export default function WaitlistNotifyPage() {
               {/* Trainer card */}
               <div style={{
                 display: 'flex', gap: 16, alignItems: 'center',
-                background: T.surface, border: `1px solid ${T.border}`,
+                background: T.surface, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                border: `1px solid ${T.border}`,
                 padding: '20px 24px', marginBottom: 40,
               }}>
                 <div style={{
@@ -214,7 +215,7 @@ export default function WaitlistNotifyPage() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <span style={{
                       fontSize: 11, fontWeight: 700, color: T.yellow,
-                      background: 'rgba(223,225,4,0.08)', border: '1px solid rgba(223,225,4,0.2)',
+                      background: 'rgba(0,188,200,0.08)', border: '1px solid rgba(0,188,200,0.2)',
                       padding: '3px 10px', fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.06em',
                     }}>{TRAINER.sport}</span>
                     <span style={{ fontSize: 12, color: T.ink3 }}>★ {TRAINER.rating} · {TRAINER.reviewCount} reviews</span>
