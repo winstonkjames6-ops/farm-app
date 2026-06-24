@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#0B0B0F', color: '#fff',
+      minHeight: '100vh', background: '#09090B', color: '#fff',
       fontFamily: "'Hanken Grotesk', sans-serif",
       display: 'flex', flexDirection: 'column',
     }}>
@@ -117,7 +117,7 @@ export default function ForgotPasswordPage() {
                     required
                     style={{
                       ...inputBase,
-                      borderColor: emailFocus ? '#DFE104' : 'rgba(255,255,255,0.1)',
+                      borderColor: emailFocus ? '#00BCC8' : 'rgba(255,255,255,0.1)',
                       boxShadow: emailFocus ? '0 0 0 3px rgba(223,225,4,0.12)' : 'none',
                     }}
                   />
@@ -127,7 +127,7 @@ export default function ForgotPasswordPage() {
                   type="submit"
                   style={{
                     width: '100%', padding: '14px', borderRadius: '11px', border: 'none',
-                    background: '#DFE104', color: '#000',
+                    background: '#00BCC8', color: '#000',
                     fontSize: '14px', fontWeight: 700, cursor: 'pointer',
                     fontFamily: "'Hanken Grotesk', sans-serif",
                     letterSpacing: '.06em', textTransform: 'uppercase',
@@ -174,7 +174,7 @@ export default function ForgotPasswordPage() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 24px',
               }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DFE104" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
@@ -191,7 +191,7 @@ export default function ForgotPasswordPage() {
               </p>
 
               {resent ? (
-                <p style={{ fontSize: '14px', color: '#DFE104', fontWeight: 600, marginBottom: '20px' }}>
+                <p style={{ fontSize: '14px', color: '#00BCC8', fontWeight: 600, marginBottom: '20px' }}>
                   Email resent!
                 </p>
               ) : (

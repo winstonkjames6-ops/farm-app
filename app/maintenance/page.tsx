@@ -1,11 +1,11 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
 function WrenchIcon() {
   return (
-    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#DFE104" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
     </svg>
   )
@@ -14,7 +14,7 @@ function WrenchIcon() {
 export default function MaintenancePage() {
   return (
     <div style={{
-      minHeight: '100vh', background: '#0B0B0F', color: '#fff',
+      minHeight: '100vh', background: '#09090B', color: '#fff',
       fontFamily: "'Hanken Grotesk', sans-serif",
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '40px 24px', textAlign: 'center',
@@ -68,9 +68,9 @@ export default function MaintenancePage() {
           background: 'rgba(223,225,4,0.08)', border: '1px solid rgba(223,225,4,0.2)',
           marginBottom: '40px',
         }}>
-          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#DFE104', flexShrink: 0 }} />
+          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#00BCC8', flexShrink: 0 }} />
           <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>
-            Back by <span style={{ color: '#DFE104', fontWeight: 700 }}>8:00 PM EST, Jun 22</span>
+            Back by <span style={{ color: '#00BCC8', fontWeight: 700 }}>8:00 PM EST, Jun 22</span>
           </span>
         </div>
 

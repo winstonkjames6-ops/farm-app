@@ -1,10 +1,10 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const ACCENT = '#DFE104'
+const ACCENT = '#00BCC8'
 
 const inputStyle: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box',
@@ -59,7 +59,7 @@ export default function ReportPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#0B0B0F', color: '#fff',
+      minHeight: '100vh', background: '#09090B', color: '#fff',
       fontFamily: "'Hanken Grotesk', sans-serif",
       display: 'flex', flexDirection: 'column',
     }}>
@@ -156,9 +156,9 @@ export default function ReportPage() {
                         color: reason ? '#fff' : 'rgba(255,255,255,0.3)',
                       }}
                     >
-                      <option value="" disabled style={{ background: '#1a1a1a' }}>Select a reason…</option>
+                      <option value="" disabled style={{ background: '#111113' }}>Select a reason…</option>
                       {REASONS.map((r) => (
-                        <option key={r} value={r} style={{ background: '#1a1a1a', color: '#fff' }}>{r}</option>
+                        <option key={r} value={r} style={{ background: '#111113', color: '#fff' }}>{r}</option>
                       ))}
                     </select>
                     <svg

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -9,7 +9,7 @@ const T = {
   surface: '#111113',
   surface2: '#18181B',
   border: 'rgba(255,255,255,0.08)',
-  yellow: '#DFE104',
+  yellow: '#00BCC8',
   yellowBg: 'rgba(223,225,4,0.06)',
   ink: '#FAFAFA',
   ink2: '#A1A1AA',

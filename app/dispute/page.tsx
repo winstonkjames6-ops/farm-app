@@ -1,10 +1,10 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const ACCENT = '#DFE104'
+const ACCENT = '#00BCC8'
 
 const inputStyle: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box',
@@ -112,7 +112,7 @@ export default function DisputePage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#0B0B0F', color: '#fff',
+      minHeight: '100vh', background: '#09090B', color: '#fff',
       fontFamily: "'Hanken Grotesk', sans-serif",
       display: 'flex', flexDirection: 'column',
     }}>
@@ -284,9 +284,9 @@ export default function DisputePage() {
                           color: disputeType ? '#fff' : 'rgba(255,255,255,0.3)',
                         }}
                       >
-                        <option value="" disabled style={{ background: '#1a1a1a' }}>Select type…</option>
+                        <option value="" disabled style={{ background: '#111113' }}>Select type…</option>
                         {DISPUTE_TYPES.map((t) => (
-                          <option key={t} value={t} style={{ background: '#1a1a1a', color: '#fff' }}>{t}</option>
+                          <option key={t} value={t} style={{ background: '#111113', color: '#fff' }}>{t}</option>
                         ))}
                       </select>
                       <svg

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 
 function MailIcon() {
   return (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#DFE104" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="4" width="20" height="16" rx="2" />
       <polyline points="2,4 12,13 22,4" />
     </svg>
@@ -20,7 +20,7 @@ export default function EmailVerificationPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#0B0B0F', color: '#fff',
+      minHeight: '100vh', background: '#09090B', color: '#fff',
       fontFamily: "'Hanken Grotesk', sans-serif",
       display: 'flex', flexDirection: 'column',
     }}>
@@ -86,7 +86,7 @@ export default function EmailVerificationPage() {
               background: 'rgba(223,225,4,0.08)', border: '1px solid rgba(223,225,4,0.2)',
               marginBottom: '20px',
             }}>
-              <p style={{ margin: 0, fontSize: '14px', color: '#DFE104', fontWeight: 600 }}>
+              <p style={{ margin: 0, fontSize: '14px', color: '#00BCC8', fontWeight: 600 }}>
                 Email resent! Check your inbox.
               </p>
             </div>

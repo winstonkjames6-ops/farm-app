@@ -1,9 +1,9 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
-const ACCENT = '#DFE104'
+const ACCENT = '#00BCC8'
 
 const steps = [
   {
@@ -101,7 +101,7 @@ export default function TrainerPendingPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#0B0B0F', color: '#fff',
+      minHeight: '100vh', background: '#09090B', color: '#fff',
       fontFamily: "'Hanken Grotesk', sans-serif",
       display: 'flex', flexDirection: 'column',
     }}>

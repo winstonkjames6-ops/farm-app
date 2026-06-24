@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 export default function ServerErrorPage() {
   return (
     <div style={{
-      minHeight: '100vh', background: '#0B0B0F', color: '#fff',
+      minHeight: '100vh', background: '#09090B', color: '#fff',
       fontFamily: "'Hanken Grotesk', sans-serif",
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '40px 24px', textAlign: 'center',
@@ -80,7 +80,7 @@ export default function ServerErrorPage() {
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               padding: '13px 24px', borderRadius: '12px',
-              background: '#DFE104', color: '#000', border: 'none',
+              background: '#00BCC8', color: '#000', border: 'none',
               fontWeight: 700, fontSize: '15px', cursor: 'pointer',
               fontFamily: "'Hanken Grotesk', sans-serif",
               transition: 'filter .15s ease',
