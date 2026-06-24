@@ -13,10 +13,10 @@ const config: Config = {
         'dark-secondary': '#2a2a2a',
         'dark-tertiary': '#4a4a4a',
         
-        // Orange accent
-        'orange-primary': '#ff8c42',
-        'orange-hover': '#ff7a22',
-        'orange-light': 'rgba(255, 140, 66, 0.1)',
+        // Teal accent
+        'orange-primary': '#00BCC8',
+        'orange-hover': '#00a8b3',
+        'orange-light': 'rgba(0, 188, 200, 0.1)',
         
         // White/grays
         'text-primary': '#ffffff',

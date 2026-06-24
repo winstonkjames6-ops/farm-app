@@ -2,13 +2,17 @@ import Link from 'next/link'
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-dark-bg min-h-screen flex items-center pt-20">
-      
-      {/* Background gradient overlay */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-primary rounded-full mix-blend-multiply filter blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-primary rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-      </div>
+    <section
+      className="relative overflow-hidden min-h-screen flex items-center pt-20"
+      style={{
+        backgroundImage: "url('/images/hero-athlete.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'left center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {/* Dark overlay */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, transparent, rgba(9,9,11,0.7))', zIndex: 0, pointerEvents: 'none' }} />
 
       {/* Content */}
       <div className="container max-w-6xl mx-auto px-4 relative z-10">

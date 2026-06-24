@@ -2,6 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .btn-primary {
+    background: #00BCC8;
+    color: #09090B;
+    border-radius: 8px;
+    display: inline-block;
+  }
+  .btn-primary:hover {
+    background: #00a8b3;
+  }
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #FAFAFA;
+    border-radius: 8px;
+    display: inline-block;
+  }
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.09);
+  }
+}
+
+@layer components {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 8px;
+  }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+  textarea:focus {
+    outline: none;
+    border-color: rgba(0, 188, 200, 0.5);
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -30,3 +66,32 @@ details[open] .faq-ans { animation: faqOpen .3s ease; }
 .cine .gsap-reveal { visibility: hidden; }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+.glass-cyan {
+  background: rgba(0, 188, 200, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 188, 200, 0.2);
+}
+.glass-modal {
+  background: rgba(9, 9, 11, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.noise-overlay::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.35;
+}
