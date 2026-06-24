@@ -5,7 +5,7 @@ export default function Hero() {
     <section
       className="relative overflow-hidden min-h-screen flex items-center pt-20"
       style={{
-        backgroundImage: "url('/images/hero-athlete.jpg')",
+        backgroundImage: "url('/hero-athlete.png')",
         backgroundSize: 'cover',
         backgroundPosition: 'left center',
         backgroundRepeat: 'no-repeat',
@@ -16,10 +16,10 @@ export default function Hero() {
 
       {/* Content */}
       <div className="container max-w-6xl mx-auto px-4 relative z-10">
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          
-          {/* Left: Text */}
-          <div>
+        <div className="flex items-center min-h-screen">
+
+          {/* Text: right column — sits in negative space */}
+          <div className="w-full text-center md:w-1/2 md:ml-auto md:text-left md:pr-8">
             <div className="mb-6 inline-block">
               <span className="text-orange-primary font-semibold text-sm uppercase tracking-wide">
                 ⚡ Curated Training
@@ -31,20 +31,20 @@ export default function Hero() {
             </h1>
 
             <p className="text-xl text-text-secondary mb-8 leading-relaxed">
-              Book curated trainers in your sport. 85% of every session goes straight to your coach. 
+              Book curated trainers in your sport. 85% of every session goes straight to your coach.
               No subscriptions. No long-term contracts.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link 
-                href="/auth/signup?type=parent" 
+            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+              <Link
+                href="/auth/signup?type=parent"
                 className="btn-primary px-8 py-4 text-center text-lg font-semibold"
               >
                 I'm looking for a trainer
               </Link>
-              <Link 
-                href="/auth/signup?type=trainer" 
+              <Link
+                href="/auth/signup?type=trainer"
                 className="btn-secondary px-8 py-4 text-center text-lg font-semibold"
               >
                 I'm a trainer
@@ -54,7 +54,7 @@ export default function Hero() {
             {/* Social proof (add later) */}
             <div className="mt-12 pt-8 border-t border-dark-tertiary">
               <p className="text-text-tertiary text-sm mb-4">Trusted by parents and coaches</p>
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-center md:justify-start">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div key={i} className="w-8 h-8 bg-dark-secondary rounded-full border border-orange-primary"></div>
                 ))}
@@ -62,13 +62,6 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Right: Hero Image */}
-          <div className="hidden md:block relative">
-            <div className="bg-gradient-to-br from-orange-primary to-orange-hover rounded-2xl overflow-hidden aspect-square flex items-center justify-center">
-              {/* Placeholder */}
-              <div className="text-6xl">🏅</div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
