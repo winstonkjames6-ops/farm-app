@@ -89,7 +89,7 @@ export default function Home() {
     if (search?.parentElement) {
       const box = search.parentElement
       search.addEventListener('focus', () => {
-        box.style.boxShadow = '0 0 0 3px rgba(223,225,4,0.30)'
+        box.style.boxShadow = '0 0 0 3px rgba(0, 188, 200, 0.30)'
         box.style.borderColor = 'var(--accent)'
       })
       search.addEventListener('blur', () => {
@@ -115,9 +115,9 @@ export default function Home() {
           '--ink-2': '#A1A1AA',
           '--ink-3': '#71717A',
           '--line': 'rgba(255,255,255,0.08)',
-          '--accent': '#DFE104',
+          '--accent': '#00BCC8',
           '--accent-ink': '#09090B',
-          '--radius': '0px',
+          '--radius': '12px',
           '--section-pad': '120px',
           '--photo-display': 'flex',
           '--social-display': 'flex',
@@ -161,14 +161,14 @@ export default function Home() {
                 display: 'inline-flex', alignItems: 'center', textDecoration: 'none',
                 color: 'var(--ink)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                 fontSize: '13px', letterSpacing: '.08em', textTransform: 'uppercase',
-                padding: '10px 16px', border: '1px solid var(--line)',
+                padding: '10px 16px', border: '1px solid var(--line)', borderRadius: '8px',
               }}>Find a trainer</Link>
               <Link href="/login" style={{
                 display: 'inline-flex', alignItems: 'center', textDecoration: 'none',
                 color: 'var(--accent-ink)', background: 'var(--accent)',
                 fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                 fontSize: '13px', letterSpacing: '.08em', textTransform: 'uppercase',
-                padding: '11px 18px', transition: 'filter .15s ease',
+                padding: '11px 18px', transition: 'filter .15s ease', borderRadius: '8px',
               }}>I&apos;m a trainer</Link>
             </div>
           </div>
@@ -180,18 +180,18 @@ export default function Home() {
           display: 'flex', alignItems: 'center', overflow: 'hidden',
         }}>
           <div style={{
-            position: 'absolute', inset: 0, backgroundImage: "url('/hero-bg.png')",
-            backgroundSize: 'cover', backgroundPosition: 'center', zIndex: 0,
+            position: 'absolute', inset: 0, backgroundImage: "url('/hero-athlete.png')",
+            backgroundSize: 'cover', backgroundPosition: 'left center', zIndex: 0,
           }} />
           <div style={{
             position: 'absolute', inset: 0, zIndex: 1,
-            background: 'linear-gradient(90deg,rgba(9,9,11,0.90) 0%,rgba(9,9,11,0.76) 34%,rgba(9,9,11,0.50) 62%,rgba(9,9,11,0.18) 100%)',
+            background: 'linear-gradient(90deg, rgba(9,9,11,0) 0%, rgba(9,9,11,0.25) 38%, rgba(9,9,11,0.88) 62%, rgba(9,9,11,0.97) 100%)',
           }} />
           <div style={{
             position: 'relative', zIndex: 2, maxWidth: '1240px', width: '100%',
             margin: '0 auto', padding: 'clamp(48px,7vw,88px) 32px',
           }}>
-            <div style={{ maxWidth: '640px' }}>
+            <div style={{ maxWidth: '640px', marginLeft: 'auto' }}>
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: '9px', color: '#fff',
                 fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
@@ -263,7 +263,7 @@ export default function Home() {
                 <Link href="/login" style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   background: 'var(--accent)', color: 'var(--accent-ink)',
-                  padding: '14px 28px',
+                  padding: '14px 28px', borderRadius: '8px',
                   fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
                   fontSize: '14px', letterSpacing: '.1em', textTransform: 'uppercase',
                   textDecoration: 'none', transition: 'filter .15s ease',
@@ -272,7 +272,7 @@ export default function Home() {
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   background: 'transparent', color: '#FAFAFA',
                   border: '1px solid rgba(255,255,255,.35)',
-                  padding: '13px 26px',
+                  padding: '13px 26px', borderRadius: '8px',
                   fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                   fontSize: '14px', letterSpacing: '.1em', textTransform: 'uppercase',
                   textDecoration: 'none', transition: 'border-color .15s ease',
@@ -311,8 +311,8 @@ export default function Home() {
           }}>
             <div data-reveal="up" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <span data-count="85" data-suffix="%" data-count-delay="0" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#DFE104' }}>85%</span>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DFE104" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+                <span data-count="85" data-suffix="%" data-count-delay="0" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#00BCC8' }}>85%</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="19" x2="12" y2="6" /><polyline points="6 11 12 5 18 11" />
                 </svg>
               </div>
@@ -320,8 +320,8 @@ export default function Home() {
             </div>
             <div data-reveal="up" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <span data-count="4.9" data-decimals="1" data-count-delay="120" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#DFE104' }}>4.9</span>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DFE104" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+                <span data-count="4.9" data-decimals="1" data-count-delay="120" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#00BCC8' }}>4.9</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="19" x2="12" y2="6" /><polyline points="6 11 12 5 18 11" />
                 </svg>
               </div>
@@ -329,8 +329,8 @@ export default function Home() {
             </div>
             <div data-reveal="up" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <span data-count="320" data-suffix="+" data-count-delay="240" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#DFE104' }}>320+</span>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DFE104" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+                <span data-count="320" data-suffix="+" data-count-delay="240" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#00BCC8' }}>320+</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="19" x2="12" y2="6" /><polyline points="6 11 12 5 18 11" />
                 </svg>
               </div>
@@ -338,8 +338,8 @@ export default function Home() {
             </div>
             <div data-reveal="up" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#DFE104' }}>&lt;</span>
-                <span data-count="2" data-suffix=" min" data-count-delay="360" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#DFE104' }}>2 min</span>
+                <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#00BCC8' }}>&lt;</span>
+                <span data-count="2" data-suffix=" min" data-count-delay="360" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#00BCC8' }}>2 min</span>
               </div>
               <div style={{ fontSize: '13px', color: 'var(--ink-3)', fontWeight: 500, fontFamily: "'Barlow Condensed',sans-serif", letterSpacing: '.1em', textTransform: 'uppercase' }}>to book a session</div>
             </div>
@@ -373,14 +373,18 @@ export default function Home() {
                   icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><polygon points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1" /></svg> },
               ].map(({ num, title, desc, icon }) => (
                 <div key={num} data-reveal="scale" style={{
-                  background: 'var(--bg)', border: '1px solid var(--line)',
+                  background: 'rgba(255,255,255,0.04)',
+                  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '12px',
                   padding: '28px 26px', transition: 'border-color .18s ease',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '22px' }}>
                     <span style={{
                       width: '48px', height: '48px',
-                      background: 'rgba(223,225,4,0.10)',
+                      background: 'rgba(0,188,200,0.10)',
                       color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      borderRadius: '10px',
                     }}>{icon}</span>
                     <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '30px', color: 'rgba(255,255,255,0.12)' }}>{num}</span>
                   </div>
@@ -422,7 +426,7 @@ export default function Home() {
                   <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{
                       width: '22px', height: '22px',
-                      background: 'rgba(223,225,4,0.12)',
+                      background: 'rgba(0,188,200,0.12)',
                       color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none',
                     }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
@@ -435,7 +439,10 @@ export default function Home() {
               </div>
             </div>
             <div data-reveal="right" style={{
-              background: 'var(--surface)', border: '1px solid var(--line)',
+              background: 'rgba(255,255,255,0.04)',
+              backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '16px',
               padding: 'clamp(20px,2.4vw,28px)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', paddingBottom: '20px', borderBottom: '1px solid var(--line)' }}>
@@ -447,7 +454,7 @@ export default function Home() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '18px', letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--ink)' }}>Coach — Tennis</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', fontSize: '13px', color: 'var(--ink-3)', fontFamily: "'Hanken Grotesk',sans-serif" }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="#DFE104" stroke="none">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="#00BCC8" stroke="none">
                       <polygon points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1" />
                     </svg>
                     <span style={{ color: 'var(--ink-2)', fontWeight: 600 }}>4.9</span> · 48 reviews · In-person
@@ -526,7 +533,10 @@ export default function Home() {
                 { title: 'Instant bookings', desc: 'See live availability and confirm a session in under two minutes.' },
               ].map(({ title, desc }) => (
                 <div key={title} data-reveal="scale" style={{
-                  background: 'var(--bg)', border: '1px solid var(--line)',
+                  background: 'rgba(255,255,255,0.04)',
+                  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '12px',
                   padding: '30px 28px', transition: 'border-color .18s ease',
                 }}>
                   <div style={{ width: '28px', height: '3px', background: 'var(--accent)', marginBottom: '20px' }} />
@@ -556,7 +566,7 @@ export default function Home() {
                 { q: 'What if I need to cancel?', a: 'Cancel up to 24 hours before a session for a full refund. Within 24 hours, the session fee applies.' },
                 { q: 'How do trainers get paid?', a: 'Trainers receive 85% of each session price via Stripe, with payouts every week.' },
               ].map(({ q, a, open }) => (
-                <details key={q} open={open} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '4px 24px' }}>
+                <details key={q} open={open} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '4px 24px', borderRadius: '8px', overflow: 'hidden' }}>
                   <summary style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', cursor: 'pointer', padding: '20px 0', listStyle: 'none' }}>
                     <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '18px', letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--ink)' }}>{q}</span>
                     <span className="faq-ind" style={{ color: 'var(--accent)', fontSize: '22px', lineHeight: 1, fontWeight: 300, transition: 'transform .2s ease', flexShrink: 0 }}>+</span>
@@ -578,7 +588,7 @@ export default function Home() {
         <section style={{ position: 'relative', overflow: 'hidden', background: '#111113', borderTop: '1px solid rgba(255,255,255,0.08)', padding: 'var(--section-pad) 0' }}>
           <div style={{
             position: 'absolute', top: '-160px', right: '-120px', width: '560px', height: '560px',
-            background: 'radial-gradient(circle,#DFE104,transparent 60%)', opacity: 0.14, pointerEvents: 'none',
+            background: 'radial-gradient(circle,#00BCC8,transparent 60%)', opacity: 0.14, pointerEvents: 'none',
           }} />
           <div style={{ position: 'relative', zIndex: 2, maxWidth: '880px', margin: '0 auto', padding: '0 24px', textAlign: 'center' }}>
             <h2 style={{
