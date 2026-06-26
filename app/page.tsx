@@ -162,7 +162,7 @@ export default function Home() {
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle menu"
-              style={{ display: isMobile ? 'flex' : 'none', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: '8px', marginLeft: 'auto' }}
+              style={{ display: isMobile ? 'flex' : 'none', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: '8px', marginLeft: 'auto', minWidth: '44px', minHeight: '44px' }}
             >
               <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
                 <rect y="0" width="22" height="2" rx="1" fill="white"/>
@@ -200,7 +200,7 @@ export default function Home() {
             } as React.CSSProperties}>
               {[['How it works','#how-it-works'],['Booking','#booking'],['Why FARM','#why-farm'],['FAQ','#faq']].map(([label, href]) => (
                 <a key={href} href={href} onClick={() => setMenuOpen(false)} style={{
-                  display: 'block', padding: '14px 0',
+                  display: 'flex', alignItems: 'center', padding: '14px 0', minHeight: '44px',
                   borderBottom: '1px solid rgba(255,255,255,0.06)',
                   color: 'var(--ink-2)', fontSize: '16px', fontWeight: 500, textDecoration: 'none',
                 }}>{label}</a>
@@ -310,7 +310,7 @@ export default function Home() {
                 <Link href="/login" style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   background: 'var(--accent)', color: 'var(--accent-ink)',
-                  padding: '14px 28px', borderRadius: '8px',
+                  padding: '14px 28px', borderRadius: '8px', minHeight: '44px',
                   fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
                   fontSize: '14px', letterSpacing: '.1em', textTransform: 'uppercase',
                   textDecoration: 'none', transition: 'filter .15s ease',
@@ -319,7 +319,7 @@ export default function Home() {
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   background: 'transparent', color: '#FAFAFA',
                   border: '1px solid rgba(255,255,255,.35)',
-                  padding: '13px 26px', borderRadius: '8px',
+                  padding: '13px 26px', borderRadius: '8px', minHeight: '44px',
                   fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                   fontSize: '14px', letterSpacing: '.1em', textTransform: 'uppercase',
                   textDecoration: 'none', transition: 'border-color .15s ease',

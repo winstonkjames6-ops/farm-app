@@ -169,7 +169,7 @@ export default function TrainerSignup() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {SPORTS.map(sport => (
                     <button key={sport} onClick={() => toggleSport(sport)} style={{
-                      padding: '8px 16px', borderRadius: '999px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
+                      padding: '8px 16px', minHeight: '44px', borderRadius: '999px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
                       background: form.sports.includes(sport) ? '#22C55E' : 'transparent',
                       color: form.sports.includes(sport) ? '#000' : 'rgba(255,255,255,0.5)',
                       border: form.sports.includes(sport) ? '1px solid #22C55E' : '1px solid rgba(255,255,255,0.15)',
@@ -319,11 +319,11 @@ export default function TrainerSignup() {
       }}>
         <div style={{ maxWidth: '680px', width: '100%', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           {step > 0
-            ? <button onClick={() => setStep(s => s - 1)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '12px 24px', color: 'rgba(255,255,255,0.6)', fontSize: '15px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif", transition: 'border-color 0.2s' }}>← Back</button>
+            ? <button onClick={() => setStep(s => s - 1)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '10px', padding: '12px 24px', minHeight: '44px', color: 'rgba(255,255,255,0.6)', fontSize: '15px', fontWeight: 600, cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif", transition: 'border-color 0.2s' }}>← Back</button>
             : <div />}
           {step < STEPS.length - 1
-            ? <button onClick={() => setStep(s => s + 1)} style={{ background: '#22C55E', border: 'none', borderRadius: '10px', padding: '13px 32px', color: '#000', fontSize: '15px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif", transition: 'filter 0.2s' }}>Continue →</button>
-            : <button onClick={() => setSubmitted(true)} disabled={!form.agreeToTerms} style={{ background: form.agreeToTerms ? '#22C55E' : 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '10px', padding: '13px 32px', color: form.agreeToTerms ? '#000' : 'rgba(255,255,255,0.3)', fontSize: '15px', fontWeight: 700, cursor: form.agreeToTerms ? 'pointer' : 'not-allowed', fontFamily: "'Hanken Grotesk', sans-serif", transition: 'all 0.2s' }}>Submit Application</button>}
+            ? <button onClick={() => setStep(s => s + 1)} style={{ background: '#22C55E', border: 'none', borderRadius: '10px', padding: '13px 32px', minHeight: '44px', color: '#000', fontSize: '15px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif", transition: 'filter 0.2s' }}>Continue →</button>
+            : <button onClick={() => setSubmitted(true)} disabled={!form.agreeToTerms} style={{ background: form.agreeToTerms ? '#22C55E' : 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '10px', padding: '13px 32px', minHeight: '44px', color: form.agreeToTerms ? '#000' : 'rgba(255,255,255,0.3)', fontSize: '15px', fontWeight: 700, cursor: form.agreeToTerms ? 'pointer' : 'not-allowed', fontFamily: "'Hanken Grotesk', sans-serif", transition: 'all 0.2s' }}>Submit Application</button>}
         </div>
       </div>
     </div>

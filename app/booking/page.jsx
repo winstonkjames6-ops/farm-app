@@ -185,7 +185,7 @@ function ConfirmScreen({ format, setFormat, onNext }) {
                 key={f}
                 onClick={() => setFormat(f)}
                 style={{
-                  padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+                  padding: '8px 14px', minHeight: '44px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
                   cursor: 'pointer', whiteSpace: 'nowrap',
                   background: format === f ? T.surface : 'transparent',
                   border: `1px solid ${format === f ? T.line : 'transparent'}`,
@@ -223,7 +223,7 @@ function ConfirmScreen({ format, setFormat, onNext }) {
       <button
         onClick={onNext}
         style={{
-          display: 'block', width: '100%', padding: '16px', borderRadius: '12px',
+          display: 'block', width: '100%', padding: '16px', borderRadius: '12px', minHeight: '44px',
           background: T.accent, color: T.accentInk, border: 'none',
           fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16px',
           cursor: 'pointer', transition: 'filter .15s ease, transform .15s ease',
@@ -344,7 +344,7 @@ function PaymentScreen({ format, onNext, onBack }) {
           <button
             onClick={onNext}
             style={{
-              display: 'block', width: '100%', padding: '17px', borderRadius: '12px',
+              display: 'block', width: '100%', padding: '17px', borderRadius: '12px', minHeight: '44px',
               background: '#22C55E', color: '#000', border: 'none',
               fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16.5px',
               cursor: 'pointer', transition: 'filter .15s ease, transform .15s ease',
@@ -506,7 +506,7 @@ function ConfirmationScreen({ format }) {
           onClick={() => {}}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-            width: '100%', padding: '15px', borderRadius: '12px',
+            width: '100%', padding: '15px', borderRadius: '12px', minHeight: '44px',
             background: T.surface, color: T.ink, border: `1.5px solid ${T.line}`,
             fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px',
             cursor: 'pointer', transition: 'border-color .15s ease',

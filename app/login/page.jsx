@@ -141,7 +141,7 @@ export default function LoginPage() {
                     flex: 1, padding: '9px 0', borderRadius: '8px', border: 'none',
                     cursor: 'pointer', fontSize: '14px', fontWeight: 700,
                     fontFamily: "'Hanken Grotesk', sans-serif",
-                    transition: 'all .18s ease',
+                    transition: 'all .18s ease', minHeight: '44px',
                     background: active ? '#fff' : 'transparent',
                     color: active ? '#000' : 'rgba(255,255,255,0.4)',
                   }}
@@ -191,7 +191,7 @@ export default function LoginPage() {
                 onClick={() => setShowPassword((v) => !v)}
                 style={{
                   position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                  background: 'none', border: 'none', cursor: 'pointer', padding: '10px', minWidth: '44px', minHeight: '44px',
                   color: 'rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center',
                   transition: 'color .15s ease',
                 }}
@@ -217,7 +217,7 @@ export default function LoginPage() {
           {/* Submit */}
           <button
             style={{
-              width: '100%', padding: '14px', borderRadius: '11px', border: 'none',
+              width: '100%', padding: '14px', borderRadius: '11px', border: 'none', minHeight: '44px',
               background: '#fff', color: '#000',
               fontSize: '15px', fontWeight: 700, cursor: 'pointer',
               fontFamily: "'Hanken Grotesk', sans-serif",

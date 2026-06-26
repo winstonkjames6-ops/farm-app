@@ -85,7 +85,7 @@ export default function ParentSignup() {
                       key={sport}
                       onClick={() => update('sport', sport)}
                       style={{
-                        padding: '8px 16px', borderRadius: '999px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
+                        padding: '11px 16px', minHeight: '44px', borderRadius: '999px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
                         background: form.sport === sport ? '#22C55E' : 'transparent',
                         color: form.sport === sport ? '#000' : 'rgba(255,255,255,0.5)',
                         border: form.sport === sport ? '1px solid #22C55E' : '1px solid rgba(255,255,255,0.15)',
@@ -119,7 +119,7 @@ export default function ParentSignup() {
                       key={ag}
                       onClick={() => update('ageGroup', ag)}
                       style={{
-                        padding: '8px 18px', borderRadius: '999px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
+                        padding: '11px 16px', minHeight: '44px', borderRadius: '999px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
                         background: form.ageGroup === ag ? '#22C55E' : 'transparent',
                         color: form.ageGroup === ag ? '#000' : 'rgba(255,255,255,0.5)',
                         border: form.ageGroup === ag ? '1px solid #22C55E' : '1px solid rgba(255,255,255,0.15)',
@@ -158,7 +158,7 @@ export default function ParentSignup() {
                 onClick={() => isValid && setSubmitted(true)}
                 disabled={!isValid}
                 style={{
-                  width: '100%', padding: '15px', borderRadius: '12px', border: 'none',
+                  width: '100%', padding: '15px', borderRadius: '12px', border: 'none', minHeight: '44px',
                   background: isValid ? '#22C55E' : 'rgba(255,255,255,0.08)',
                   color: isValid ? '#000' : 'rgba(255,255,255,0.25)',
                   fontSize: '16px', fontWeight: 700, cursor: isValid ? 'pointer' : 'not-allowed',

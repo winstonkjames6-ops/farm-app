@@ -100,3 +100,17 @@ details[open] .faq-ans { animation: faqOpen .3s ease; }
   z-index: 9999;
   opacity: 0.35;
 }
+
+/* Touch target safety net */
+button, a, [role="button"] {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Exception: inline text links should not be block-forced */
+p a, span a, li a {
+  min-height: unset;
+  display: inline;
+}
