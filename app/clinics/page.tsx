@@ -121,6 +121,8 @@ function metaBadge(label: string) {
         padding: '3px 8px',
         background: D.surface2,
         border: `1px solid ${D.border}`,
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         color: D.muted,
       }}
     >
@@ -235,6 +237,8 @@ function ClinicCard({ clinic }: { clinic: typeof CLINICS[number] }) {
       style={{
         background: D.surface,
         border: `1px solid ${D.border}`,
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         padding: '1.5rem',
         display: 'flex',
         flexDirection: 'row',
@@ -529,6 +533,8 @@ export default function ClinicsPage() {
             padding: '20px',
             background: D.surface,
             border: `1px solid ${D.border}`,
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
           }}
         >
           <FilterGroup

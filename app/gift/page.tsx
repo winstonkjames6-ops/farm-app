@@ -496,6 +496,8 @@ export default function GiftPage() {
                   style={{
                     background: D.surface,
                     border:     `2px solid ${D.accent}`,
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
                     borderRadius: 0,
                     boxShadow:  '0 0 40px rgba(0,188,200,0.06)',
                     overflow:   'hidden',

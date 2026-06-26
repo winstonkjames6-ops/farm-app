@@ -261,6 +261,8 @@ export default function GroupsPage() {
               style={{
                 background: D.surface,
                 border: `1px solid ${D.border}`,
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
                 padding: '24px',
                 display: 'flex',
                 flexDirection: 'row',

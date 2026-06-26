@@ -154,6 +154,8 @@ export default function PackagesPage() {
                 position: 'relative',
                 background: D.surface,
                 border: pkg.popular ? `2px solid ${D.borderAccent}` : `1px solid ${D.border}`,
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
                 padding: '32px 28px 28px',
                 display: 'flex',
                 flexDirection: 'column',
