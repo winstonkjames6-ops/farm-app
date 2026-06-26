@@ -471,7 +471,7 @@ export default function ClinicsPage() {
             <h1
               style={{
                 fontFamily: barlow,
-                fontSize: '52px',
+                fontSize: 'clamp(32px,6vw,52px)',
                 fontWeight: 800,
                 letterSpacing: '.02em',
                 textTransform: 'uppercase',

@@ -181,7 +181,7 @@ export default function GroupsPage() {
             style={{
               fontFamily: font.heading,
               fontWeight: 800,
-              fontSize: '52px',
+              fontSize: 'clamp(32px,6vw,52px)',
               lineHeight: 0.96,
               letterSpacing: '0.04em',
               textTransform: 'uppercase',

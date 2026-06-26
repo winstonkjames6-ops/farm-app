@@ -145,7 +145,7 @@ export default function Home() {
           borderBottom: '1px solid var(--line)',
         } as React.CSSProperties}>
           <div style={{
-            maxWidth: '1240px', margin: '0 auto', padding: '0 32px', height: '72px',
+            maxWidth: '1240px', margin: '0 auto', padding: '0 clamp(16px,4vw,32px)', height: '72px',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px',
           }}>
             <a href="#top" style={{ display: 'flex', alignItems: 'center', gap: '11px', textDecoration: 'none' }}>
@@ -352,13 +352,13 @@ export default function Home() {
         {/* ── STATS BAR ── */}
         <section style={{ background: '#111113', borderTop: '1px solid rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{
-            maxWidth: '1240px', margin: '0 auto', padding: '36px 32px',
+            maxWidth: '1240px', margin: '0 auto', padding: 'clamp(24px,4vw,36px) clamp(16px,4vw,32px)',
             display: 'flex', flexWrap: 'wrap', gap: 'clamp(28px,5vw,72px)',
             alignItems: 'center', justifyContent: 'flex-start',
           }}>
             <div data-reveal="up" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <span data-count="85" data-suffix="%" data-count-delay="0" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#00BCC8' }}>85%</span>
+                <span data-count="85" data-suffix="%" data-count-delay="0" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 'clamp(32px,6vw,46px)', lineHeight: 1, color: '#00BCC8' }}>85%</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="19" x2="12" y2="6" /><polyline points="6 11 12 5 18 11" />
                 </svg>
@@ -367,7 +367,7 @@ export default function Home() {
             </div>
             <div data-reveal="up" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <span data-count="4.9" data-decimals="1" data-count-delay="120" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#00BCC8' }}>4.9</span>
+                <span data-count="4.9" data-decimals="1" data-count-delay="120" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 'clamp(32px,6vw,46px)', lineHeight: 1, color: '#00BCC8' }}>4.9</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="19" x2="12" y2="6" /><polyline points="6 11 12 5 18 11" />
                 </svg>
@@ -376,7 +376,7 @@ export default function Home() {
             </div>
             <div data-reveal="up" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <span data-count="320" data-suffix="+" data-count-delay="240" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#00BCC8' }}>320+</span>
+                <span data-count="320" data-suffix="+" data-count-delay="240" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 'clamp(32px,6vw,46px)', lineHeight: 1, color: '#00BCC8' }}>320+</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="19" x2="12" y2="6" /><polyline points="6 11 12 5 18 11" />
                 </svg>
@@ -385,8 +385,8 @@ export default function Home() {
             </div>
             <div data-reveal="up" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#00BCC8' }}>&lt;</span>
-                <span data-count="2" data-suffix=" min" data-count-delay="360" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '46px', lineHeight: 1, color: '#00BCC8' }}>2 min</span>
+                <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 'clamp(32px,6vw,46px)', lineHeight: 1, color: '#00BCC8' }}>&lt;</span>
+                <span data-count="2" data-suffix=" min" data-count-delay="360" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 'clamp(32px,6vw,46px)', lineHeight: 1, color: '#00BCC8' }}>2 min</span>
               </div>
               <div style={{ fontSize: '13px', color: 'var(--ink-3)', fontWeight: 500, fontFamily: "'Barlow Condensed',sans-serif", letterSpacing: '.1em', textTransform: 'uppercase' }}>to book a session</div>
             </div>

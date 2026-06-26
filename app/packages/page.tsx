@@ -108,7 +108,7 @@ export default function PackagesPage() {
             style={{
               fontFamily: font.heading,
               fontWeight: 800,
-              fontSize: '52px',
+              fontSize: 'clamp(32px,6vw,52px)',
               lineHeight: 0.96,
               letterSpacing: '0.04em',
               textTransform: 'uppercase',
@@ -204,7 +204,7 @@ export default function PackagesPage() {
                 style={{
                   fontFamily: font.heading,
                   fontWeight: 800,
-                  fontSize: '72px',
+                  fontSize: 'clamp(42px,7vw,72px)',
                   lineHeight: 1,
                   color: D.accent,
                   letterSpacing: '-0.01em',
