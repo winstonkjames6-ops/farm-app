@@ -171,7 +171,7 @@ function TrainerCard({ trainer, index }: { trainer: typeof TRAINERS[0]; index: n
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
           gap: '0',
           border: `1px solid ${T.border}`,
         }}
