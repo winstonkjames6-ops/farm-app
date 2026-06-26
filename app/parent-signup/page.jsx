@@ -72,7 +72,7 @@ export default function ParentSignup() {
                   value={form.email}
                   onChange={e => update('email', e.target.value)}
                   placeholder="you@example.com"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '13px 16px', color: '#fff', fontSize: '15px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif' " }}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '13px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif' " }}
                 />
               </div>
 
@@ -106,7 +106,7 @@ export default function ParentSignup() {
                   onChange={e => update('zipCode', e.target.value)}
                   placeholder="78701"
                   maxLength={5}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '13px 16px', color: '#fff', fontSize: '15px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif" }}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '13px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif" }}
                 />
               </div>
 

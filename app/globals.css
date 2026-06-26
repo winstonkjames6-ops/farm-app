@@ -26,10 +26,12 @@
 
 @layer components {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-  textarea {
+  textarea,
+  select {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.09);
     border-radius: 8px;
+    font-size: 16px;
   }
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
   textarea:focus {
@@ -44,11 +46,14 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
   margin: 0;
   padding: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-top: env(safe-area-inset-top);
 }
 
 details > summary { list-style: none; }

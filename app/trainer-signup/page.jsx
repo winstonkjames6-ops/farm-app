@@ -141,20 +141,20 @@ export default function TrainerSignup() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '8px', letterSpacing: '.05em', textTransform: 'uppercase' }}>First name</label>
-                  <input className={inputClass} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '15px', width: '100%', boxSizing: 'border-box' }} value={form.firstName} onChange={e => update('firstName', e.target.value)} placeholder="Marcus" />
+                  <input className={inputClass} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box' }} value={form.firstName} onChange={e => update('firstName', e.target.value)} placeholder="Marcus" />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '8px', letterSpacing: '.05em', textTransform: 'uppercase' }}>Last name</label>
-                  <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '15px', width: '100%', boxSizing: 'border-box', outline: 'none' }} value={form.lastName} onChange={e => update('lastName', e.target.value)} placeholder="Rivera" />
+                  <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none' }} value={form.lastName} onChange={e => update('lastName', e.target.value)} placeholder="Rivera" />
                 </div>
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '8px', letterSpacing: '.05em', textTransform: 'uppercase' }}>Email</label>
-                <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '15px', width: '100%', boxSizing: 'border-box', outline: 'none' }} type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="marcus@example.com" />
+                <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none' }} type="email" value={form.email} onChange={e => update('email', e.target.value)} placeholder="marcus@example.com" />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '8px', letterSpacing: '.05em', textTransform: 'uppercase' }}>Phone</label>
-                <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '15px', width: '100%', boxSizing: 'border-box', outline: 'none' }} type="tel" value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="(555) 000-0000" />
+                <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none' }} type="tel" value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="(555) 000-0000" />
               </div>
             </motion.div>
           )}
@@ -202,11 +202,11 @@ export default function TrainerSignup() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '8px', letterSpacing: '.05em', textTransform: 'uppercase' }}>City</label>
-                  <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '15px', width: '100%', boxSizing: 'border-box', outline: 'none' }} value={form.location} onChange={e => update('location', e.target.value)} placeholder="Austin" />
+                  <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none' }} value={form.location} onChange={e => update('location', e.target.value)} placeholder="Austin" />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '8px', letterSpacing: '.05em', textTransform: 'uppercase' }}>ZIP code</label>
-                  <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '15px', width: '100%', boxSizing: 'border-box', outline: 'none' }} value={form.zipCode} onChange={e => update('zipCode', e.target.value)} placeholder="78701" maxLength={5} />
+                  <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none' }} value={form.zipCode} onChange={e => update('zipCode', e.target.value)} placeholder="78701" maxLength={5} />
                 </div>
               </div>
 
@@ -214,7 +214,7 @@ export default function TrainerSignup() {
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '8px', letterSpacing: '.05em', textTransform: 'uppercase' }}>Hourly rate</label>
                 <div style={{ position: 'relative' }}>
                   <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', fontSize: '15px', pointerEvents: 'none' }}>$</span>
-                  <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 48px 12px 32px', color: '#fff', fontSize: '15px', width: '100%', boxSizing: 'border-box', outline: 'none' }} type="number" value={form.hourlyRate} onChange={e => update('hourlyRate', e.target.value)} placeholder="60" min={0} />
+                  <input style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 48px 12px 32px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none' }} type="number" value={form.hourlyRate} onChange={e => update('hourlyRate', e.target.value)} placeholder="60" min={0} />
                   <span style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)', fontSize: '13px', pointerEvents: 'none' }}>/hr</span>
                 </div>
               </div>
@@ -228,7 +228,7 @@ export default function TrainerSignup() {
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '8px', letterSpacing: '.05em', textTransform: 'uppercase' }}>Years of experience</label>
-                <select style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: form.experience ? '#fff' : 'rgba(255,255,255,0.3)', fontSize: '15px', width: '100%', outline: 'none', cursor: 'pointer', appearance: 'none' }} value={form.experience} onChange={e => update('experience', e.target.value)}>
+                <select style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: form.experience ? '#fff' : 'rgba(255,255,255,0.3)', fontSize: '16px', width: '100%', outline: 'none', cursor: 'pointer', appearance: 'none' }} value={form.experience} onChange={e => update('experience', e.target.value)}>
                   <option value="" disabled style={{ background: '#1a1a24', color: 'rgba(255,255,255,0.5)' }}>Select range</option>
                   <option value="1-2" style={{ background: '#1a1a24', color: '#fff' }}>1–2 years</option>
                   <option value="3-5" style={{ background: '#1a1a24', color: '#fff' }}>3–5 years</option>
@@ -239,12 +239,12 @@ export default function TrainerSignup() {
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '8px', letterSpacing: '.05em', textTransform: 'uppercase' }}>Credentials & certifications</label>
-                <textarea style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '15px', width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'vertical', lineHeight: 1.6, fontFamily: "'Hanken Grotesk', sans-serif" }} rows={3} value={form.credentials} onChange={e => update('credentials', e.target.value)} placeholder="e.g. USSF D License, played D1 at UT Austin, 5 years coaching competitive youth leagues" />
+                <textarea style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'vertical', lineHeight: 1.6, fontFamily: "'Hanken Grotesk', sans-serif" }} rows={3} value={form.credentials} onChange={e => update('credentials', e.target.value)} placeholder="e.g. USSF D License, played D1 at UT Austin, 5 years coaching competitive youth leagues" />
               </div>
 
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: '8px', letterSpacing: '.05em', textTransform: 'uppercase' }}>Bio</label>
-                <textarea style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '15px', width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'vertical', lineHeight: 1.6, fontFamily: "'Hanken Grotesk', sans-serif" }} rows={4} value={form.bio} onChange={e => update('bio', e.target.value)} placeholder="Tell parents what makes your coaching style unique. What should a parent know about working with you? What age groups do you specialize in?" />
+                <textarea style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '12px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none', resize: 'vertical', lineHeight: 1.6, fontFamily: "'Hanken Grotesk', sans-serif" }} rows={4} value={form.bio} onChange={e => update('bio', e.target.value)} placeholder="Tell parents what makes your coaching style unique. What should a parent know about working with you? What age groups do you specialize in?" />
               </div>
             </motion.div>
           )}

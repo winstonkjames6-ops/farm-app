@@ -258,7 +258,7 @@ function CardInput({ label, placeholder, value, onChange, maxLength, pattern }) 
           padding: '12px 14px', borderRadius: '10px',
           border: `1.5px solid ${focused ? T.ink : T.line}`,
           background: T.surface, color: T.ink, outline: 'none',
-          fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '15px',
+          fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '16px',
           transition: 'border-color .15s ease',
           boxShadow: focused ? `0 0 0 3px rgba(26,24,20,0.06)` : 'none',
         }}

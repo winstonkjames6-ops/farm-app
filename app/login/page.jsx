@@ -57,7 +57,7 @@ const inputBase = {
   background: 'rgba(255,255,255,0.05)',
   border: '1px solid rgba(255,255,255,0.1)',
   borderRadius: '10px', padding: '13px 16px',
-  color: '#fff', fontSize: '15px', outline: 'none',
+  color: '#fff', fontSize: '16px', outline: 'none',
   fontFamily: "'Hanken Grotesk', sans-serif",
   transition: 'border-color .15s ease',
 }
