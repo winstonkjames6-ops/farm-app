@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -9,6 +9,7 @@ export default function Home() {
   const cycleTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const router = useRouter()
   const searchRef = useRef<HTMLInputElement>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     const root = rootRef.current
@@ -135,6 +136,17 @@ export default function Home() {
           backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
           borderBottom: '1px solid var(--line)',
         } as React.CSSProperties}>
+          <style>{`
+            @media (max-width: 767px) {
+              .nav-links { display: none !important; }
+              .nav-ctas  { display: none !important; }
+              .nav-hamburger { display: flex !important; }
+            }
+            @media (min-width: 768px) {
+              .nav-hamburger { display: none !important; }
+              .nav-mobile-menu { display: none !important; }
+            }
+          `}</style>
           <div style={{
             maxWidth: '1240px', margin: '0 auto', padding: '0 32px', height: '72px',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px',
@@ -150,13 +162,13 @@ export default function Home() {
                 letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink)',
               }}>FARM</span>
             </a>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+            <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
               <a href="#how-it-works" style={{ textDecoration: 'none', color: 'var(--ink-2)', fontSize: '15px', fontWeight: 500 }}>How it works</a>
               <a href="#booking" style={{ textDecoration: 'none', color: 'var(--ink-2)', fontSize: '15px', fontWeight: 500 }}>Booking</a>
               <a href="#why-farm" style={{ textDecoration: 'none', color: 'var(--ink-2)', fontSize: '15px', fontWeight: 500 }}>Why FARM</a>
               <a href="#faq" style={{ textDecoration: 'none', color: 'var(--ink-2)', fontSize: '15px', fontWeight: 500 }}>FAQ</a>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="nav-ctas" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Link href="/login" style={{
                 display: 'inline-flex', alignItems: 'center', textDecoration: 'none',
                 color: 'var(--ink)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
@@ -171,7 +183,53 @@ export default function Home() {
                 padding: '11px 18px', transition: 'filter .15s ease', borderRadius: '8px',
               }}>I&apos;m a trainer</Link>
             </div>
+            <button
+              className="nav-hamburger"
+              onClick={() => setMenuOpen(o => !o)}
+              aria-label="Toggle menu"
+              style={{
+                display: 'none', alignItems: 'center', justifyContent: 'center',
+                background: 'none', border: 'none', cursor: 'pointer', padding: '8px', color: 'var(--ink)',
+              }}
+            >
+              {menuOpen ? (
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="3" y1="3" x2="19" y2="19" />
+                  <line x1="19" y1="3" x2="3" y2="19" />
+                </svg>
+              ) : (
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="3" y1="6" x2="19" y2="6" />
+                  <line x1="3" y1="11" x2="19" y2="11" />
+                  <line x1="3" y1="16" x2="19" y2="16" />
+                </svg>
+              )}
+            </button>
           </div>
+          {menuOpen && (
+            <div className="nav-mobile-menu" style={{
+              background: 'var(--bg)', borderBottom: '1px solid var(--line)',
+              padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px',
+            }}>
+              <a href="#how-it-works" onClick={() => setMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--ink-2)', fontSize: '17px', fontWeight: 500 }}>How it works</a>
+              <a href="#booking" onClick={() => setMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--ink-2)', fontSize: '17px', fontWeight: 500 }}>Booking</a>
+              <a href="#why-farm" onClick={() => setMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--ink-2)', fontSize: '17px', fontWeight: 500 }}>Why FARM</a>
+              <a href="#faq" onClick={() => setMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--ink-2)', fontSize: '17px', fontWeight: 500 }}>FAQ</a>
+              <Link href="/login" onClick={() => setMenuOpen(false)} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+                color: 'var(--ink)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                fontSize: '13px', letterSpacing: '.08em', textTransform: 'uppercase',
+                padding: '12px 16px', border: '1px solid var(--line)', borderRadius: '8px', width: '100%',
+              }}>Find a trainer</Link>
+              <Link href="/login" onClick={() => setMenuOpen(false)} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none',
+                color: 'var(--accent-ink)', background: 'var(--accent)',
+                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                fontSize: '13px', letterSpacing: '.08em', textTransform: 'uppercase',
+                padding: '13px 18px', borderRadius: '8px', width: '100%',
+              }}>I&apos;m a trainer</Link>
+            </div>
+          )}
         </nav>
 
         {/* ── HERO ── */}
