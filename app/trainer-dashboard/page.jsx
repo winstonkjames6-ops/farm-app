@@ -50,7 +50,7 @@ const A = {
   bg: '#09090B',
   surface: '#111113',
   border: 'rgba(255,255,255,0.08)',
-  accent: '#DFE104',
+  accent: '#00BCC8',
   muted: 'rgba(255,255,255,0.40)',
   text: '#EFEFEF',
 }
@@ -80,7 +80,7 @@ const T = {
   ink2: 'rgba(255,255,255,0.60)',
   ink3: 'rgba(255,255,255,0.40)',
   line: 'rgba(255,255,255,0.08)',
-  accent: '#DFE104',
+  accent: '#00BCC8',
   accentInk: '#09090B',
   green: '#22C55E',
   greenSurface: 'rgba(34,197,94,0.10)',
@@ -114,9 +114,9 @@ function SportBadge({ sport }) {
       className="text-[11px] font-bold uppercase px-2 py-[3px]"
       style={{
         fontFamily: "'Barlow Condensed', sans-serif",
-        background: 'rgba(223,225,4,0.10)',
+        background: 'rgba(0,188,200,0.10)',
         color: T.accent,
-        border: '1px solid rgba(223,225,4,0.20)',
+        border: '1px solid rgba(0,188,200,0.20)',
         letterSpacing: '.1em',
       }}
     >
@@ -594,8 +594,8 @@ export default function TrainerDashboardPage() {
               href="/clinics/create"
               className="inline-block no-underline text-[13px] font-bold px-4 py-2"
               style={{
-                border: `1.5px solid #DFE104`,
-                color: '#DFE104',
+                border: `1.5px solid #00BCC8`,
+                color: '#00BCC8',
                 fontFamily: "'Barlow Condensed', sans-serif",
                 letterSpacing: '.1em',
                 textTransform: 'uppercase',

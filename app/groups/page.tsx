@@ -8,9 +8,9 @@ const D = {
   bg: '#09090B',
   surface: '#111113',
   border: 'rgba(255,255,255,0.08)',
-  borderAccent: '#DFE104',
-  accent: '#DFE104',
-  accentDim: 'rgba(223,225,4,0.10)',
+  borderAccent: '#00BCC8',
+  accent: '#00BCC8',
+  accentDim: 'rgba(0,188,200,0.10)',
   muted: 'rgba(255,255,255,0.40)',
   text: '#F0F0F0',
 }

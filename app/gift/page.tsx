@@ -10,8 +10,8 @@ const D = {
   surface:    '#111113',
   surface2:   '#18181B',
   border:     'rgba(255,255,255,0.08)',
-  accent:     '#DFE104',
-  accentDim:  'rgba(223,225,4,0.10)',
+  accent:     '#00BCC8',
+  accentDim:  'rgba(0,188,200,0.10)',
   muted:      'rgba(255,255,255,0.40)',
   muted2:     'rgba(255,255,255,0.20)',
   text:       '#F0F0F0',
@@ -497,7 +497,7 @@ export default function GiftPage() {
                     background: D.surface,
                     border:     `2px solid ${D.accent}`,
                     borderRadius: 0,
-                    boxShadow:  '0 0 40px rgba(223,225,4,0.06)',
+                    boxShadow:  '0 0 40px rgba(0,188,200,0.06)',
                     overflow:   'hidden',
                   }}
                 >
@@ -597,8 +597,8 @@ export default function GiftPage() {
                         height:     '1px',
                         background: `repeating-linear-gradient(
                           90deg,
-                          rgba(223,225,4,0.30) 0px,
-                          rgba(223,225,4,0.30) 6px,
+                          rgba(0,188,200,0.30) 0px,
+                          rgba(0,188,200,0.30) 6px,
                           transparent 6px,
                           transparent 11px
                         )`,

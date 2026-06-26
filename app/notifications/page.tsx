@@ -9,8 +9,8 @@ const T = {
   surface: '#111113',
   surface2: '#18181B',
   border: 'rgba(255,255,255,0.08)',
-  yellow: '#DFE104',
-  yellowBg: 'rgba(223,225,4,0.05)',
+  yellow: '#00BCC8',
+  yellowBg: 'rgba(0,188,200,0.05)',
   ink: '#FAFAFA',
   ink2: '#A1A1AA',
   ink3: '#52525B',
@@ -111,8 +111,8 @@ function NotifIcon({ type, read }: { type: NotifType; read: boolean }) {
   return (
     <div style={{
       width: 36, height: 36, flexShrink: 0,
-      background: read ? T.surface2 : 'rgba(223,225,4,0.08)',
-      border: `1px solid ${read ? T.border : 'rgba(223,225,4,0.2)'}`,
+      background: read ? T.surface2 : 'rgba(0,188,200,0.08)',
+      border: `1px solid ${read ? T.border : 'rgba(0,188,200,0.2)'}`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       {type === 'Sessions' && <IconCalendar color={color} />}

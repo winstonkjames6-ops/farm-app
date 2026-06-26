@@ -356,7 +356,7 @@ export default function DashboardPage() {
             transition={{ duration: 0.35, ease: [0.2, 0.7, 0.2, 1] }}
             style={{
               background: '#111113',
-              borderLeft: '3px solid #DFE104',
+              borderLeft: '3px solid #00BCC8',
               padding: '16px 20px',
               marginBottom: '24px',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -378,7 +378,7 @@ export default function DashboardPage() {
               <Link
                 href="/review"
                 style={{
-                  background: '#DFE104', color: '#000', textDecoration: 'none',
+                  background: '#00BCC8', color: '#09090B', textDecoration: 'none',
                   padding: '9px 16px', fontSize: '12px', fontWeight: 800,
                   fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.1em',
                   textTransform: 'uppercase',

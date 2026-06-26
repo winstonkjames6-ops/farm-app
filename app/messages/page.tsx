@@ -9,7 +9,7 @@ const T = {
   surface: '#111113',
   surface2: '#18181B',
   border: 'rgba(255,255,255,0.08)',
-  yellow: '#DFE104',
+  yellow: '#00BCC8',
   ink: '#FAFAFA',
   ink2: '#A1A1AA',
   ink3: '#52525B',

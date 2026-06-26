@@ -23,7 +23,7 @@ const T = {
   ink: '#FAFAFA',
   ink2: '#A1A1AA',
   ink3: '#71717A',
-  yellow: '#DFE104',
+  yellow: '#00BCC8',
 }
 
 const TAGS = [
@@ -112,7 +112,7 @@ export default function ReviewPage() {
                 style={{
                   width: 72,
                   height: 72,
-                  background: 'rgba(223,225,4,0.10)',
+                  background: 'rgba(0,188,200,0.10)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -394,7 +394,7 @@ export default function ReviewPage() {
                 style={{
                   width: '100%',
                   padding: '16px',
-                  background: rating === 0 ? 'rgba(223,225,4,0.25)' : T.yellow,
+                  background: rating === 0 ? 'rgba(0,188,200,0.25)' : T.yellow,
                   border: 'none',
                   color: '#09090B',
                   fontFamily: "'Barlow Condensed', sans-serif",

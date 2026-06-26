@@ -106,7 +106,7 @@ const T = {
   ink: '#FAFAFA',
   ink2: '#A1A1AA',
   ink3: '#71717A',
-  yellow: '#DFE104',
+  yellow: '#00BCC8',
   green: '#22C55E',
   red: '#EF4444',
 }
@@ -116,7 +116,7 @@ const T = {
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; color: string; bg: string }> = {
     completed: { label: 'COMPLETED', color: T.green, bg: 'rgba(34,197,94,0.12)' },
-    upcoming: { label: 'UPCOMING', color: T.yellow, bg: 'rgba(223,225,4,0.12)' },
+    upcoming: { label: 'UPCOMING', color: T.yellow, bg: 'rgba(0,188,200,0.12)' },
     cancelled: { label: 'CANCELLED', color: T.red, bg: 'rgba(239,68,68,0.12)' },
   }
   const c = config[status]

@@ -290,9 +290,9 @@ export default function TrainerProfile({ params: { slug } }) {
                 {/* Play / Pause button */}
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{
-                    width: 56, height: 56, borderRadius: '50%', background: '#DFE104',
+                    width: 56, height: 56, borderRadius: '50%', background: '#00BCC8',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 8px 32px rgba(223,225,4,0.32)',
+                    boxShadow: '0 8px 32px rgba(0,188,200,0.32)',
                     transition: 'transform .15s ease',
                   }}>
                     {videoPlaying ? (
@@ -321,7 +321,7 @@ export default function TrainerProfile({ params: { slug } }) {
                   <motion.div
                     animate={{ width: videoPlaying ? '100%' : '0%' }}
                     transition={{ duration: videoPlaying ? 32 : 0.2, ease: 'linear' }}
-                    style={{ height: '100%', background: '#DFE104' }}
+                    style={{ height: '100%', background: '#00BCC8' }}
                   />
                 </div>
               </div>
@@ -380,7 +380,7 @@ export default function TrainerProfile({ params: { slug } }) {
                       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <div style={{
                           width: 36, height: 36, borderRadius: '50%',
-                          background: playingCard === item.id ? 'rgba(255,255,255,0.18)' : 'rgba(223,225,4,0.92)',
+                          background: playingCard === item.id ? 'rgba(255,255,255,0.18)' : 'rgba(0,188,200,0.92)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           transition: 'background .15s ease',
                         }}>
@@ -404,7 +404,7 @@ export default function TrainerProfile({ params: { slug } }) {
                             initial={{ width: '0%' }}
                             animate={{ width: '100%' }}
                             transition={{ duration: 45, ease: 'linear' }}
-                            style={{ height: '100%', background: '#DFE104' }}
+                            style={{ height: '100%', background: '#00BCC8' }}
                           />
                         )}
                       </div>

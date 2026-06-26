@@ -139,8 +139,8 @@ function StarRating({ rating }) {
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
       {[1, 2, 3, 4, 5].map((s) => (
         <svg key={s} width="12" height="12" viewBox="0 0 24 24"
-          fill={s <= Math.round(rating) ? '#DFE104' : 'none'}
-          stroke="#DFE104" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          fill={s <= Math.round(rating) ? '#00BCC8' : 'none'}
+          stroke="#00BCC8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <polygon points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1" />
         </svg>
       ))}
@@ -191,8 +191,8 @@ function TrainerCard({ trainer, index }) {
                 <span style={{
                   fontFamily: barlow, fontSize: '11px', fontWeight: 700,
                   letterSpacing: '.1em', textTransform: 'uppercase',
-                  background: 'rgba(223,225,4,0.10)', color: '#DFE104',
-                  border: '1px solid rgba(223,225,4,0.20)', padding: '2px 8px',
+                  background: 'rgba(0,188,200,0.10)', color: '#00BCC8',
+                  border: '1px solid rgba(0,188,200,0.20)', padding: '2px 8px',
                 }}>{trainer.sport}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}>
@@ -334,7 +334,7 @@ export default function SearchPage() {
             <label key={s} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
               <input
                 type="checkbox" checked={selectedSports.includes(s)} onChange={() => toggleSport(s)}
-                style={{ accentColor: '#DFE104', width: '15px', height: '15px', cursor: 'pointer' }}
+                style={{ accentColor: '#00BCC8', width: '15px', height: '15px', cursor: 'pointer' }}
               />
               <span style={{
                 fontFamily: hanken, fontSize: '14px',
@@ -370,7 +370,7 @@ export default function SearchPage() {
             <label key={f} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
               <input
                 type="checkbox" checked={selectedFormats.includes(f)} onChange={() => toggleFormat(f)}
-                style={{ accentColor: '#DFE104', width: '15px', height: '15px', cursor: 'pointer' }}
+                style={{ accentColor: '#00BCC8', width: '15px', height: '15px', cursor: 'pointer' }}
               />
               <span style={{
                 fontFamily: hanken, fontSize: '14px',
@@ -420,7 +420,7 @@ export default function SearchPage() {
           style={{
             background: 'none', border: 'none', padding: 0, cursor: 'pointer',
             fontFamily: barlow, fontWeight: 700, fontSize: '13px',
-            letterSpacing: '.08em', textTransform: 'uppercase', color: '#DFE104', textAlign: 'left',
+            letterSpacing: '.08em', textTransform: 'uppercase', color: '#00BCC8', textAlign: 'left',
           }}
         >
           Clear all filters
@@ -445,7 +445,7 @@ export default function SearchPage() {
         }}>
           <Link href="/" style={{
             fontFamily: barlow, fontWeight: 800, fontSize: '22px',
-            letterSpacing: '.04em', color: '#DFE104', textDecoration: 'none',
+            letterSpacing: '.04em', color: '#00BCC8', textDecoration: 'none',
           }}>
             FARM
           </Link>
@@ -454,11 +454,11 @@ export default function SearchPage() {
             style={{
               fontFamily: barlow, fontWeight: 700, fontSize: '13px',
               letterSpacing: '.1em', textTransform: 'uppercase',
-              padding: '8px 18px', border: '1.5px solid #DFE104',
-              color: '#DFE104', textDecoration: 'none',
+              padding: '8px 18px', border: '1.5px solid #00BCC8',
+              color: '#00BCC8', textDecoration: 'none',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#DFE104'; e.currentTarget.style.color = '#09090B' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#DFE104' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#00BCC8'; e.currentTarget.style.color = '#09090B' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#00BCC8' }}
           >
             I&apos;m a trainer
           </Link>
@@ -510,9 +510,9 @@ export default function SearchPage() {
           onClick={() => setMobileFiltersOpen((o) => !o)}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 16px',
-            border: mobileFiltersOpen ? '1px solid #DFE104' : '1px solid rgba(255,255,255,0.08)',
-            background: mobileFiltersOpen ? 'rgba(223,225,4,0.10)' : 'transparent',
-            color: mobileFiltersOpen ? '#DFE104' : 'rgba(255,255,255,0.60)',
+            border: mobileFiltersOpen ? '1px solid #00BCC8' : '1px solid rgba(255,255,255,0.08)',
+            background: mobileFiltersOpen ? 'rgba(0,188,200,0.10)' : 'transparent',
+            color: mobileFiltersOpen ? '#00BCC8' : 'rgba(255,255,255,0.60)',
             fontFamily: barlow, fontWeight: 700, fontSize: '13px',
             letterSpacing: '.1em', textTransform: 'uppercase', cursor: 'pointer',
           }}
@@ -586,7 +586,7 @@ export default function SearchPage() {
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
                   fontFamily: barlow, fontWeight: 700, fontSize: '14px',
-                  letterSpacing: '.1em', textTransform: 'uppercase', color: '#DFE104', padding: 0,
+                  letterSpacing: '.1em', textTransform: 'uppercase', color: '#00BCC8', padding: 0,
                 }}
               >
                 Clear filters

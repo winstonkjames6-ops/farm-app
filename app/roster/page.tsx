@@ -74,7 +74,7 @@ const T = {
   ink: '#FAFAFA',
   ink2: '#A1A1AA',
   ink3: '#71717A',
-  yellow: '#DFE104',
+  yellow: '#00BCC8',
 }
 
 const barlow = "'Barlow Condensed', sans-serif"

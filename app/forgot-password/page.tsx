@@ -119,7 +119,7 @@ export default function ForgotPasswordPage() {
                     style={{
                       ...inputBase,
                       borderColor: emailFocus ? '#00BCC8' : 'rgba(255,255,255,0.1)',
-                      boxShadow: emailFocus ? '0 0 0 3px rgba(223,225,4,0.12)' : 'none',
+                      boxShadow: emailFocus ? '0 0 0 3px rgba(0,188,200,0.12)' : 'none',
                     }}
                   />
                 </Field>
@@ -128,7 +128,7 @@ export default function ForgotPasswordPage() {
                   type="submit"
                   style={{
                     width: '100%', padding: '14px', borderRadius: '11px', border: 'none',
-                    background: '#00BCC8', color: '#000',
+                    background: '#00BCC8', color: '#09090B',
                     fontSize: '14px', fontWeight: 700, cursor: 'pointer',
                     fontFamily: "'Hanken Grotesk', sans-serif",
                     letterSpacing: '.06em', textTransform: 'uppercase',
@@ -172,7 +172,7 @@ export default function ForgotPasswordPage() {
               {/* Check icon */}
               <div style={{
                 width: '56px', height: '56px', borderRadius: '50%',
-                background: 'rgba(223,225,4,0.1)', border: '1px solid rgba(223,225,4,0.25)',
+                background: 'rgba(0,188,200,0.1)', border: '1px solid rgba(0,188,200,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 24px',
               }}>

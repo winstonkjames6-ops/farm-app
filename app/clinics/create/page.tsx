@@ -10,8 +10,8 @@ const D = {
   surface:   '#111113',
   surface2:  '#18181B',
   border:    'rgba(255,255,255,0.08)',
-  accent:    '#DFE104',
-  accentDim: 'rgba(223,225,4,0.10)',
+  accent:    '#00BCC8',
+  accentDim: 'rgba(0,188,200,0.10)',
   muted:     'rgba(255,255,255,0.40)',
   muted2:    'rgba(255,255,255,0.20)',
   text:      '#F0F0F0',
@@ -79,7 +79,7 @@ function Nav() {
             fontWeight: 800,
             fontSize: '22px',
             letterSpacing: '.04em',
-            color: '#DFE104',
+            color: '#00BCC8',
             textDecoration: 'none',
           }}
         >
@@ -121,10 +121,10 @@ function SuccessScreen({ onReset }: { onReset: () => void }) {
     >
       {/* Checkmark circle */}
       <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-        <circle cx="26" cy="26" r="24" stroke="#DFE104" strokeWidth="2" />
+        <circle cx="26" cy="26" r="24" stroke="#00BCC8" strokeWidth="2" />
         <polyline
           points="16,26 23,33 36,20"
-          stroke="#DFE104"
+          stroke="#00BCC8"
           strokeWidth="2.4"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -137,7 +137,7 @@ function SuccessScreen({ onReset }: { onReset: () => void }) {
           fontFamily: barlow,
           fontSize: '36px',
           fontWeight: 800,
-          color: '#DFE104',
+          color: '#00BCC8',
           letterSpacing: '.02em',
           textTransform: 'uppercase',
           lineHeight: 1,
@@ -168,7 +168,7 @@ function SuccessScreen({ onReset }: { onReset: () => void }) {
             cursor: 'pointer',
             fontFamily: hanken,
             fontSize: '14px',
-            color: '#DFE104',
+            color: '#00BCC8',
             textDecoration: 'underline',
           }}
         >
