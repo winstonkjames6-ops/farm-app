@@ -1297,7 +1297,34 @@ function DangerZoneSection({ paused, setPaused }: { paused: boolean; setPaused: 
             <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500, marginBottom: '2px' }}>Pause my profile</div>
             <div style={{ fontSize: '12px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>Your profile won&apos;t appear in search while paused</div>
           </div>
-          <ToggleSwitch on={paused} onChange={() => setPaused(!paused)} />
+          <div
+                onClick={() => setPaused(!paused)}
+                style={{
+                  width: '44px',
+                  height: '24px',
+                  borderRadius: '999px',
+                  background: paused ? '#00BCC8' : '#E5E7EB',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  transition: 'background 0.2s ease',
+                  display: 'inline-block',
+                }}
+              >
+                <div
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    background: '#FFFFFF',
+                    position: 'absolute',
+                    top: '2px',
+                    left: paused ? '22px' : '2px',
+                    transition: 'left 0.2s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                  }}
+                />
+              </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '16px 0' }}>
           <div style={{ fontSize: '14px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>Delete account</div>
