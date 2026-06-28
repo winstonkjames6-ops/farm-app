@@ -65,7 +65,7 @@ function Stars({ rating, size = 14 }) {
         <svg key={i} width={size} height={size} viewBox="0 0 24 24">
           <polygon
             points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1"
-            fill={i <= filled ? '#D6532A' : 'rgba(26,24,20,0.14)'}
+            fill={i <= filled ? '#00BCC8' : 'rgba(0,0,0,0.10)'}
             stroke="none"
           />
         </svg>
@@ -91,7 +91,7 @@ export default function TrainerProfile({ params: { slug } }) {
   }
 
   const sectionHeading = {
-    fontFamily: "'Archivo', sans-serif",
+    fontFamily: "'Barlow Condensed', sans-serif",
     fontWeight: 700,
     fontSize: '18px',
     color: 'var(--ink)',
@@ -111,9 +111,9 @@ export default function TrainerProfile({ params: { slug } }) {
   return (
     <div
       style={{
-        '--bg': '#F4F1EA', '--surface': '#FBF9F5', '--surface-2': '#ECE6DA',
-        '--ink': '#1A1814', '--ink-2': '#4C473E', '--ink-3': '#8C8678',
-        '--line': 'rgba(26,24,20,0.10)', '--accent': '#D6532A', '--accent-ink': '#FFF8F2',
+        '--bg': '#F8F8F6', '--surface': '#FFFFFF', '--surface-2': '#F0EFEB',
+        '--ink': '#1A1A1A', '--ink-2': '#4A4A4A', '--ink-3': '#9A9A9A',
+        '--line': 'rgba(0,0,0,0.08)', '--accent': '#00BCC8', '--accent-ink': '#FFFFFF',
         '--radius': '14px',
         background: 'var(--bg)', color: 'var(--ink)',
         fontFamily: "'Hanken Grotesk', sans-serif",
@@ -144,7 +144,7 @@ export default function TrainerProfile({ params: { slug } }) {
       {/* ── Nav ── */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: 'color-mix(in srgb, var(--bg) 84%, transparent)',
+        background: 'color-mix(in srgb, #F8F8F6 84%, transparent)',
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
         borderBottom: '1px solid var(--line)',
       }}>
@@ -156,9 +156,9 @@ export default function TrainerProfile({ params: { slug } }) {
             <span style={{
               width: '32px', height: '32px', borderRadius: '9px', background: 'var(--accent)',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--accent-ink)', fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '17px',
+              color: 'var(--accent-ink)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: '17px',
             }}>F</span>
-            <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '22px', letterSpacing: '.02em', color: 'var(--ink)' }}>FARM</span>
+            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', letterSpacing: '.02em', color: 'var(--ink)' }}>FARM</span>
           </Link>
           <Link href="/search" style={{
             display: 'inline-flex', alignItems: 'center', textDecoration: 'none',
@@ -198,15 +198,15 @@ export default function TrainerProfile({ params: { slug } }) {
                 {/* Avatar */}
                 <div style={{
                   width: '88px', height: '88px', borderRadius: '20px', flexShrink: 0,
-                  background: 'linear-gradient(140deg, #d6532a 0%, #e8784e 100%)',
+                  background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '30px',
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: '30px',
                   color: '#fff', letterSpacing: '-.02em', border: '1px solid var(--line)',
                 }}>MR</div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h1 style={{
-                    fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '26px',
+                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '26px',
                     margin: '0 0 8px', letterSpacing: '-.02em', color: 'var(--ink)',
                   }}>{TRAINER.name}</h1>
 
@@ -214,26 +214,26 @@ export default function TrainerProfile({ params: { slug } }) {
                     <div style={{
                       display: 'inline-flex', alignItems: 'center', gap: '5px',
                       padding: '3px 10px 3px 8px',
-                      border: '1.5px solid #b8bc03',
+                      border: '1.5px solid #00BCC8',
                       borderRadius: '999px',
-                      background: 'rgba(184,188,3,0.07)',
+                      background: 'rgba(0,188,200,0.07)',
                       marginBottom: '10px',
                     }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#b8bc03" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                       </svg>
                       <span style={{
                         fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                         fontSize: '10.5px', letterSpacing: '.1em', textTransform: 'uppercase',
-                        color: '#8f9200',
+                        color: '#00838C',
                       }}>Background Verified</span>
                     </div>
                   )}
 
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginBottom: '12px' }}>
                     <span style={{
-                      background: 'color-mix(in srgb, var(--accent) 13%, transparent)',
-                      color: 'var(--accent)', fontSize: '12.5px', fontWeight: 700,
+                      background: 'rgba(0,188,200,0.10)',
+                      color: '#00BCC8', fontSize: '12.5px', fontWeight: 700,
                       padding: '4px 12px', borderRadius: '999px',
                     }}>{TRAINER.sport}</span>
                     <span style={{
@@ -425,8 +425,8 @@ export default function TrainerProfile({ params: { slug } }) {
                   <div key={cred} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={{
                       width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
-                      background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
-                      color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'rgba(0,188,200,0.12)',
+                      color: '#00BCC8', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="4 13 9 18 20 6" />
@@ -455,7 +455,7 @@ export default function TrainerProfile({ params: { slug } }) {
               <div style={card}>
                 <h2 style={sectionHeading}>Rate</h2>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '6px' }}>
-                  <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '34px', color: 'var(--ink)', lineHeight: 1 }}>${TRAINER.hourlyRate}</span>
+                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '34px', color: 'var(--ink)', lineHeight: 1 }}>${TRAINER.hourlyRate}</span>
                   <span style={{ color: 'var(--ink-3)', fontSize: '15px' }}>/hr</span>
                 </div>
                 <p style={{ color: 'var(--ink-3)', fontSize: '13px', margin: 0, lineHeight: 1.45 }}>No subscription.<br />Pay per session.</p>
@@ -486,7 +486,7 @@ export default function TrainerProfile({ params: { slug } }) {
                           width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
                           background: 'var(--surface-2)', border: '1px solid var(--line)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: '14px', color: 'var(--ink-2)',
+                          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', color: 'var(--ink-2)',
                         }}>{r.name.charAt(0)}</div>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--ink)', marginBottom: '3px' }}>{r.name}</div>
@@ -518,7 +518,7 @@ export default function TrainerProfile({ params: { slug } }) {
               border: '1px solid var(--line)',
               borderRadius: '20px',
               padding: '24px 24px 28px',
-              boxShadow: '0 28px 64px rgba(26,24,20,.10)',
+              boxShadow: '0 28px 64px rgba(0,0,0,0.08)',
             }}>
 
               {/* Card header */}
@@ -527,7 +527,7 @@ export default function TrainerProfile({ params: { slug } }) {
                 paddingBottom: '18px', borderBottom: '1px solid var(--line)', marginBottom: '20px',
               }}>
                 <div>
-                  <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '19px', color: 'var(--ink)', letterSpacing: '-.01em' }}>{TRAINER.name}</div>
+                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '19px', color: 'var(--ink)', letterSpacing: '-.01em' }}>{TRAINER.name}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '5px', fontSize: '12.5px', color: 'var(--ink-3)' }}>
                     <Stars rating={TRAINER.rating} size={12} />
                     <span style={{ color: 'var(--ink-2)', fontWeight: 600 }}>{TRAINER.rating}</span>
@@ -535,7 +535,7 @@ export default function TrainerProfile({ params: { slug } }) {
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '24px', color: 'var(--ink)', lineHeight: 1 }}>${TRAINER.hourlyRate}</div>
+                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '24px', color: 'var(--ink)', lineHeight: 1 }}>${TRAINER.hourlyRate}</div>
                   <div style={{ fontSize: '12px', color: 'var(--ink-3)', marginTop: '3px' }}>per hour</div>
                 </div>
               </div>
@@ -552,12 +552,12 @@ export default function TrainerProfile({ params: { slug } }) {
                         textAlign: 'center', padding: '10px 0', borderRadius: '11px', cursor: 'pointer',
                         background: selectedDate === i ? 'var(--accent)' : 'var(--bg)',
                         border: selectedDate === i ? '1px solid var(--accent)' : '1px solid var(--line)',
-                        boxShadow: selectedDate === i ? '0 6px 18px color-mix(in srgb, var(--accent) 28%, transparent)' : 'none',
+                        boxShadow: selectedDate === i ? '0 6px 18px rgba(0,188,200,0.28)' : 'none',
                         transition: 'all .15s ease',
                       }}
                     >
-                      <div style={{ fontSize: '10px', fontWeight: 600, color: selectedDate === i ? 'rgba(255,248,242,.75)' : 'var(--ink-3)', marginBottom: '3px' }}>{d.day}</div>
-                      <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: '17px', lineHeight: 1, color: selectedDate === i ? 'var(--accent-ink)' : 'var(--ink)' }}>{d.num}</div>
+                      <div style={{ fontSize: '10px', fontWeight: 600, color: selectedDate === i ? 'rgba(255,255,255,0.75)' : 'var(--ink-3)', marginBottom: '3px' }}>{d.day}</div>
+                      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '17px', lineHeight: 1, color: selectedDate === i ? 'var(--accent-ink)' : 'var(--ink)' }}>{d.num}</div>
                     </button>
                   ))}
                 </div>
@@ -600,7 +600,7 @@ export default function TrainerProfile({ params: { slug } }) {
                         background: selectedFormat === f ? 'var(--surface)' : 'transparent',
                         border: selectedFormat === f ? '1px solid var(--line)' : '1px solid transparent',
                         color: selectedFormat === f ? 'var(--ink)' : 'var(--ink-3)',
-                        boxShadow: selectedFormat === f ? '0 1px 4px rgba(26,24,20,.08)' : 'none',
+                        boxShadow: selectedFormat === f ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                         transition: 'all .15s ease',
                       }}
                     >{f}</button>
@@ -614,14 +614,14 @@ export default function TrainerProfile({ params: { slug } }) {
                 paddingBottom: '18px', marginBottom: '18px', borderBottom: '1px solid var(--line)',
               }}>
                 <span style={{ color: 'var(--ink-2)', fontSize: '15px' }}>Total</span>
-                <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '22px', color: 'var(--ink)' }}>${TRAINER.hourlyRate}.00</span>
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: 'var(--ink)' }}>${TRAINER.hourlyRate}.00</span>
               </div>
 
               {/* CTA */}
               <Link href="/booking" style={{
                 display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box',
                 width: '100%', padding: '15px', borderRadius: '12px',
-                background: '#22C55E', color: '#000',
+                background: '#00BCC8', color: '#FFFFFF',
                 fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16px',
                 cursor: 'pointer', marginBottom: '12px',
                 transition: 'filter .15s ease, transform .15s ease',
