@@ -1405,7 +1405,7 @@ export default function TrainerDashboardPage() {
           position: 'fixed',
           inset: 0,
           zIndex: 1,
-          background: 'rgba(248,248,246,0.92)',
+          background: 'rgba(248,248,246,0.75)',
           pointerEvents: 'none',
         }}
       />
