@@ -1940,6 +1940,14 @@ export default function TrainerDashboardPage() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    const valid = ['home', 'schedule', 'earnings', 'messages']
+    if (tab && valid.includes(tab)) {
+      setActiveNav(tab)
+    }
+  }, [searchParams])
+
   const nextSession = MOCK_SESSIONS.find((s) => s.isToday) ?? null
   const filteredSessions = MOCK_SESSIONS.filter((s) => s.day === activeDay)
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
