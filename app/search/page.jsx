@@ -113,24 +113,24 @@ const AVAILABILITY_OPTIONS = ['This Weekend', 'This Week', 'Next Week']
 const barlow = "'Barlow Condensed', sans-serif"
 const hanken = "'Hanken Grotesk', sans-serif"
 
-const ARROW = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.40)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`
+const ARROW = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='rgba(0,0,0,0.40)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`
 
 const selectStyle = {
   width: '100%', padding: '9px 32px 9px 12px',
-  border: '1px solid rgba(255,255,255,0.08)', background: '#18181B',
-  fontFamily: hanken, fontSize: '13.5px', color: '#F0F0F0',
+  border: '1px solid rgba(0,0,0,0.08)', background: '#FFFFFF',
+  fontFamily: hanken, fontSize: '13.5px', color: '#1A1A1A',
   cursor: 'pointer', outline: 'none', appearance: 'none', WebkitAppearance: 'none',
   backgroundImage: ARROW, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
-  colorScheme: 'dark',
+  colorScheme: 'light',
 }
 
 const labelStyle = {
   display: 'block', fontFamily: barlow, fontWeight: 700,
   fontSize: '11px', letterSpacing: '.14em', textTransform: 'uppercase',
-  color: 'rgba(255,255,255,0.40)', marginBottom: '8px',
+  color: '#9A9A9A', marginBottom: '8px',
 }
 
-const divider = { height: '1px', background: 'rgba(255,255,255,0.08)' }
+const divider = { height: '1px', background: 'rgba(0,0,0,0.08)' }
 
 // ── StarRating ────────────────────────────────────────────────────────────────
 
@@ -166,9 +166,10 @@ function TrainerCard({ trainer, index }) {
             padding: '24px', height: '100%', boxSizing: 'border-box',
             display: 'flex', flexDirection: 'column', gap: '16px',
             transition: 'border-color .15s ease', cursor: 'pointer',
+            background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.20)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.14)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)' }}
         >
           {/* Header row: avatar + name + rate */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
@@ -178,14 +179,14 @@ function TrainerCard({ trainer, index }) {
               border: '1px solid rgba(0,188,200,0.25)',
               borderRadius: '12px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: barlow, fontWeight: 800, fontSize: '17px', color: '#FAFAFA',
+              fontFamily: barlow, fontWeight: 800, fontSize: '17px', color: '#1A1A1A',
             }}>
               {trainer.initials}
             </div>
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: barlow, fontWeight: 700, fontSize: '18px', color: '#F0F0F0', lineHeight: 1.2 }}>
+                <span style={{ fontFamily: barlow, fontWeight: 700, fontSize: '18px', color: '#1A1A1A', lineHeight: 1.2 }}>
                   {trainer.name}
                 </span>
                 <span style={{
@@ -196,24 +197,24 @@ function TrainerCard({ trainer, index }) {
                 }}>{trainer.sport}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.40)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.40)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
                 </svg>
-                <span style={{ fontFamily: hanken, fontSize: '13px', color: 'rgba(255,255,255,0.40)' }}>{trainer.location}</span>
+                <span style={{ fontFamily: hanken, fontSize: '13px', color: '#9A9A9A' }}>{trainer.location}</span>
               </div>
             </div>
 
             <div style={{ flexShrink: 0, textAlign: 'right' }}>
               <div style={{ fontFamily: barlow, fontWeight: 800, fontSize: '22px', color: '#00BCC8' }}>${trainer.rate}</div>
-              <div style={{ fontFamily: hanken, fontSize: '12px', color: 'rgba(255,255,255,0.40)' }}>/hr</div>
+              <div style={{ fontFamily: hanken, fontSize: '12px', color: '#9A9A9A' }}>/hr</div>
             </div>
           </div>
 
           {/* Rating */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <StarRating rating={trainer.rating} />
-            <span style={{ fontFamily: barlow, fontWeight: 700, fontSize: '14px', color: '#F0F0F0' }}>{trainer.rating.toFixed(1)}</span>
-            <span style={{ fontFamily: hanken, fontSize: '13px', color: 'rgba(255,255,255,0.40)' }}>({trainer.reviewCount} reviews)</span>
+            <span style={{ fontFamily: barlow, fontWeight: 700, fontSize: '14px', color: '#1A1A1A' }}>{trainer.rating.toFixed(1)}</span>
+            <span style={{ fontFamily: hanken, fontSize: '13px', color: '#9A9A9A' }}>({trainer.reviewCount} reviews)</span>
           </div>
 
           {/* Formats + availability */}
@@ -221,7 +222,7 @@ function TrainerCard({ trainer, index }) {
             {trainer.formats.map((f) => (
               <span key={f} style={{
                 fontFamily: hanken, fontSize: '12px', fontWeight: 600, padding: '4px 10px',
-                border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.60)',
+                border: '1px solid rgba(0,0,0,0.10)', color: '#4A4A4A',
               }}>{f}</span>
             ))}
             <span style={{
@@ -232,9 +233,9 @@ function TrainerCard({ trainer, index }) {
 
           {/* Credentials */}
           <p style={{
-            fontFamily: hanken, fontSize: '13px', color: 'rgba(255,255,255,0.50)',
+            fontFamily: hanken, fontSize: '13px', color: '#9A9A9A',
             margin: 0, lineHeight: 1.45,
-            paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.08)',
+            paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.08)',
           }}>
             {trainer.credentials}
           </p>
@@ -338,7 +339,7 @@ export default function SearchPage() {
               />
               <span style={{
                 fontFamily: hanken, fontSize: '14px',
-                color: selectedSports.includes(s) ? '#F0F0F0' : 'rgba(255,255,255,0.60)',
+                color: selectedSports.includes(s) ? '#1A1A1A' : '#4A4A4A',
                 fontWeight: selectedSports.includes(s) ? 600 : 400,
               }}>{s}</span>
             </label>
@@ -374,7 +375,7 @@ export default function SearchPage() {
               />
               <span style={{
                 fontFamily: hanken, fontSize: '14px',
-                color: selectedFormats.includes(f) ? '#F0F0F0' : 'rgba(255,255,255,0.60)',
+                color: selectedFormats.includes(f) ? '#1A1A1A' : '#4A4A4A',
                 fontWeight: selectedFormats.includes(f) ? 600 : 400,
               }}>{f}</span>
             </label>
@@ -431,13 +432,14 @@ export default function SearchPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#09090B', color: '#F0F0F0',
+      minHeight: '100vh', background: '#F8F8F6', color: '#1A1A1A',
       fontFamily: hanken, WebkitFontSmoothing: 'antialiased',
     }}>
       {/* Nav */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: '#09090B', borderBottom: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(248,248,246,0.88)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+        borderBottom: '1px solid rgba(0,0,0,0.08)',
       }}>
         <div style={{
           maxWidth: '1240px', margin: '0 auto', padding: '0 24px', height: '56px',
@@ -457,7 +459,7 @@ export default function SearchPage() {
               padding: '8px 18px', border: '1.5px solid #00BCC8',
               color: '#00BCC8', textDecoration: 'none',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#00BCC8'; e.currentTarget.style.color = '#09090B' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#00BCC8'; e.currentTarget.style.color = '#FFFFFF' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#00BCC8' }}
           >
             I&apos;m a trainer
@@ -471,11 +473,11 @@ export default function SearchPage() {
           fontFamily: barlow, fontWeight: 800,
           fontSize: 'clamp(36px, 5vw, 56px)',
           letterSpacing: '.02em', textTransform: 'uppercase',
-          margin: '0 0 6px', color: '#F0F0F0', lineHeight: 1,
+          margin: '0 0 6px', color: '#1A1A1A', lineHeight: 1,
         }}>
           Find a trainer
         </h1>
-        <p style={{ fontFamily: hanken, fontSize: '15px', color: 'rgba(255,255,255,0.40)', margin: '0 0 20px' }}>
+        <p style={{ fontFamily: hanken, fontSize: '15px', color: '#9A9A9A', margin: '0 0 20px' }}>
           Austin, TX · All sports
         </p>
 
@@ -483,7 +485,7 @@ export default function SearchPage() {
         <div style={{ position: 'relative', maxWidth: '560px' }}>
           <svg
             width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke="rgba(255,255,255,0.40)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+            stroke="rgba(0,0,0,0.40)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
             style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
           >
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -495,8 +497,8 @@ export default function SearchPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               width: '100%', padding: '11px 16px 11px 42px',
-              background: '#18181B', border: '1px solid rgba(255,255,255,0.08)',
-              color: '#F0F0F0', fontFamily: hanken, fontSize: '15px',
+              background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)',
+              color: '#1A1A1A', fontFamily: hanken, fontSize: '16px',
               outline: 'none', boxSizing: 'border-box',
             }}
           />
@@ -510,9 +512,9 @@ export default function SearchPage() {
           onClick={() => setMobileFiltersOpen((o) => !o)}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 16px',
-            border: mobileFiltersOpen ? '1px solid #00BCC8' : '1px solid rgba(255,255,255,0.08)',
+            border: mobileFiltersOpen ? '1px solid #00BCC8' : '1px solid rgba(0,0,0,0.08)',
             background: mobileFiltersOpen ? 'rgba(0,188,200,0.10)' : 'transparent',
-            color: mobileFiltersOpen ? '#00BCC8' : 'rgba(255,255,255,0.60)',
+            color: mobileFiltersOpen ? '#00BCC8' : '#4A4A4A',
             fontFamily: barlow, fontWeight: 700, fontSize: '13px',
             letterSpacing: '.1em', textTransform: 'uppercase', cursor: 'pointer',
           }}
@@ -528,7 +530,7 @@ export default function SearchPage() {
       {mobileFiltersOpen && (
         <div className="mobile-only" style={{
           maxWidth: '1240px', margin: '12px 24px 0',
-          background: '#111113', border: '1px solid rgba(255,255,255,0.08)', padding: '24px',
+          background: '#F8F8F6', border: '1px solid rgba(0,0,0,0.08)', padding: '24px',
         }}>
           {sidebar}
         </div>
@@ -544,7 +546,7 @@ export default function SearchPage() {
       >
         {/* Sidebar — desktop only */}
         <div className="desktop-sidebar" style={{
-          background: '#111113', border: '1px solid rgba(255,255,255,0.08)',
+          background: '#F8F8F6', border: '1px solid rgba(0,0,0,0.08)',
           padding: '24px', position: 'sticky', top: '72px',
         }}>
           {sidebar}
@@ -556,8 +558,8 @@ export default function SearchPage() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             gap: '16px', marginBottom: '20px', flexWrap: 'wrap',
           }}>
-            <span style={{ fontFamily: hanken, fontSize: '14px', color: 'rgba(255,255,255,0.40)' }}>
-              <strong style={{ fontFamily: barlow, fontWeight: 700, fontSize: '16px', color: '#F0F0F0', letterSpacing: '.02em' }}>
+            <span style={{ fontFamily: hanken, fontSize: '14px', color: '#9A9A9A' }}>
+              <strong style={{ fontFamily: barlow, fontWeight: 700, fontSize: '16px', color: '#1A1A1A', letterSpacing: '.02em' }}>
                 {filtered.length}
               </strong>{' '}trainer{filtered.length !== 1 ? 's' : ''} near you
             </span>
@@ -572,11 +574,11 @@ export default function SearchPage() {
           {filtered.length === 0 ? (
             <div style={{
               textAlign: 'center', padding: '80px 24px',
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: '1px solid rgba(0,0,0,0.08)',
             }}>
               <p style={{
                 fontFamily: barlow, fontSize: '22px', fontWeight: 700,
-                color: 'rgba(255,255,255,0.40)', textTransform: 'uppercase',
+                color: '#9A9A9A', textTransform: 'uppercase',
                 letterSpacing: '.06em', margin: '0 0 12px',
               }}>
                 No trainers match your filters

@@ -8,16 +8,16 @@ import { useRef } from 'react'
 // ── Design tokens ────────────────────────────────────────────────────────────
 
 const T = {
-  bg: '#F5F2EE',
-  surface: '#FBF9F5',
-  surface2: '#ECE6DA',
-  ink: '#1A1814',
-  ink2: '#4C473E',
-  ink3: '#8C8678',
-  line: 'rgba(26,24,20,0.10)',
-  accent: '#D94F2B',
-  accentInk: '#FFF8F2',
-  accentLight: 'rgba(217,79,43,0.09)',
+  bg: '#F8F8F6',
+  surface: '#FFFFFF',
+  surface2: '#F0EFEB',
+  ink: '#1A1A1A',
+  ink2: '#4A4A4A',
+  ink3: '#9A9A9A',
+  line: 'rgba(0,0,0,0.08)',
+  accent: '#00BCC8',
+  accentInk: '#FFFFFF',
+  accentLight: 'rgba(0,188,200,0.09)',
 }
 
 // ── Data ─────────────────────────────────────────────────────────────────────
@@ -286,7 +286,7 @@ export default function HowItWorksPage() {
       <nav
         className="sticky top-0 z-50 border-b"
         style={{
-          background: `color-mix(in srgb, ${T.bg} 88%, transparent)`,
+          background: 'rgba(248,248,246,0.88)',
           backdropFilter: 'blur(14px)',
           WebkitBackdropFilter: 'blur(14px)',
           borderColor: T.line,
@@ -312,7 +312,7 @@ export default function HowItWorksPage() {
               href="/search"
               className="text-sm font-semibold px-4 py-2 rounded-full no-underline transition-[border-color] duration-150"
               style={{ border: `1.5px solid ${T.line}`, color: T.ink2 }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(26,24,20,0.24)' }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.24)' }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
             >
               Find a trainer

@@ -41,7 +41,7 @@ function Field({ label, children }) {
     <div style={{ marginBottom: '18px' }}>
       <label style={{
         display: 'block', fontSize: '12px', fontWeight: 600,
-        color: 'rgba(255,255,255,0.45)', marginBottom: '8px',
+        color: '#9A9A9A', marginBottom: '8px',
         letterSpacing: '.07em', textTransform: 'uppercase',
         fontFamily: "'Hanken Grotesk', sans-serif",
       }}>
@@ -54,10 +54,10 @@ function Field({ label, children }) {
 
 const inputBase = {
   width: '100%', boxSizing: 'border-box',
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
+  background: '#FFFFFF',
+  border: '1px solid rgba(0,0,0,0.12)',
   borderRadius: '10px', padding: '13px 16px',
-  color: '#fff', fontSize: '16px', outline: 'none',
+  color: '#1A1A1A', fontSize: '16px', outline: 'none',
   fontFamily: "'Hanken Grotesk', sans-serif",
   transition: 'border-color .15s ease',
 }
@@ -76,26 +76,26 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#0B0B0F', color: '#fff',
+      minHeight: '100vh', background: '#F8F8F6', color: '#1A1A1A',
       fontFamily: "'Hanken Grotesk', sans-serif",
       display: 'flex', flexDirection: 'column',
     }}>
       {/* Header */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: 'rgba(11,11,15,0.9)', backdropFilter: 'blur(12px)',
+        background: 'rgba(248,248,246,0.88)', backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        borderBottom: '1px solid rgba(0,0,0,0.08)',
         display: 'flex', alignItems: 'center',
         padding: '0 32px', height: '64px',
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
           <span style={{
-            width: '30px', height: '30px', borderRadius: '8px', background: '#22C55E',
+            width: '30px', height: '30px', borderRadius: '8px', background: '#00BCC8',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '16px', color: '#000',
+            fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '16px', color: '#FFFFFF',
           }}>F</span>
-          <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '20px', color: '#fff', letterSpacing: '.02em' }}>FARM</span>
+          <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '20px', color: '#1A1A1A', letterSpacing: '.02em' }}>FARM</span>
         </Link>
       </header>
 
@@ -109,6 +109,7 @@ export default function LoginPage() {
           style={{
             width: '100%', maxWidth: '420px',
             borderRadius: '16px', padding: '36px 32px',
+            background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)',
           }}
         >
           {/* Heading */}
@@ -116,10 +117,11 @@ export default function LoginPage() {
             <h1 style={{
               fontFamily: "'Archivo', sans-serif", fontWeight: 900,
               fontSize: '30px', margin: '0 0 8px', letterSpacing: '-.025em', lineHeight: 1.1,
+              color: '#1A1A1A',
             }}>
               Welcome back
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px', margin: 0, lineHeight: 1.5 }}>
+            <p style={{ color: '#9A9A9A', fontSize: '15px', margin: 0, lineHeight: 1.5 }}>
               Sign in to your FARM account
             </p>
           </div>
@@ -127,8 +129,8 @@ export default function LoginPage() {
           {/* Role toggle */}
           <div style={{
             display: 'flex', gap: '6px', marginBottom: '28px',
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.09)',
+            background: 'rgba(0,0,0,0.04)',
+            border: '1px solid rgba(0,0,0,0.08)',
             borderRadius: '12px', padding: '5px',
           }}>
             {['parent', 'trainer'].map((r) => {
@@ -142,8 +144,8 @@ export default function LoginPage() {
                     cursor: 'pointer', fontSize: '14px', fontWeight: 700,
                     fontFamily: "'Hanken Grotesk', sans-serif",
                     transition: 'all .18s ease', minHeight: '44px',
-                    background: active ? '#fff' : 'transparent',
-                    color: active ? '#000' : 'rgba(255,255,255,0.4)',
+                    background: active ? '#1A1A1A' : 'transparent',
+                    color: active ? '#FFFFFF' : '#9A9A9A',
                   }}
                 >
                   {r.charAt(0).toUpperCase() + r.slice(1)}
@@ -163,8 +165,8 @@ export default function LoginPage() {
               placeholder="you@example.com"
               style={{
                 ...inputBase,
-                borderColor: emailFocus ? '#22C55E' : 'rgba(255,255,255,0.1)',
-                boxShadow: emailFocus ? '0 0 0 3px rgba(34,197,94,0.12)' : 'none',
+                borderColor: emailFocus ? '#00BCC8' : 'rgba(0,0,0,0.12)',
+                boxShadow: emailFocus ? '0 0 0 3px rgba(0,188,200,0.12)' : 'none',
               }}
             />
           </Field>
@@ -182,8 +184,8 @@ export default function LoginPage() {
                 style={{
                   ...inputBase,
                   paddingRight: '46px',
-                  borderColor: passwordFocus ? '#22C55E' : 'rgba(255,255,255,0.1)',
-                  boxShadow: passwordFocus ? '0 0 0 3px rgba(34,197,94,0.12)' : 'none',
+                  borderColor: passwordFocus ? '#00BCC8' : 'rgba(0,0,0,0.12)',
+                  boxShadow: passwordFocus ? '0 0 0 3px rgba(0,188,200,0.12)' : 'none',
                 }}
               />
               <button
@@ -192,22 +194,22 @@ export default function LoginPage() {
                 style={{
                   position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none', cursor: 'pointer', padding: '10px', minWidth: '44px', minHeight: '44px',
-                  color: 'rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center',
+                  color: '#9A9A9A', display: 'flex', alignItems: 'center',
                   transition: 'color .15s ease',
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#4A4A4A' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#9A9A9A' }}
               >
                 <EyeIcon open={showPassword} />
               </button>
             </div>
             <div style={{ textAlign: 'right', marginTop: '8px' }}>
               <Link href="/forgot-password" style={{
-                fontSize: '13px', color: 'rgba(255,255,255,0.4)', textDecoration: 'none', fontWeight: 500,
+                fontSize: '13px', color: '#9A9A9A', textDecoration: 'none', fontWeight: 500,
                 transition: 'color .15s ease',
               }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.4)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#4A4A4A' }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#9A9A9A' }}
               >
                 Forgot password?
               </Link>
@@ -218,7 +220,7 @@ export default function LoginPage() {
           <button
             style={{
               width: '100%', padding: '14px', borderRadius: '11px', border: 'none', minHeight: '44px',
-              background: '#fff', color: '#000',
+              background: '#00BCC8', color: '#FFFFFF',
               fontSize: '15px', fontWeight: 700, cursor: 'pointer',
               fontFamily: "'Hanken Grotesk', sans-serif",
               marginTop: '6px', marginBottom: '20px',
@@ -232,17 +234,17 @@ export default function LoginPage() {
 
           {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.09)' }} />
-            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>or</span>
-            <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.09)' }} />
+            <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
+            <span style={{ fontSize: '13px', color: '#9A9A9A', fontWeight: 500 }}>or</span>
+            <div style={{ flex: 1, height: '1px', background: 'rgba(0,0,0,0.08)' }} />
           </div>
 
           {/* Google OAuth */}
           <button
             style={{
               width: '100%', padding: '13px 16px', borderRadius: '11px',
-              border: '1px solid rgba(255,255,255,0.12)',
-              background: 'rgba(255,255,255,0.05)', color: '#fff',
+              border: '1px solid rgba(0,0,0,0.10)',
+              background: 'rgba(0,0,0,0.04)', color: '#1A1A1A',
               fontSize: '14px', fontWeight: 600, cursor: 'pointer',
               fontFamily: "'Hanken Grotesk', sans-serif",
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
@@ -250,12 +252,12 @@ export default function LoginPage() {
               transition: 'border-color .15s ease, background .15s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)'
-              e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
+              e.currentTarget.style.borderColor = 'rgba(0,0,0,0.22)'
+              e.currentTarget.style.background = 'rgba(0,0,0,0.08)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
-              e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+              e.currentTarget.style.borderColor = 'rgba(0,0,0,0.10)'
+              e.currentTarget.style.background = 'rgba(0,0,0,0.04)'
             }}
           >
             <GoogleIcon />
@@ -263,10 +265,10 @@ export default function LoginPage() {
           </button>
 
           {/* Sign up link */}
-          <p style={{ textAlign: 'center', fontSize: '14px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+          <p style={{ textAlign: 'center', fontSize: '14px', color: '#9A9A9A', margin: 0 }}>
             Don&apos;t have an account?{' '}
             <Link href={signupHref} style={{
-              color: '#22C55E', textDecoration: 'none', fontWeight: 700,
+              color: '#00BCC8', textDecoration: 'none', fontWeight: 700,
               transition: 'opacity .15s ease',
             }}
               onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8' }}

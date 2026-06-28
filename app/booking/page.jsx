@@ -21,16 +21,16 @@ const BOOKING = {
 // ── Shared token values ─────────────────────────────────────────────────────
 
 const T = {
-  bg: '#F5F2EE',
-  surface: '#FBF9F5',
-  surface2: '#ECE6DA',
-  ink: '#1A1814',
-  ink2: '#4C473E',
-  ink3: '#8C8678',
-  line: 'rgba(26,24,20,0.10)',
-  accent: '#D94F2B',
-  accentInk: '#FFF8F2',
-  green: '#22C55E',
+  bg: '#F8F8F6',
+  surface: '#FFFFFF',
+  surface2: '#F0EFEB',
+  ink: '#1A1A1A',
+  ink2: '#4A4A4A',
+  ink3: '#9A9A9A',
+  line: 'rgba(0,0,0,0.08)',
+  accent: '#00BCC8',
+  accentInk: '#FFFFFF',
+  green: '#00BCC8',
   radius: '14px',
 }
 
@@ -43,7 +43,7 @@ function Stars({ rating }) {
         <svg key={i} width="13" height="13" viewBox="0 0 24 24">
           <polygon
             points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1"
-            fill={i <= Math.round(rating) ? T.accent : 'rgba(26,24,20,0.12)'}
+            fill={i <= Math.round(rating) ? T.accent : 'rgba(0,0,0,0.10)'}
           />
         </svg>
       ))}
@@ -62,7 +62,7 @@ function TrainerSummary() {
     }}>
       <div style={{
         width: '52px', height: '52px', borderRadius: '12px', flexShrink: 0,
-        background: `linear-gradient(140deg, ${T.accent} 0%, #e8784e 100%)`,
+        background: `linear-gradient(140deg, ${T.accent} 0%, #00D4E2 100%)`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '19px', color: '#fff',
       }}>
@@ -190,7 +190,7 @@ function ConfirmScreen({ format, setFormat, onNext }) {
                   background: format === f ? T.surface : 'transparent',
                   border: `1px solid ${format === f ? T.line : 'transparent'}`,
                   color: format === f ? T.ink : T.ink3,
-                  boxShadow: format === f ? '0 1px 4px rgba(26,24,20,.08)' : 'none',
+                  boxShadow: format === f ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                   transition: 'all .15s ease',
                   fontFamily: "'Hanken Grotesk', sans-serif",
                 }}
@@ -211,7 +211,7 @@ function ConfirmScreen({ format, setFormat, onNext }) {
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: T.ink2 }}>
           <span>Platform fee</span>
-          <span style={{ color: '#22C55E', fontWeight: 600 }}>$0.00</span>
+          <span style={{ color: '#00BCC8', fontWeight: 600 }}>$0.00</span>
         </div>
         <div style={{ height: '1px', background: T.line }} />
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -260,7 +260,7 @@ function CardInput({ label, placeholder, value, onChange, maxLength, pattern }) 
           background: T.surface, color: T.ink, outline: 'none',
           fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '16px',
           transition: 'border-color .15s ease',
-          boxShadow: focused ? `0 0 0 3px rgba(26,24,20,0.06)` : 'none',
+          boxShadow: focused ? `0 0 0 3px rgba(0,0,0,0.06)` : 'none',
         }}
       />
     </div>
@@ -345,7 +345,7 @@ function PaymentScreen({ format, onNext, onBack }) {
             onClick={onNext}
             style={{
               display: 'block', width: '100%', padding: '17px', borderRadius: '12px', minHeight: '44px',
-              background: '#22C55E', color: '#000', border: 'none',
+              background: '#00BCC8', color: '#FFFFFF', border: 'none',
               fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16.5px',
               cursor: 'pointer', transition: 'filter .15s ease, transform .15s ease',
               marginBottom: '12px',
@@ -408,9 +408,9 @@ function ConfirmationScreen({ format }) {
       <motion.div
         style={{
           width: '88px', height: '88px', borderRadius: '50%',
-          background: '#22C55E', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: '#00BCC8', display: 'flex', alignItems: 'center', justifyContent: 'center',
           margin: '0 auto 24px',
-          boxShadow: '0 12px 40px rgba(34,197,94,0.32)',
+          boxShadow: '0 12px 40px rgba(0,188,200,0.32)',
         }}
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -468,7 +468,7 @@ function ConfirmationScreen({ format }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', paddingBottom: '16px', borderBottom: `1px solid ${T.line}` }}>
           <div style={{
             width: '44px', height: '44px', borderRadius: '10px', flexShrink: 0,
-            background: `linear-gradient(140deg, ${T.accent} 0%, #e8784e 100%)`,
+            background: `linear-gradient(140deg, ${T.accent} 0%, #00D4E2 100%)`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '16px', color: '#fff',
           }}>
@@ -511,7 +511,7 @@ function ConfirmationScreen({ format }) {
             fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px',
             cursor: 'pointer', transition: 'border-color .15s ease',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(26,24,20,0.24)' }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.24)' }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -565,7 +565,7 @@ export default function BookingPage() {
       {/* Nav */}
       <nav style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: `color-mix(in srgb, ${T.bg} 88%, transparent)`,
+        background: `rgba(248,248,246,0.88)`,
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
         borderBottom: `1px solid ${T.line}`,
       }}>

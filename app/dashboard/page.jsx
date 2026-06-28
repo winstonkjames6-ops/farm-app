@@ -48,16 +48,16 @@ const BOOKINGS = [
 // ── Design tokens ────────────────────────────────────────────────────────────
 
 const T = {
-  bg: '#F5F2EE',
-  surface: '#FBF9F5',
-  surface2: '#ECE6DA',
-  ink: '#1A1814',
-  ink2: '#4C473E',
-  ink3: '#8C8678',
-  line: 'rgba(26,24,20,0.10)',
-  accent: '#D94F2B',
-  accentInk: '#FFF8F2',
-  green: '#22C55E',
+  bg: '#F8F8F6',
+  surface: '#FFFFFF',
+  surface2: '#F0EFEB',
+  ink: '#1A1A1A',
+  ink2: '#4A4A4A',
+  ink3: '#9A9A9A',
+  line: 'rgba(0,0,0,0.08)',
+  accent: '#00BCC8',
+  accentInk: '#FFFFFF',
+  green: '#00BCC8',
   radius: '14px',
 }
 
@@ -70,7 +70,7 @@ function Stars({ rating, size = 14 }) {
         <svg key={i} width={size} height={size} viewBox="0 0 24 24">
           <polygon
             points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1"
-            fill={i <= rating ? T.accent : 'rgba(26,24,20,0.13)'}
+            fill={i <= rating ? T.accent : 'rgba(0,0,0,0.10)'}
           />
         </svg>
       ))}
@@ -86,7 +86,7 @@ function Avatar({ initials }) {
       className="flex-none flex items-center justify-center rounded-xl text-white font-black text-lg"
       style={{
         width: 52, height: 52,
-        background: `linear-gradient(140deg, ${T.accent} 0%, #e8784e 100%)`,
+        background: `linear-gradient(140deg, ${T.accent} 0%, #00D4E2 100%)`,
         fontFamily: "'Archivo', sans-serif",
       }}
     >
@@ -163,7 +163,7 @@ function UpcomingCard({ booking, index }) {
         <div className="dash-card-actions flex-none flex flex-col items-end gap-2 pt-1">
           <button
             className="font-bold text-sm px-5 py-2.5 rounded-xl transition-[filter] duration-150"
-            style={{ background: T.green, color: '#000', border: 'none', cursor: 'pointer' }}
+            style={{ background: T.green, color: '#FFFFFF', border: 'none', cursor: 'pointer' }}
             onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.06)' }}
             onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
           >
@@ -235,7 +235,7 @@ function PastCard({ booking, index }) {
               color: T.ink2,
               textDecoration: 'none',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(26,24,20,0.26)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.26)' }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
           >
             Book again
@@ -312,7 +312,7 @@ export default function DashboardPage() {
       <nav
         className="sticky top-0 z-50 border-b"
         style={{
-          background: `color-mix(in srgb, ${T.bg} 88%, transparent)`,
+          background: 'rgba(248,248,246,0.88)',
           backdropFilter: 'blur(14px)',
           WebkitBackdropFilter: 'blur(14px)',
           borderColor: T.line,
@@ -337,7 +337,7 @@ export default function DashboardPage() {
             href="/search"
             className="text-sm font-semibold px-4 py-2 rounded-full no-underline transition-[border-color] duration-150"
             style={{ border: `1.5px solid ${T.line}`, color: T.ink2 }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(26,24,20,0.24)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.24)' }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
           >
             Find trainers
@@ -355,7 +355,8 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: [0.2, 0.7, 0.2, 1] }}
             style={{
-              background: '#111113',
+              background: '#F8F8F6',
+              border: '1px solid rgba(0,0,0,0.08)',
               borderLeft: '3px solid #00BCC8',
               padding: '16px 20px',
               marginBottom: '24px',
@@ -366,11 +367,11 @@ export default function DashboardPage() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{
                 fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: '14px',
-                color: '#FAFAFA', margin: '0 0 4px',
+                color: '#1A1A1A', margin: '0 0 4px',
               }}>
                 How was your session with Marcus Rivera on Tuesday?
               </p>
-              <p style={{ fontSize: '13px', color: '#71717A', margin: 0 }}>
+              <p style={{ fontSize: '13px', color: '#9A9A9A', margin: 0 }}>
                 Your feedback helps other parents find great trainers.
               </p>
             </div>
@@ -378,7 +379,7 @@ export default function DashboardPage() {
               <Link
                 href="/review"
                 style={{
-                  background: '#00BCC8', color: '#09090B', textDecoration: 'none',
+                  background: '#00BCC8', color: '#FFFFFF', textDecoration: 'none',
                   padding: '9px 16px', fontSize: '12px', fontWeight: 800,
                   fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.1em',
                   textTransform: 'uppercase',
@@ -388,7 +389,7 @@ export default function DashboardPage() {
                 onClick={() => setShowReviewNudge(false)}
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
-                  color: '#71717A', fontSize: '13px', fontWeight: 600, padding: '4px 8px',
+                  color: '#9A9A9A', fontSize: '13px', fontWeight: 600, padding: '4px 8px',
                 }}
               >Dismiss</button>
             </div>
@@ -412,17 +413,17 @@ export default function DashboardPage() {
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '5px',
               padding: '3px 10px 3px 8px',
-              border: '1.5px solid #b8bc03',
+              border: '1.5px solid #00BCC8',
               borderRadius: '999px',
-              background: 'rgba(184,188,3,0.07)',
+              background: 'rgba(0,188,200,0.07)',
             }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#b8bc03" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
               <span style={{
                 fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                 fontSize: '10.5px', letterSpacing: '.1em', textTransform: 'uppercase',
-                color: '#8f9200',
+                color: '#00838C',
               }}>Verified Parent</span>
             </div>
           </div>
@@ -487,7 +488,7 @@ export default function DashboardPage() {
                 href="/child/create"
                 className="flex items-center gap-4 rounded-2xl p-5 no-underline transition-[border-color] duration-150"
                 style={{ background: T.surface, border: `1.5px dashed ${T.line}`, color: T.ink2 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(26,24,20,0.26)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.26)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
               >
                 <div
@@ -518,7 +519,7 @@ export default function DashboardPage() {
             flex-direction: row !important;
             width: 100%;
             padding-top: 12px;
-            border-top: 1px solid rgba(26,24,20,0.10);
+            border-top: 1px solid rgba(0,0,0,0.08);
             margin-top: 4px;
           }
         }

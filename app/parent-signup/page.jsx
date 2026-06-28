@@ -28,23 +28,24 @@ export default function ParentSignup() {
   const isValid = form.email && form.sport && form.zipCode && form.ageGroup && form.sessionFormat
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0B0B0F', color: '#fff', fontFamily: "'Hanken Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#F8F8F6', color: '#1A1A1A', fontFamily: "'Hanken Grotesk', sans-serif" }}>
 
       {/* Header */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 50,
-        background: 'rgba(11,11,15,0.9)', backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(248,248,246,0.88)', backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(0,0,0,0.08)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 32px', height: '64px',
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
           <span style={{
-            width: '30px', height: '30px', borderRadius: '8px', background: '#22C55E',
+            width: '30px', height: '30px', borderRadius: '8px', background: '#00BCC8',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '16px', color: '#000',
+            fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '16px', color: '#FFFFFF',
           }}>F</span>
-          <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '20px', color: '#fff', letterSpacing: '.02em' }}>FARM</span>
+          <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '20px', color: '#1A1A1A', letterSpacing: '.02em' }}>FARM</span>
         </Link>
       </header>
 
@@ -58,27 +59,27 @@ export default function ParentSignup() {
               exit={{ x: -20, opacity: 0, transition: { duration: 0.2 } }}
             >
               <div style={{ marginBottom: '40px' }}>
-                <h1 style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: 'clamp(32px,5vw,46px)', margin: '0 0 12px', letterSpacing: '-.025em', lineHeight: 1.05 }}>Find the right trainer.</h1>
-                <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '16px', lineHeight: 1.6, margin: 0 }}>
+                <h1 style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: 'clamp(32px,5vw,46px)', margin: '0 0 12px', letterSpacing: '-.025em', lineHeight: 1.05, color: '#1A1A1A' }}>Find the right trainer.</h1>
+                <p style={{ color: '#9A9A9A', fontSize: '16px', lineHeight: 1.6, margin: 0 }}>
                   Tell us what you're looking for and we'll match your athlete with a vetted, experienced coach in your area.
                 </p>
               </div>
 
               {/* Email */}
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginBottom: '8px', letterSpacing: '.06em', textTransform: 'uppercase' }}>Email address</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#9A9A9A', marginBottom: '8px', letterSpacing: '.06em', textTransform: 'uppercase' }}>Email address</label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={e => update('email', e.target.value)}
                   placeholder="you@example.com"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '13px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif' " }}
+                  style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '10px', padding: '13px 16px', color: '#1A1A1A', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif" }}
                 />
               </div>
 
               {/* Sport */}
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginBottom: '10px', letterSpacing: '.06em', textTransform: 'uppercase' }}>Sport</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#9A9A9A', marginBottom: '10px', letterSpacing: '.06em', textTransform: 'uppercase' }}>Sport</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {SPORTS.map(sport => (
                     <button
@@ -86,9 +87,9 @@ export default function ParentSignup() {
                       onClick={() => update('sport', sport)}
                       style={{
                         padding: '11px 16px', minHeight: '44px', borderRadius: '999px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
-                        background: form.sport === sport ? '#22C55E' : 'transparent',
-                        color: form.sport === sport ? '#000' : 'rgba(255,255,255,0.5)',
-                        border: form.sport === sport ? '1px solid #22C55E' : '1px solid rgba(255,255,255,0.15)',
+                        background: form.sport === sport ? '#00BCC8' : 'transparent',
+                        color: form.sport === sport ? '#FFFFFF' : '#9A9A9A',
+                        border: form.sport === sport ? '1px solid #00BCC8' : '1px solid rgba(0,0,0,0.12)',
                         fontFamily: "'Hanken Grotesk', sans-serif",
                       }}
                     >{sport}</button>
@@ -98,7 +99,7 @@ export default function ParentSignup() {
 
               {/* ZIP */}
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginBottom: '8px', letterSpacing: '.06em', textTransform: 'uppercase' }}>ZIP code</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#9A9A9A', marginBottom: '8px', letterSpacing: '.06em', textTransform: 'uppercase' }}>ZIP code</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -106,13 +107,13 @@ export default function ParentSignup() {
                   onChange={e => update('zipCode', e.target.value)}
                   placeholder="78701"
                   maxLength={5}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '13px 16px', color: '#fff', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif" }}
+                  style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '10px', padding: '13px 16px', color: '#1A1A1A', fontSize: '16px', width: '100%', boxSizing: 'border-box', outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif" }}
                 />
               </div>
 
               {/* Age group */}
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginBottom: '10px', letterSpacing: '.06em', textTransform: 'uppercase' }}>Athlete age group</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#9A9A9A', marginBottom: '10px', letterSpacing: '.06em', textTransform: 'uppercase' }}>Athlete age group</label>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {AGE_GROUPS.map(ag => (
                     <button
@@ -120,9 +121,9 @@ export default function ParentSignup() {
                       onClick={() => update('ageGroup', ag)}
                       style={{
                         padding: '11px 16px', minHeight: '44px', borderRadius: '999px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
-                        background: form.ageGroup === ag ? '#22C55E' : 'transparent',
-                        color: form.ageGroup === ag ? '#000' : 'rgba(255,255,255,0.5)',
-                        border: form.ageGroup === ag ? '1px solid #22C55E' : '1px solid rgba(255,255,255,0.15)',
+                        background: form.ageGroup === ag ? '#00BCC8' : 'transparent',
+                        color: form.ageGroup === ag ? '#FFFFFF' : '#9A9A9A',
+                        border: form.ageGroup === ag ? '1px solid #00BCC8' : '1px solid rgba(0,0,0,0.12)',
                         fontFamily: "'Hanken Grotesk', sans-serif",
                       }}
                     >{ag}</button>
@@ -132,7 +133,7 @@ export default function ParentSignup() {
 
               {/* Session format */}
               <div style={{ marginBottom: '36px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginBottom: '10px', letterSpacing: '.06em', textTransform: 'uppercase' }}>Session format</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#9A9A9A', marginBottom: '10px', letterSpacing: '.06em', textTransform: 'uppercase' }}>Session format</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                   {SESSION_FORMATS.map(({ type, icon, desc }) => (
                     <button
@@ -140,14 +141,14 @@ export default function ParentSignup() {
                       onClick={() => update('sessionFormat', type)}
                       style={{
                         padding: '16px 12px', borderRadius: '12px', textAlign: 'center', cursor: 'pointer', transition: 'all 0.2s ease',
-                        background: form.sessionFormat === type ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.04)',
-                        border: form.sessionFormat === type ? '1.5px solid #22C55E' : '1px solid rgba(255,255,255,0.1)',
+                        background: form.sessionFormat === type ? 'rgba(0,188,200,0.12)' : 'rgba(0,0,0,0.04)',
+                        border: form.sessionFormat === type ? '1.5px solid #00BCC8' : '1px solid rgba(0,0,0,0.12)',
                         fontFamily: "'Hanken Grotesk', sans-serif",
                       }}
                     >
                       <div style={{ fontSize: '22px', marginBottom: '6px' }}>{icon}</div>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: form.sessionFormat === type ? '#22C55E' : '#fff', marginBottom: '3px' }}>{type}</div>
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>{desc}</div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: form.sessionFormat === type ? '#00BCC8' : '#1A1A1A', marginBottom: '3px' }}>{type}</div>
+                      <div style={{ fontSize: '11px', color: '#9A9A9A', lineHeight: 1.4 }}>{desc}</div>
                     </button>
                   ))}
                 </div>
@@ -159,8 +160,8 @@ export default function ParentSignup() {
                 disabled={!isValid}
                 style={{
                   width: '100%', padding: '15px', borderRadius: '12px', border: 'none', minHeight: '44px',
-                  background: isValid ? '#22C55E' : 'rgba(255,255,255,0.08)',
-                  color: isValid ? '#000' : 'rgba(255,255,255,0.25)',
+                  background: isValid ? '#00BCC8' : 'rgba(0,0,0,0.08)',
+                  color: isValid ? '#FFFFFF' : '#9A9A9A',
                   fontSize: '16px', fontWeight: 700, cursor: isValid ? 'pointer' : 'not-allowed',
                   fontFamily: "'Hanken Grotesk', sans-serif", transition: 'all 0.2s ease',
                   marginBottom: '12px',
@@ -168,7 +169,7 @@ export default function ParentSignup() {
               >
                 Find my trainer
               </button>
-              <p style={{ textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.3)', margin: 0 }}>No credit card needed.</p>
+              <p style={{ textAlign: 'center', fontSize: '13px', color: '#9A9A9A', margin: 0 }}>No credit card needed.</p>
             </motion.div>
           ) : (
             <motion.div
@@ -183,38 +184,38 @@ export default function ParentSignup() {
                   animate={{ scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 300, damping: 22, delay: 0.1 } }}
                   style={{
                     width: '80px', height: '80px', borderRadius: '50%',
-                    background: 'rgba(34,197,94,0.15)', border: '2px solid #22C55E',
+                    background: 'rgba(0,188,200,0.15)', border: '2px solid #00BCC8',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     margin: '0 auto 24px',
                   }}
                 >
-                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="4 13 9 18 20 6" />
                   </svg>
                 </motion.div>
-                <h1 style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '36px', margin: '0 0 12px', letterSpacing: '-.02em' }}>You're on the list</h1>
-                <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '15px', lineHeight: 1.6, margin: 0, maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
-                  We're matching your <strong style={{ color: '#fff' }}>{form.sport}</strong> athlete in <strong style={{ color: '#fff' }}>{form.zipCode}</strong> with top coaches. Expect a message at <strong style={{ color: '#fff' }}>{form.email}</strong> within 24 hours.
+                <h1 style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '36px', margin: '0 0 12px', letterSpacing: '-.02em', color: '#1A1A1A' }}>You're on the list</h1>
+                <p style={{ color: '#9A9A9A', fontSize: '15px', lineHeight: 1.6, margin: 0, maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
+                  We're matching your <strong style={{ color: '#1A1A1A' }}>{form.sport}</strong> athlete in <strong style={{ color: '#1A1A1A' }}>{form.zipCode}</strong> with top coaches. Expect a message at <strong style={{ color: '#1A1A1A' }}>{form.email}</strong> within 24 hours.
                 </p>
               </div>
 
               {/* Summary card */}
-              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '20px', marginBottom: '32px' }}>
+              <div style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '14px', padding: '20px', marginBottom: '32px' }}>
                 {[
                   { label: 'Sport', value: form.sport },
                   { label: 'Age group', value: form.ageGroup },
                   { label: 'Format', value: form.sessionFormat },
                   { label: 'ZIP code', value: form.zipCode },
                 ].map(({ label, value }) => (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>{label}</span>
-                    <span style={{ fontSize: '14px', color: '#fff', fontWeight: 500 }}>{value}</span>
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                    <span style={{ fontSize: '13px', color: '#9A9A9A', fontWeight: 600 }}>{label}</span>
+                    <span style={{ fontSize: '14px', color: '#1A1A1A', fontWeight: 500 }}>{value}</span>
                   </div>
                 ))}
               </div>
 
               <div style={{ textAlign: 'center' }}>
-                <Link href="/" style={{ color: '#22C55E', textDecoration: 'none', fontWeight: 600, fontSize: '15px' }}>← Back to FARM</Link>
+                <Link href="/" style={{ color: '#00BCC8', textDecoration: 'none', fontWeight: 600, fontSize: '15px' }}>← Back to FARM</Link>
               </div>
             </motion.div>
           )}
