@@ -864,7 +864,34 @@ function AvailabilitySection() {
                     </select>
                   </>
                 )}
-                <ToggleSwitch on={d.enabled} onChange={() => toggleDay(day)} />
+                <div
+                  onClick={() => toggleDay(day)}
+                  style={{
+                    width: '44px',
+                    height: '24px',
+                    borderRadius: '999px',
+                    background: d.enabled ? '#00BCC8' : '#E5E7EB',
+                    position: 'relative',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    transition: 'background 0.2s ease',
+                    display: 'inline-block',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      background: '#FFFFFF',
+                      position: 'absolute',
+                      top: '2px',
+                      left: d.enabled ? '22px' : '2px',
+                      transition: 'left 0.2s ease',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                    }}
+                  />
+                </div>
               </div>
             </div>
           )
@@ -1119,10 +1146,64 @@ function NotificationsSection() {
             <div style={{ fontSize: '12px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{row.description}</div>
           </div>
           <div style={{ width: '52px', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
-            <ToggleSwitch on={notifState[row.key].email} onChange={() => toggle(row.key, 'email')} />
+            <div
+              onClick={() => toggle(row.key, 'email')}
+              style={{
+                width: '44px',
+                height: '24px',
+                borderRadius: '999px',
+                background: notifState[row.key].email ? '#00BCC8' : '#E5E7EB',
+                position: 'relative',
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'background 0.2s ease',
+                display: 'inline-block',
+              }}
+            >
+              <div
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: '#FFFFFF',
+                  position: 'absolute',
+                  top: '2px',
+                  left: notifState[row.key].email ? '22px' : '2px',
+                  transition: 'left 0.2s ease',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                }}
+              />
+            </div>
           </div>
           <div style={{ width: '52px', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
-            <ToggleSwitch on={notifState[row.key].sms} onChange={() => toggle(row.key, 'sms')} />
+            <div
+              onClick={() => toggle(row.key, 'sms')}
+              style={{
+                width: '44px',
+                height: '24px',
+                borderRadius: '999px',
+                background: notifState[row.key].sms ? '#00BCC8' : '#E5E7EB',
+                position: 'relative',
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'background 0.2s ease',
+                display: 'inline-block',
+              }}
+            >
+              <div
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: '#FFFFFF',
+                  position: 'absolute',
+                  top: '2px',
+                  left: notifState[row.key].sms ? '22px' : '2px',
+                  transition: 'left 0.2s ease',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                }}
+              />
+            </div>
           </div>
         </div>
       ))}
