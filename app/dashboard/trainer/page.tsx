@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
+import Link from 'next/link'
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
@@ -53,6 +54,77 @@ const MOCK_SESSIONS = [
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const DAYS_WITH_SESSIONS = new Set(['Mon', 'Tue'])
+
+const MOCK_MESSAGES = [
+  {
+    id: 1,
+    parentName: 'Sarah Williams',
+    parentInitials: 'SW',
+    childName: 'Ethan Williams',
+    sport: 'Soccer',
+    lastMessage: "Will Ethan need to bring any equipment to Saturday's session?",
+    time: '2m ago',
+    unread: true,
+  },
+  {
+    id: 2,
+    parentName: 'David Chen',
+    parentInitials: 'DC',
+    childName: 'Maya Chen',
+    sport: 'Tennis',
+    lastMessage: 'Thanks so much — Maya was so excited after the last session!',
+    time: '1h ago',
+    unread: false,
+  },
+  {
+    id: 3,
+    parentName: 'Lisa Blake',
+    parentInitials: 'LB',
+    childName: 'Jordan Blake',
+    sport: 'Basketball',
+    lastMessage: 'Can we move Tuesday to Wednesday this week?',
+    time: 'Yesterday',
+    unread: true,
+  },
+  {
+    id: 4,
+    parentName: 'Marcus Webb',
+    parentInitials: 'MW',
+    childName: 'Darius Webb',
+    sport: 'Soccer',
+    lastMessage: 'Booked — looking forward to it.',
+    time: '2d ago',
+    unread: false,
+  },
+]
+
+const MOCK_EARNINGS = {
+  pendingPayout: 212,
+  nextPayoutDate: 'Friday, Jun 27',
+  weeklyEarned: 340,
+  weeklyGoal: 500,
+  allTime: 4820,
+  sessionRate: 65,
+  history: [
+    { id: 1, parentName: 'Sarah Williams', childName: 'Ethan Williams', sport: 'Soccer',
+      date: 'Mon, Jun 23', amount: 65, status: 'pending' as const },
+    { id: 2, parentName: 'David Chen', childName: 'Maya Chen', sport: 'Tennis',
+      date: 'Mon, Jun 23', amount: 75, status: 'pending' as const },
+    { id: 3, parentName: 'Lisa Blake', childName: 'Jordan Blake', sport: 'Basketball',
+      date: 'Tue, Jun 17', amount: 55, status: 'paid' as const },
+    { id: 4, parentName: 'Priya Nair', childName: 'Anika Nair', sport: 'Soccer',
+      date: 'Sat, Jun 14', amount: 65, status: 'paid' as const },
+    { id: 5, parentName: 'James Okafor', childName: 'Kofi Okafor', sport: 'Soccer',
+      date: 'Wed, Jun 11', amount: 65, status: 'paid' as const },
+  ],
+}
+
+const FULL_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const ALL_SESSIONS_BY_DAY: Record<string, typeof MOCK_SESSIONS> = {
+  Mon: MOCK_SESSIONS.filter(s => s.day === 'Mon'),
+  Tue: MOCK_SESSIONS.filter(s => s.day === 'Tue'),
+  Wed: [], Thu: [], Fri: [], Sat: [], Sun: [],
+}
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -826,6 +898,442 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
+// ── HomeView ───────────────────────────────────────────────────────────────────
+
+function HomeView({
+  activeDay,
+  onDaySelect,
+  nextSession,
+  filteredSessions,
+}: {
+  activeDay: string
+  onDaySelect: (d: string) => void
+  nextSession: typeof MOCK_SESSIONS[0] | null
+  filteredSessions: typeof MOCK_SESSIONS
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
+    >
+      <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '28px', color: '#111827' }}>
+            {getGreeting()}, Marcus.
+          </div>
+          <div style={{ fontSize: '14px', color: '#374151', marginTop: '4px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
+            Here&apos;s your day at a glance.
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', scrollbarWidth: 'none' as const }}>
+          <StatTile value="7" label="Sessions this week" index={0} accentColor="#6366F1" />
+          <StatTile value="485" label="Earnings this week" isEarnings index={1} accentColor="#00BCC8" />
+          <StatTile value="2" label="Upcoming today" index={2} accentColor="#F59E0B" />
+          <StatTile value="4.9" label="Avg rating" index={3} suffix={<IconStar />} accentColor="#10B981" />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <SectionLabel>Next Session</SectionLabel>
+          <NextSessionCard session={nextSession} />
+
+          <SectionLabel>Schedule</SectionLabel>
+          <WeeklyStrip activeDay={activeDay} onDaySelect={onDaySelect} />
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {filteredSessions.length === 0 ? (
+              <div style={{
+                textAlign: 'center', padding: '40px 20px',
+                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px',
+                color: T.ink3, letterSpacing: '0.08em', textTransform: 'uppercase',
+              }}>
+                No sessions on {activeDay}
+              </div>
+            ) : (
+              filteredSessions.map((session, i) => (
+                <SessionCard key={session.id} session={session} index={i} />
+              ))
+            )}
+          </div>
+
+          <SectionLabel>Summary</SectionLabel>
+          <EarningsCard />
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ── ScheduleView ───────────────────────────────────────────────────────────────
+
+function ScheduleView() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
+    >
+      <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: T.ink }}>
+            Jun 23 – Jun 29
+          </div>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink2, marginTop: '4px' }}>
+            7 sessions this week
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {FULL_WEEK.map((day) => {
+            const sessions = ALL_SESSIONS_BY_DAY[day] || []
+            return (
+              <div key={day} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: sessions.length > 0 ? '16px' : '0' }}>
+                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink }}>
+                    {day}
+                  </span>
+                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3 }}>
+                    {sessions.length > 0 ? `${sessions.length} session${sessions.length > 1 ? 's' : ''}` : 'Available'}
+                  </span>
+                </div>
+
+                {sessions.length > 0 ? (
+                  <div>
+                    {sessions.map((session, i) => (
+                      <div key={session.id}>
+                        {i > 0 && <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', margin: '12px 0' }} />}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '14px', color: T.ink }}>
+                              {session.childName}
+                            </div>
+                            <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>
+                              {session.sport}
+                            </div>
+                          </div>
+                          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', color: T.ink, flexShrink: 0 }}>
+                            {session.time}
+                          </div>
+                          <span style={{
+                            padding: '3px 10px',
+                            background: session.type === 'IN-PERSON' ? 'rgba(0,188,200,0.1)' : 'rgba(99,102,241,0.1)',
+                            color: session.type === 'IN-PERSON' ? T.cyan : '#6366F1',
+                            border: session.type === 'IN-PERSON' ? '1px solid rgba(0,188,200,0.2)' : '1px solid rgba(99,102,241,0.2)',
+                            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '11px',
+                            letterSpacing: '0.08em', borderRadius: '6px', flexShrink: 0,
+                          }}>
+                            {session.type}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    height: '44px', border: '1px dashed rgba(0,0,0,0.10)', borderRadius: '10px',
+                    fontSize: '13px', color: T.ink3, cursor: 'pointer',
+                    fontFamily: "'Hanken Grotesk', sans-serif",
+                  }}>
+                    + Add availability
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ── EarningsView ───────────────────────────────────────────────────────────────
+
+function EarningsView() {
+  const progress = Math.min((MOCK_EARNINGS.weeklyEarned / MOCK_EARNINGS.weeklyGoal) * 100, 100)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
+    >
+      <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Payout summary */}
+        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>Pending payout</span>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '36px', color: T.ink, lineHeight: 1 }}>
+                ${MOCK_EARNINGS.pendingPayout}
+              </div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, marginTop: '2px' }}>
+                Stripe payout {MOCK_EARNINGS.nextPayoutDate}
+              </div>
+            </div>
+          </div>
+          <div style={{ height: '1px', background: 'rgba(0,0,0,0.08)', margin: '16px 0' }} />
+          <div style={{ display: 'flex' }}>
+            {[
+              { label: 'All time', value: `$${MOCK_EARNINGS.allTime.toLocaleString()}` },
+              { label: 'This week', value: `$${MOCK_EARNINGS.weeklyEarned} / $${MOCK_EARNINGS.weeklyGoal}` },
+              { label: 'Rate', value: `$${MOCK_EARNINGS.sessionRate}/hr` },
+            ].map((stat, i, arr) => (
+              <div key={stat.label} style={{
+                flex: 1,
+                paddingLeft: i > 0 ? '16px' : 0,
+                paddingRight: i < arr.length - 1 ? '16px' : 0,
+                borderLeft: i > 0 ? '1px solid rgba(0,0,0,0.08)' : 'none',
+              }}>
+                <div style={{
+                  fontFamily: "'Barlow Condensed', sans-serif", fontSize: '11px', color: T.ink3,
+                  textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px',
+                }}>
+                  {stat.label}
+                </div>
+                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '20px', color: T.ink }}>
+                  {stat.value}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Weekly progress */}
+        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
+          <SectionLabel>Weekly goal</SectionLabel>
+          <div style={{ marginBottom: '10px' }}>
+            <div style={{ height: '6px', borderRadius: '999px', background: '#E5E7EB', overflow: 'hidden' }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.9, delay: 0.3, ease: 'easeOut' }}
+                style={{ height: '100%', borderRadius: '999px', background: T.cyan }}
+              />
+            </div>
+          </div>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>
+            ${MOCK_EARNINGS.weeklyEarned} earned of ${MOCK_EARNINGS.weeklyGoal} goal
+          </div>
+        </div>
+
+        {/* Payout history */}
+        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
+          <SectionLabel>Payout history</SectionLabel>
+          <div>
+            {MOCK_EARNINGS.history.map((item, i) => (
+              <div key={item.id}>
+                {i > 0 && <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)' }} />}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 0' }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '999px', background: T.cyanLight, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '13px', color: T.cyan,
+                  }}>
+                    {item.parentName.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink, fontWeight: 500 }}>
+                      {item.childName}
+                    </div>
+                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>
+                      {item.parentName}
+                    </div>
+                  </div>
+                  <span style={{
+                    padding: '3px 8px', background: T.cyanLight, color: T.cyan,
+                    border: '1px solid rgba(0,188,200,0.2)',
+                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '11px',
+                    letterSpacing: '0.06em', borderRadius: '6px', flexShrink: 0,
+                  }}>
+                    {item.sport}
+                  </span>
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink3, flexShrink: 0 }}>
+                    {item.date}
+                  </div>
+                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink, flexShrink: 0 }}>
+                    ${item.amount}
+                  </div>
+                  <span style={{
+                    padding: '4px 10px',
+                    background: item.status === 'paid' ? 'rgba(34,197,94,0.10)' : T.cyanLight,
+                    color: item.status === 'paid' ? '#16a34a' : T.cyan,
+                    fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '11px',
+                    borderRadius: '999px', flexShrink: 0,
+                  }}>
+                    {item.status === 'paid' ? 'Paid' : 'Pending'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ── MessagesView ───────────────────────────────────────────────────────────────
+
+function MessagesView() {
+  const [activeThread, setActiveThread] = useState<number | null>(null)
+  const unreadCount = MOCK_MESSAGES.filter(m => m.unread).length
+  const activeMessage = MOCK_MESSAGES.find(m => m.id === activeThread)
+
+  if (activeThread !== null && activeMessage) {
+    const mockConversation = [
+      { from: 'parent', text: `Hi! Quick question about ${activeMessage.childName}'s upcoming session.` },
+      { from: 'trainer', text: 'Of course! Happy to help. What\'s on your mind?' },
+      { from: 'parent', text: activeMessage.lastMessage },
+    ]
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
+      >
+        <div style={{ padding: '32px', display: 'flex', flexDirection: 'column' }}>
+          <button
+            onClick={() => setActiveThread(null)}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2,
+              textAlign: 'left', padding: '0 0 16px 0', minHeight: '44px',
+            }}
+          >
+            ← Messages
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: '999px', background: T.cyanLight, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.cyan,
+            }}>
+              {activeMessage.parentInitials}
+            </div>
+            <div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px', color: T.ink }}>
+                {activeMessage.parentName}
+              </div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>
+                {activeMessage.childName} · {activeMessage.sport}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {mockConversation.map((msg, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: msg.from === 'trainer' ? 'flex-end' : 'flex-start' }}>
+                <div style={{
+                  padding: '12px 16px',
+                  borderRadius: msg.from === 'trainer' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                  background: msg.from === 'trainer' ? T.cyan : T.card,
+                  border: msg.from === 'trainer' ? 'none' : `1px solid ${T.border}`,
+                  color: msg.from === 'trainer' ? '#FFFFFF' : T.ink,
+                  fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', maxWidth: '72%',
+                }}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{
+            display: 'flex', gap: '8px', alignItems: 'center',
+            marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${T.border}`,
+          }}>
+            <input
+              type="text"
+              placeholder={`Message ${activeMessage.parentName}...`}
+              style={{
+                flex: 1, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)',
+                borderRadius: '999px', padding: '12px 20px', fontSize: '16px',
+                fontFamily: "'Hanken Grotesk', sans-serif", outline: 'none',
+              }}
+            />
+            <button style={{
+              width: 44, height: 44, borderRadius: '999px', flexShrink: 0,
+              background: T.cyan, color: '#FFFFFF', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
+    >
+      <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '28px', color: T.ink }}>
+            Messages
+          </div>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink2, marginTop: '4px' }}>
+            {unreadCount} unread
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {MOCK_MESSAGES.map((message) => (
+            <div
+              key={message.id}
+              onClick={() => setActiveThread(message.id)}
+              style={{
+                background: T.card,
+                border: `1px solid ${message.unread ? 'rgba(0,188,200,0.20)' : T.border}`,
+                borderRadius: '14px', padding: '16px 20px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '12px',
+              }}
+            >
+              <div style={{
+                width: 44, height: 44, borderRadius: '999px', background: T.cyanLight, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.cyan,
+              }}>
+                {message.parentInitials}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px', color: T.ink, marginBottom: '2px' }}>
+                  {message.parentName}
+                </div>
+                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, marginBottom: '4px' }}>
+                  {message.childName} · {message.sport}
+                </div>
+                <div style={{
+                  fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {message.lastMessage}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
+                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>
+                  {message.time}
+                </span>
+                {message.unread && (
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: T.cyan }} />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
 // ── Desktop sidebar ────────────────────────────────────────────────────────────
 
 function Sidebar({
@@ -1458,88 +1966,38 @@ export default function TrainerDashboardPage() {
           paddingBottom: '40px',
         }}
       >
-        <div
-          style={{
-            padding: '32px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '24px',
-          }}
-        >
-          {/* Greeting */}
-          <div>
-            <div
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 600,
-                fontSize: '28px',
-                color: '#111827',
-              }}
-            >
-              {getGreeting()}, Marcus.
-            </div>
-            <div
-              style={{
-                fontSize: '14px',
-                color: '#374151',
-                marginTop: '4px',
-                fontFamily: "'Hanken Grotesk', sans-serif",
-              }}
-            >
-              Here&apos;s your day at a glance.
-            </div>
-          </div>
-
-          {/* Stat strip — horizontal scroll */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '10px',
-              overflowX: 'auto',
-              scrollbarWidth: 'none' as const,
-            }}
+        {activeNav === 'home' && (
+          <HomeView
+            activeDay={activeDay}
+            onDaySelect={setActiveDay}
+            nextSession={nextSession}
+            filteredSessions={filteredSessions}
+          />
+        )}
+        {activeNav === 'schedule' && <ScheduleView />}
+        {activeNav === 'earnings' && <EarningsView />}
+        {activeNav === 'messages' && <MessagesView />}
+        {activeNav === 'profile' && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
           >
-            <StatTile value="7" label="Sessions this week" index={0} accentColor="#6366F1" />
-            <StatTile value="485" label="Earnings this week" isEarnings index={1} accentColor="#00BCC8" />
-            <StatTile value="2" label="Upcoming today" index={2} accentColor="#F59E0B" />
-            <StatTile value="4.9" label="Avg rating" index={3} suffix={<IconStar />} accentColor="#10B981" />
-          </div>
-
-          {/* Content area */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <SectionLabel>Next Session</SectionLabel>
-            <NextSessionCard session={nextSession} />
-
-            <SectionLabel>Schedule</SectionLabel>
-            <WeeklyStrip activeDay={activeDay} onDaySelect={setActiveDay} />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {filteredSessions.length === 0 ? (
-                <div
-                  style={{
-                    textAlign: 'center',
-                    padding: '40px 20px',
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontWeight: 700,
-                    fontSize: '15px',
-                    color: T.ink3,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  No sessions on {activeDay}
-                </div>
-              ) : (
-                filteredSessions.map((session, i) => (
-                  <SessionCard key={session.id} session={session} index={i} />
-                ))
-              )}
+            <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: T.ink }}>
+                Profile
+              </div>
+              <Link href="/dashboard/trainer/profile" style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                background: T.cyan, color: '#FFFFFF', textDecoration: 'none',
+                padding: '14px 24px', borderRadius: '12px', width: 'fit-content',
+                fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px',
+              }}>
+                Edit your profile →
+              </Link>
             </div>
-
-            <SectionLabel>Summary</SectionLabel>
-            <EarningsCard />
-          </div>
-        </div>
+          </motion.div>
+        )}
       </motion.main>
     </div>
   )
