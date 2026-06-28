@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
@@ -1341,11 +1342,13 @@ function Sidebar({
   onSelect,
   sidebarOpen,
   onToggle,
+  isProfilePage,
 }: {
   active: string
   onSelect: (k: string) => void
   sidebarOpen: boolean
   onToggle: () => void
+  isProfilePage: boolean
 }) {
   const todaySessions = MOCK_SESSIONS.filter((s) => s.isToday).length
   const weeklyDone = 7
@@ -1435,57 +1438,58 @@ function Sidebar({
         {/* Nav items */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '8px 0', flexShrink: 0 }}>
           {NAV_ITEMS.map(({ key, label, Icon, badge }) => {
-            const isActive = key === active
-            return (
-              <button
-                key={key}
-                onClick={() => onSelect(key)}
-                onMouseEnter={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = '#F3F4F6'
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
-                }}
-                style={{
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: sidebarOpen ? '12px' : '0',
-                  justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                  padding: sidebarOpen ? '14px 24px' : '14px 0',
-                  borderRadius: '10px',
-                  background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent',
-                  border: 'none',
-                  color: isActive ? T.cyan : T.ink2,
-                  fontFamily: "'Hanken Grotesk', sans-serif",
-                  fontSize: '14px',
-                  fontWeight: isActive ? 600 : 500,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  width: '100%',
-                  minHeight: '44px',
-                  transition: 'background 0.15s',
-                  flexShrink: 0,
-                }}
-              >
+            const isActive = isProfilePage ? key === 'profile' : key === active
+            const navStyle = {
+              position: 'relative' as const,
+              display: 'flex' as const,
+              alignItems: 'center' as const,
+              gap: sidebarOpen ? '12px' : '0',
+              justifyContent: (sidebarOpen ? 'flex-start' : 'center') as 'flex-start' | 'center',
+              padding: sidebarOpen ? '14px 24px' : '14px 0',
+              borderRadius: '10px',
+              background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent',
+              color: isActive ? T.cyan : T.ink2,
+              fontFamily: "'Hanken Grotesk', sans-serif",
+              fontSize: '14px',
+              fontWeight: isActive ? 600 : 500,
+              width: '100%',
+              minHeight: '44px',
+              transition: 'background 0.15s',
+              flexShrink: 0,
+            }
+            const navContent = (
+              <>
                 <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', width: 20 }}>
                   <Icon size={20} />
                 </span>
                 {sidebarOpen && <span style={{ whiteSpace: 'nowrap' }}>{label}</span>}
                 {badge && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '20px',
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      background: '#00BCC8',
-                      flexShrink: 0,
-                    }}
-                  />
+                  <span style={{ position: 'absolute', top: '10px', right: '20px', width: '8px', height: '8px', borderRadius: '50%', background: '#00BCC8', flexShrink: 0 }} />
                 )}
+              </>
+            )
+            if (key === 'profile') {
+              return (
+                <Link
+                  key={key}
+                  href="/dashboard/trainer/profile"
+                  onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLAnchorElement).style.background = '#F3F4F6' }}
+                  onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLAnchorElement).style.background = 'transparent' }}
+                  style={{ textDecoration: 'none', cursor: 'pointer', ...navStyle }}
+                >
+                  {navContent}
+                </Link>
+              )
+            }
+            return (
+              <button
+                key={key}
+                onClick={() => onSelect(key)}
+                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = '#F3F4F6' }}
+                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+                style={{ border: 'none', cursor: 'pointer', textAlign: 'left', ...navStyle }}
+              >
+                {navContent}
               </button>
             )
           })}
@@ -1847,6 +1851,40 @@ function MobileHeader({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               {NAV_ITEMS.map(({ key, label, Icon }) => {
                 const isActive = key === activeNav
+                const mobileStyle = {
+                  display: 'flex' as const,
+                  flexDirection: 'column' as const,
+                  alignItems: 'center' as const,
+                  justifyContent: 'center' as const,
+                  gap: '8px',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent',
+                  border: `1px solid ${isActive ? 'rgba(0,188,200,0.2)' : 'rgba(0,0,0,0.08)'}`,
+                  color: isActive ? T.cyan : T.ink2,
+                  cursor: 'pointer',
+                  minHeight: '80px',
+                }
+                const mobileContent = (
+                  <>
+                    <Icon size={22} />
+                    <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 500 }}>
+                      {label}
+                    </span>
+                  </>
+                )
+                if (key === 'profile') {
+                  return (
+                    <Link
+                      key={key}
+                      href="/dashboard/trainer/profile"
+                      onClick={() => setIsOpen(false)}
+                      style={{ textDecoration: 'none', ...mobileStyle }}
+                    >
+                      {mobileContent}
+                    </Link>
+                  )
+                }
                 return (
                   <button
                     key={key}
@@ -1854,31 +1892,9 @@ function MobileHeader({
                       onSelect(key)
                       setIsOpen(false)
                     }}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      padding: '16px',
-                      borderRadius: '12px',
-                      background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent',
-                      border: `1px solid ${isActive ? 'rgba(0,188,200,0.2)' : 'rgba(0,0,0,0.08)'}`,
-                      color: isActive ? T.cyan : T.ink2,
-                      cursor: 'pointer',
-                      minHeight: '80px',
-                    }}
+                    style={mobileStyle}
                   >
-                    <Icon size={22} />
-                    <span
-                      style={{
-                        fontFamily: "'Hanken Grotesk', sans-serif",
-                        fontSize: '13px',
-                        fontWeight: 500,
-                      }}
-                    >
-                      {label}
-                    </span>
+                    {mobileContent}
                   </button>
                 )
               })}
@@ -1893,8 +1909,11 @@ function MobileHeader({
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function TrainerDashboardPage() {
+  const searchParams = useSearchParams()
   const [activeDay, setActiveDay] = useState('Mon')
-  const [activeNav, setActiveNav] = useState('home')
+  const [activeNav, setActiveNav] = useState(() => {
+    return searchParams.get('tab') ?? 'home'
+  })
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
@@ -1950,6 +1969,7 @@ export default function TrainerDashboardPage() {
             onSelect={setActiveNav}
             sidebarOpen={sidebarOpen}
             onToggle={() => setSidebarOpen((o) => !o)}
+            isProfilePage={false}
           />
           <DesktopHeader sidebarOpen={sidebarOpen} />
         </>
@@ -1977,27 +1997,6 @@ export default function TrainerDashboardPage() {
         {activeNav === 'schedule' && <ScheduleView />}
         {activeNav === 'earnings' && <EarningsView />}
         {activeNav === 'messages' && <MessagesView />}
-        {activeNav === 'profile' && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
-          >
-            <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: T.ink }}>
-                Profile
-              </div>
-              <Link href="/dashboard/trainer/profile" style={{
-                display: 'inline-flex', alignItems: 'center', gap: '8px',
-                background: T.cyan, color: '#FFFFFF', textDecoration: 'none',
-                padding: '14px 24px', borderRadius: '12px', width: 'fit-content',
-                fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px',
-              }}>
-                Edit your profile →
-              </Link>
-            </div>
-          </motion.div>
-        )}
       </motion.main>
     </div>
   )

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 import {
   ChevronLeft,
   ChevronRight,
@@ -327,9 +328,9 @@ function formatTodayDate() {
 }
 
 function Sidebar({
-  active, onSelect, sidebarOpen, onToggle,
+  active, onSelect, sidebarOpen, onToggle, isProfilePage,
 }: {
-  active: string; onSelect: (k: string) => void; sidebarOpen: boolean; onToggle: () => void
+  active: string; onSelect: (k: string) => void; sidebarOpen: boolean; onToggle: () => void; isProfilePage: boolean
 }) {
   return (
     <motion.div
@@ -362,30 +363,61 @@ function Sidebar({
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '8px 0', flexShrink: 0 }}>
           {NAV_ITEMS.map(({ key, label, Icon, badge }) => {
             const isActive = key === active
+            const profilePageHrefs: Record<string, string> = {
+              home: '/dashboard/trainer',
+              schedule: '/dashboard/trainer?tab=schedule',
+              earnings: '/dashboard/trainer?tab=earnings',
+              messages: '/dashboard/trainer?tab=messages',
+            }
+            const navStyle = {
+              position: 'relative' as const,
+              display: 'flex' as const,
+              alignItems: 'center' as const,
+              gap: sidebarOpen ? '12px' : '0',
+              justifyContent: (sidebarOpen ? 'flex-start' : 'center') as 'flex-start' | 'center',
+              padding: sidebarOpen ? '14px 24px' : '14px 0',
+              borderRadius: '10px',
+              background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent',
+              color: isActive ? T.cyan : T.ink2,
+              fontFamily: "'Hanken Grotesk', sans-serif",
+              fontSize: '14px',
+              fontWeight: isActive ? 600 : 500,
+              width: '100%',
+              minHeight: '44px',
+              transition: 'background 0.15s',
+              flexShrink: 0,
+            }
+            const navContent = (
+              <>
+                <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', width: 20 }}><Icon size={20} /></span>
+                {sidebarOpen && <span style={{ whiteSpace: 'nowrap' }}>{label}</span>}
+                {badge && (
+                  <span style={{ position: 'absolute', top: '10px', right: '20px', width: '8px', height: '8px', borderRadius: '50%', background: T.cyan, flexShrink: 0 }} />
+                )}
+              </>
+            )
+            if (isProfilePage && key !== 'profile') {
+              return (
+                <Link
+                  key={key}
+                  href={profilePageHrefs[key]}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = '#F3F4F6' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent' }}
+                  style={{ textDecoration: 'none', cursor: 'pointer', ...navStyle }}
+                >
+                  {navContent}
+                </Link>
+              )
+            }
             return (
               <button
                 key={key}
                 onClick={() => onSelect(key)}
                 onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = '#F3F4F6' }}
                 onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-                style={{
-                  position: 'relative', display: 'flex', alignItems: 'center',
-                  gap: sidebarOpen ? '12px' : '0',
-                  justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                  padding: sidebarOpen ? '14px 24px' : '14px 0',
-                  borderRadius: '10px',
-                  background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent',
-                  border: 'none', color: isActive ? T.cyan : T.ink2,
-                  fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px',
-                  fontWeight: isActive ? 600 : 500, cursor: 'pointer', textAlign: 'left',
-                  width: '100%', minHeight: '44px', transition: 'background 0.15s', flexShrink: 0,
-                }}
+                style={{ border: 'none', cursor: 'pointer', textAlign: 'left', ...navStyle }}
               >
-                <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', width: 20 }}><Icon size={20} /></span>
-                {sidebarOpen && <span style={{ whiteSpace: 'nowrap' }}>{label}</span>}
-                {badge && (
-                  <span style={{ position: 'absolute', top: '10px', right: '20px', width: '8px', height: '8px', borderRadius: '50%', background: T.cyan, flexShrink: 0 }} />
-                )}
+                {navContent}
               </button>
             )
           })}
@@ -484,11 +516,36 @@ function MobileHeader({ activeNav, onSelect }: { activeNav: string; onSelect: (k
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               {NAV_ITEMS.map(({ key, label, Icon }) => {
                 const isActive = key === activeNav
-                return (
-                  <button key={key} onClick={() => { onSelect(key); setIsOpen(false) }}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '16px', borderRadius: '12px', background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent', border: `1px solid ${isActive ? 'rgba(0,188,200,0.2)' : 'rgba(0,0,0,0.08)'}`, color: isActive ? T.cyan : T.ink2, cursor: 'pointer', minHeight: '80px' }}>
+                const mobileHrefs: Record<string, string> = {
+                  home: '/dashboard/trainer',
+                  schedule: '/dashboard/trainer?tab=schedule',
+                  earnings: '/dashboard/trainer?tab=earnings',
+                  messages: '/dashboard/trainer?tab=messages',
+                }
+                const mobileStyle = {
+                  display: 'flex' as const, flexDirection: 'column' as const, alignItems: 'center' as const,
+                  justifyContent: 'center' as const, gap: '8px', padding: '16px', borderRadius: '12px',
+                  background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent',
+                  border: `1px solid ${isActive ? 'rgba(0,188,200,0.2)' : 'rgba(0,0,0,0.08)'}`,
+                  color: isActive ? T.cyan : T.ink2, cursor: 'pointer', minHeight: '80px',
+                }
+                const mobileContent = (
+                  <>
                     <Icon size={22} />
                     <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 500 }}>{label}</span>
+                  </>
+                )
+                if (key !== 'profile') {
+                  return (
+                    <Link key={key} href={mobileHrefs[key]} onClick={() => setIsOpen(false)}
+                      style={{ textDecoration: 'none', ...mobileStyle }}>
+                      {mobileContent}
+                    </Link>
+                  )
+                }
+                return (
+                  <button key={key} onClick={() => { onSelect(key); setIsOpen(false) }} style={mobileStyle}>
+                    {mobileContent}
                   </button>
                 )
               })}
@@ -1365,7 +1422,7 @@ export default function TrainerProfilePage() {
         <MobileHeader activeNav={activeNav} onSelect={setActiveNav} />
       ) : (
         <>
-          <Sidebar active={activeNav} onSelect={setActiveNav} sidebarOpen={sidebarOpen} onToggle={() => setSidebarOpen((o) => !o)} />
+          <Sidebar active={activeNav} onSelect={setActiveNav} sidebarOpen={sidebarOpen} onToggle={() => setSidebarOpen((o) => !o)} isProfilePage={true} />
           <DesktopHeader sidebarOpen={sidebarOpen} />
         </>
       )}
