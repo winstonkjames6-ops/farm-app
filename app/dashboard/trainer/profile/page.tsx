@@ -218,18 +218,17 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: () => void }) {
         padding: 0,
       }}
     >
-      <motion.div
-        animate={{ x: on ? 22 : 2 }}
-        transition={{ duration: 0.15 }}
+      <div
         style={{
           position: 'absolute',
           top: '2px',
-          left: 0,
+          left: on ? '22px' : '2px',
           width: '20px',
           height: '20px',
-          borderRadius: '999px',
+          borderRadius: '50%',
           background: '#FFFFFF',
           boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+          transition: 'left 0.2s',
         }}
       />
     </button>
