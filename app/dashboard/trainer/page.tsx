@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
@@ -61,6 +62,15 @@ const T = {
   ink: '#111827',
   ink2: '#6B7280',
   ink3: '#9CA3AF',
+}
+
+// ── Greeting helper ────────────────────────────────────────────────────────────
+
+function getGreeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
 }
 
 // ── Icons (Lucide-style inline SVG) ───────────────────────────────────────────
@@ -167,12 +177,14 @@ function StatTile({
   isEarnings,
   suffix,
   index,
+  accentColor,
 }: {
   value: string
   label: string
   isEarnings?: boolean
   suffix?: React.ReactNode
   index: number
+  accentColor: string
 }) {
   return (
     <motion.div
@@ -182,6 +194,7 @@ function StatTile({
       style={{
         background: T.card,
         border: `1px solid ${T.border}`,
+        borderLeft: `4px solid ${accentColor}`,
         borderRadius: '12px',
         padding: '16px',
         minWidth: '130px',
@@ -205,7 +218,7 @@ function StatTile({
           <span
             style={{
               fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 800,
+              fontWeight: 600,
               fontSize: '48px',
               color: T.ink,
               lineHeight: 1,
@@ -219,7 +232,7 @@ function StatTile({
           <span
             style={{
               fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 800,
+              fontWeight: 600,
               fontSize: '48px',
               color: T.ink,
               lineHeight: 1,
@@ -305,9 +318,9 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       style={{
-        background: T.cyanDim,
-        border: `1px solid ${T.cyanBorder}`,
-        borderLeft: `3px solid ${T.cyan}`,
+        background: 'rgba(0,188,200,0.10)',
+        border: `1px solid rgba(0,188,200,0.25)`,
+        borderLeft: `4px solid ${T.cyan}`,
         borderRadius: '16px',
         padding: '20px',
       }}
@@ -327,7 +340,7 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
             <span
               style={{
                 fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 800,
+                fontWeight: 700,
                 fontSize: '22px',
                 color: T.ink,
                 letterSpacing: '0.02em',
@@ -338,7 +351,7 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
             <span
               style={{
                 padding: '3px 10px',
-                border: `1px solid ${T.cyanBorder}`,
+                border: `1px solid rgba(0,188,200,0.25)`,
                 color: T.cyan,
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 700,
@@ -353,7 +366,7 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
           <div
             style={{
               fontFamily: "'Hanken Grotesk', sans-serif",
-              fontSize: '13px',
+              fontSize: '14px',
               color: T.ink2,
               marginBottom: '12px',
             }}
@@ -364,7 +377,7 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
             style={{
               fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 700,
-              fontSize: '28px',
+              fontSize: '32px',
               color: T.ink,
               lineHeight: 1,
               letterSpacing: '-0.01em',
@@ -378,7 +391,7 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
               alignItems: 'center',
               gap: '5px',
               marginTop: '6px',
-              color: T.ink2,
+              color: T.ink3,
               fontFamily: "'Hanken Grotesk', sans-serif",
               fontSize: '13px',
             }}
@@ -404,7 +417,7 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
               height: 48,
               borderRadius: '999px',
               background: T.cyanLight,
-              border: `2px solid ${T.cyanBorder}`,
+              border: `2px solid rgba(0,188,200,0.25)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -418,8 +431,8 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
           </div>
           <button
             style={{
-              padding: '0 20px',
-              height: '44px',
+              padding: '12px 20px',
+              minHeight: '44px',
               background: T.cyan,
               color: '#FFFFFF',
               fontFamily: "'Hanken Grotesk', sans-serif",
@@ -473,8 +486,8 @@ function WeeklyStrip({
               padding: '8px 14px',
               borderRadius: '999px',
               background: isActive ? T.cyan : 'transparent',
-              border: `1px solid ${isActive ? T.cyan : T.border}`,
-              color: isActive ? '#FFFFFF' : T.ink2,
+              border: `1px solid ${isActive ? T.cyan : '#E5E7EB'}`,
+              color: isActive ? '#FFFFFF' : T.ink3,
               fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 700,
               fontSize: '13px',
@@ -486,15 +499,20 @@ function WeeklyStrip({
             }}
           >
             {day}
-            <span
-              style={{
-                width: '5px',
-                height: '5px',
-                borderRadius: '999px',
-                background: isActive ? '#FFFFFF' : hasSessions ? T.cyan : 'transparent',
-                transition: 'background 0.15s',
-              }}
-            />
+            {hasSessions ? (
+              <span
+                style={{
+                  width: '4px',
+                  height: '4px',
+                  borderRadius: '999px',
+                  background: T.cyan,
+                  transition: 'background 0.15s',
+                  flexShrink: 0,
+                }}
+              />
+            ) : (
+              <span style={{ width: '4px', height: '4px', flexShrink: 0 }} />
+            )}
           </button>
         )
       })}
@@ -528,7 +546,7 @@ function SessionCard({ session, index }: { session: (typeof MOCK_SESSIONS)[0]; i
         background: T.card,
         border: `1px solid ${T.border}`,
         borderRadius: '14px',
-        padding: '16px',
+        padding: '16px 20px',
         display: 'flex',
         flexDirection: 'column',
         gap: '12px',
@@ -547,7 +565,7 @@ function SessionCard({ session, index }: { session: (typeof MOCK_SESSIONS)[0]; i
           <div
             style={{
               fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 800,
+              fontWeight: 700,
               fontSize: '18px',
               color: T.ink,
               letterSpacing: '0.01em',
@@ -568,15 +586,15 @@ function SessionCard({ session, index }: { session: (typeof MOCK_SESSIONS)[0]; i
             </span>
             <span
               style={{
-                padding: '2px 8px',
+                padding: '3px 10px',
                 background: badge.bg,
                 color: badge.color,
                 border: badge.border,
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 700,
-                fontSize: '10px',
+                fontSize: '11px',
                 letterSpacing: '0.08em',
-                borderRadius: '4px',
+                borderRadius: '6px',
               }}
             >
               {session.type}
@@ -706,7 +724,7 @@ function EarningsCard() {
       style={{
         background: T.card,
         border: `1px solid ${T.border}`,
-        borderRadius: '16px',
+        borderRadius: '14px',
         padding: '20px',
         display: 'flex',
         flexDirection: 'column',
@@ -716,11 +734,9 @@ function EarningsCard() {
       <div
         style={{
           fontFamily: "'Barlow Condensed', sans-serif",
-          fontWeight: 800,
+          fontWeight: 700,
           fontSize: '22px',
           color: T.ink,
-          letterSpacing: '0.04em',
-          textTransform: 'uppercase',
         }}
       >
         Earnings
@@ -748,18 +764,18 @@ function EarningsCard() {
           <span
             style={{
               fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700,
+              fontWeight: 600,
               fontSize: '22px',
               color: T.ink,
             }}
           >
             ${weeklyAmount}
-            <span style={{ fontSize: '13px', color: T.ink3, marginLeft: '4px' }}>/ ${weeklyGoal}</span>
+            <span style={{ fontSize: '13px', color: T.ink3, marginLeft: '4px', fontWeight: 400 }}>/ ${weeklyGoal}</span>
           </span>
         </div>
         <div
           style={{
-            height: '4px',
+            height: '6px',
             borderRadius: '999px',
             background: '#E5E7EB',
             overflow: 'hidden',
@@ -812,7 +828,7 @@ function EarningsCard() {
         <span
           style={{
             fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 700,
+            fontWeight: 600,
             fontSize: '22px',
             color: T.ink,
           }}
@@ -831,11 +847,12 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <div
       style={{
         fontFamily: "'Barlow Condensed', sans-serif",
-        fontWeight: 700,
+        fontWeight: 500,
         fontSize: '11px',
-        letterSpacing: '0.12em',
+        letterSpacing: '0.08em',
         color: T.ink3,
         textTransform: 'uppercase',
+        marginBottom: '12px',
       }}
     >
       {children}
@@ -845,40 +862,88 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 // ── Desktop sidebar ────────────────────────────────────────────────────────────
 
-function Sidebar({ active, onSelect }: { active: string; onSelect: (k: string) => void }) {
+function Sidebar({
+  active,
+  onSelect,
+  sidebarOpen,
+  onToggle,
+}: {
+  active: string
+  onSelect: (k: string) => void
+  sidebarOpen: boolean
+  onToggle: () => void
+}) {
   return (
-    <div
+    <motion.div
+      animate={{ width: sidebarOpen ? 240 : 72 }}
+      transition={{ duration: 0.25, ease: 'easeInOut' }}
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
-        width: '240px',
         height: '100vh',
         background: '#FFFFFF',
         borderRight: '1px solid rgba(0,0,0,0.08)',
         zIndex: 50,
         display: 'flex',
         flexDirection: 'column',
+        overflow: 'hidden',
       }}
     >
-      {/* Wordmark */}
-      <div style={{ padding: '24px 24px 20px' }}>
-        <span
+      {/* Wordmark + logo mark */}
+      <div
+        style={{
+          padding: '24px 24px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          flexShrink: 0,
+        }}
+      >
+        {/* Logo mark */}
+        <div
           style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 800,
-            fontSize: '22px',
-            color: T.cyan,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
+            width: 28,
+            height: 28,
+            borderRadius: '6px',
+            background: T.cyan,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
-          FARM
-        </span>
+          <span
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              fontSize: '16px',
+              color: '#FFFFFF',
+              lineHeight: 1,
+            }}
+          >
+            F
+          </span>
+        </div>
+        {sidebarOpen && (
+          <span
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 800,
+              fontSize: '22px',
+              color: T.cyan,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            FARM
+          </span>
+        )}
       </div>
 
       {/* Divider */}
-      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', marginBottom: '8px' }} />
+      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', marginBottom: '8px', flexShrink: 0 }} />
 
       {/* Nav items */}
       <nav
@@ -886,7 +951,7 @@ function Sidebar({ active, onSelect }: { active: string; onSelect: (k: string) =
           display: 'flex',
           flexDirection: 'column',
           gap: '4px',
-          padding: '16px 12px',
+          padding: '8px 0',
           flex: 1,
         }}
       >
@@ -898,7 +963,7 @@ function Sidebar({ active, onSelect }: { active: string; onSelect: (k: string) =
               onClick={() => onSelect(key)}
               onMouseEnter={(e) => {
                 if (!isActive)
-                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.04)'
+                  (e.currentTarget as HTMLButtonElement).style.background = '#F3F4F6'
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
@@ -907,8 +972,9 @@ function Sidebar({ active, onSelect }: { active: string; onSelect: (k: string) =
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                padding: '10px 14px',
+                gap: sidebarOpen ? '12px' : '0',
+                justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                padding: sidebarOpen ? '10px 24px' : '10px 0',
                 borderRadius: '10px',
                 background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent',
                 border: 'none',
@@ -921,17 +987,56 @@ function Sidebar({ active, onSelect }: { active: string; onSelect: (k: string) =
                 width: '100%',
                 minHeight: '44px',
                 transition: 'background 0.15s',
+                flexShrink: 0,
               }}
             >
-              <Icon size={20} />
-              {label}
+              <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', width: 20 }}>
+                <Icon size={20} />
+              </span>
+              {sidebarOpen && (
+                <span style={{ whiteSpace: 'nowrap' }}>{label}</span>
+              )}
             </button>
           )
         })}
       </nav>
 
       {/* Divider */}
-      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)' }} />
+      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
+
+      {/* Toggle button */}
+      <button
+        onClick={onToggle}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = '#F3F4F6'
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
+        }}
+        style={{
+          width: '100%',
+          padding: '12px 24px',
+          display: 'flex',
+          justifyContent: sidebarOpen ? 'flex-end' : 'center',
+          alignItems: 'center',
+          background: 'transparent',
+          border: 'none',
+          color: T.ink3,
+          cursor: 'pointer',
+          flexShrink: 0,
+          minHeight: '44px',
+          transition: 'background 0.15s',
+        }}
+      >
+        {sidebarOpen ? (
+          <ChevronLeft size={20} color={T.ink3} />
+        ) : (
+          <ChevronRight size={20} color={T.ink3} />
+        )}
+      </button>
+
+      {/* Divider */}
+      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
 
       {/* Trainer info pinned to bottom */}
       <div
@@ -940,6 +1045,8 @@ function Sidebar({ active, onSelect }: { active: string; onSelect: (k: string) =
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
+          justifyContent: sidebarOpen ? 'flex-start' : 'center',
+          flexShrink: 0,
         }}
       >
         <div
@@ -961,42 +1068,47 @@ function Sidebar({ active, onSelect }: { active: string; onSelect: (k: string) =
         >
           MT
         </div>
-        <div>
-          <div
-            style={{
-              fontFamily: "'Hanken Grotesk', sans-serif",
-              fontSize: '14px',
-              fontWeight: 600,
-              color: T.ink,
-              lineHeight: 1.3,
-            }}
-          >
-            Marcus Torres
+        {sidebarOpen && (
+          <div style={{ overflow: 'hidden' }}>
+            <div
+              style={{
+                fontFamily: "'Hanken Grotesk', sans-serif",
+                fontSize: '14px',
+                fontWeight: 600,
+                color: T.ink,
+                lineHeight: 1.3,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Marcus Torres
+            </div>
+            <div
+              style={{
+                fontFamily: "'Hanken Grotesk', sans-serif",
+                fontSize: '12px',
+                color: T.ink3,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Trainer
+            </div>
           </div>
-          <div
-            style={{
-              fontFamily: "'Hanken Grotesk', sans-serif",
-              fontSize: '12px',
-              color: T.ink3,
-            }}
-          >
-            Trainer
-          </div>
-        </div>
+        )}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
 // ── Desktop header ─────────────────────────────────────────────────────────────
 
-function DesktopHeader() {
+function DesktopHeader({ sidebarOpen }: { sidebarOpen: boolean }) {
   return (
-    <header
+    <motion.header
+      animate={{ left: sidebarOpen ? 240 : 72 }}
+      transition={{ duration: 0.25, ease: 'easeInOut' }}
       style={{
         position: 'fixed',
         top: 0,
-        left: '240px',
         right: 0,
         height: '64px',
         background: 'rgba(248,248,246,0.9)',
@@ -1010,43 +1122,22 @@ function DesktopHeader() {
         zIndex: 40,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <button
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: T.ink2,
-            cursor: 'pointer',
-            minWidth: '44px',
-            minHeight: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <IconBell />
-        </button>
-        <div
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '999px',
-            background: T.cyan,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 800,
-            fontSize: '13px',
-            color: '#FFFFFF',
-            cursor: 'pointer',
-            letterSpacing: '0.04em',
-          }}
-        >
-          MT
-        </div>
-      </div>
-    </header>
+      <button
+        style={{
+          background: 'transparent',
+          border: 'none',
+          color: T.ink2,
+          cursor: 'pointer',
+          minWidth: '44px',
+          minHeight: '44px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <IconBell />
+      </button>
+    </motion.header>
   )
 }
 
@@ -1093,22 +1184,42 @@ function MobileHeader({
         >
           FARM
         </span>
-        <button
-          onClick={() => setIsOpen((o) => !o)}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: '#374151',
-            cursor: 'pointer',
-            minWidth: '44px',
-            minHeight: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {isOpen ? <IconX /> : <IconMenu />}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '999px',
+              background: T.cyan,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 800,
+              fontSize: '13px',
+              color: '#FFFFFF',
+              letterSpacing: '0.04em',
+            }}
+          >
+            MT
+          </div>
+          <button
+            onClick={() => setIsOpen((o) => !o)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#374151',
+              cursor: 'pointer',
+              minWidth: '44px',
+              minHeight: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {isOpen ? <IconX /> : <IconMenu />}
+          </button>
+        </div>
       </header>
 
       <AnimatePresence>
@@ -1153,8 +1264,8 @@ function MobileHeader({
                       gap: '8px',
                       padding: '16px',
                       borderRadius: '12px',
-                      background: isActive ? 'rgba(0,188,200,0.08)' : 'rgba(0,0,0,0.03)',
-                      border: 'none',
+                      background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent',
+                      border: `1px solid ${isActive ? 'rgba(0,188,200,0.2)' : 'rgba(0,0,0,0.08)'}`,
                       color: isActive ? T.cyan : T.ink2,
                       cursor: 'pointer',
                       minHeight: '80px',
@@ -1187,6 +1298,7 @@ export default function TrainerDashboardPage() {
   const [activeDay, setActiveDay] = useState('Mon')
   const [activeNav, setActiveNav] = useState('home')
   const [isMobile, setIsMobile] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -1197,6 +1309,7 @@ export default function TrainerDashboardPage() {
 
   const nextSession = MOCK_SESSIONS.find((s) => s.isToday) ?? null
   const filteredSessions = MOCK_SESSIONS.filter((s) => s.day === activeDay)
+  const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, position: 'relative' }}>
@@ -1238,35 +1351,65 @@ export default function TrainerDashboardPage() {
         <MobileHeader activeNav={activeNav} onSelect={setActiveNav} />
       ) : (
         <>
-          <Sidebar active={activeNav} onSelect={setActiveNav} />
-          <DesktopHeader />
+          <Sidebar
+            active={activeNav}
+            onSelect={setActiveNav}
+            sidebarOpen={sidebarOpen}
+            onToggle={() => setSidebarOpen((o) => !o)}
+          />
+          <DesktopHeader sidebarOpen={sidebarOpen} />
         </>
       )}
 
       {/* Scrollable main content */}
-      <main
+      <motion.main
+        animate={{ marginLeft: sidebarWidth }}
+        transition={{ duration: 0.25, ease: 'easeInOut' }}
         style={{
           position: 'relative',
           zIndex: 1,
           paddingTop: '64px',
           paddingBottom: '40px',
-          marginLeft: isMobile ? 0 : '240px',
         }}
       >
+        {/* Greeting */}
+        <div style={{ padding: '24px 20px 0', marginBottom: '24px' }}>
+          <div
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 600,
+              fontSize: '28px',
+              color: '#111827',
+            }}
+          >
+            {getGreeting()}, Marcus.
+          </div>
+          <div
+            style={{
+              fontSize: '14px',
+              color: '#9CA3AF',
+              marginTop: '4px',
+              fontFamily: "'Hanken Grotesk', sans-serif",
+            }}
+          >
+            Here&apos;s your day at a glance.
+          </div>
+        </div>
+
         {/* Stat strip — horizontal scroll */}
         <div
           style={{
             display: 'flex',
             gap: '10px',
             overflowX: 'auto',
-            padding: '20px 20px 0',
+            padding: '0 20px',
             scrollbarWidth: 'none' as const,
           }}
         >
-          <StatTile value="7" label="Sessions this week" index={0} />
-          <StatTile value="485" label="Earnings this week" isEarnings index={1} />
-          <StatTile value="2" label="Upcoming today" index={2} />
-          <StatTile value="4.9" label="Avg rating" index={3} suffix={<IconStar />} />
+          <StatTile value="7" label="Sessions this week" index={0} accentColor="#6366F1" />
+          <StatTile value="485" label="Earnings this week" isEarnings index={1} accentColor="#00BCC8" />
+          <StatTile value="2" label="Upcoming today" index={2} accentColor="#F59E0B" />
+          <StatTile value="4.9" label="Avg rating" index={3} suffix={<IconStar />} accentColor="#10B981" />
         </div>
 
         {/* Content area */}
@@ -1310,7 +1453,7 @@ export default function TrainerDashboardPage() {
           <SectionLabel>Summary</SectionLabel>
           <EarningsCard />
         </div>
-      </main>
+      </motion.main>
     </div>
   )
 }
