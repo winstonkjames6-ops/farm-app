@@ -6,6 +6,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
+const MOCK_TRAINER = {
+  name: 'Marcus Torres',
+  initials: 'MT',
+  sport: 'soccer',
+}
+
 const MOCK_SESSIONS = [
   {
     id: 1,
@@ -64,13 +70,20 @@ const T = {
   ink3: '#9CA3AF',
 }
 
-// ── Greeting helper ────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function getGreeting() {
   const hour = new Date().getHours()
   if (hour < 12) return 'Good morning'
   if (hour < 18) return 'Good afternoon'
   return 'Good evening'
+}
+
+function formatTodayDate() {
+  const now = new Date()
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return `${dayNames[now.getDay()]}, ${monthNames[now.getMonth()]} ${now.getDate()}`
 }
 
 // ── Icons (Lucide-style inline SVG) ───────────────────────────────────────────
@@ -196,8 +209,8 @@ function StatTile({
         border: `1px solid ${T.border}`,
         borderLeft: `4px solid ${accentColor}`,
         borderRadius: '12px',
-        padding: '16px',
-        minWidth: '130px',
+        padding: '20px 24px',
+        minWidth: '140px',
         flexShrink: 0,
       }}
     >
@@ -274,7 +287,7 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
           background: T.card,
           border: `1px solid ${T.border}`,
           borderRadius: '16px',
-          padding: '32px 20px',
+          padding: '32px 24px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -322,11 +335,10 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
         border: `1px solid rgba(0,188,200,0.25)`,
         borderLeft: `4px solid ${T.cyan}`,
         borderRadius: '16px',
-        padding: '20px',
+        padding: '24px',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-        {/* Left: child + time info */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -401,7 +413,6 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
           </div>
         </div>
 
-        {/* Right: avatar + CTA */}
         <div
           style={{
             display: 'flex',
@@ -506,7 +517,6 @@ function WeeklyStrip({
                   height: '4px',
                   borderRadius: '999px',
                   background: T.cyan,
-                  transition: 'background 0.15s',
                   flexShrink: 0,
                 }}
               />
@@ -552,7 +562,6 @@ function SessionCard({ session, index }: { session: (typeof MOCK_SESSIONS)[0]; i
         gap: '12px',
       }}
     >
-      {/* Top row */}
       <div
         style={{
           display: 'flex',
@@ -614,7 +623,6 @@ function SessionCard({ session, index }: { session: (typeof MOCK_SESSIONS)[0]; i
         </div>
       </div>
 
-      {/* Location + message row */}
       <div
         style={{
           display: 'flex',
@@ -655,7 +663,6 @@ function SessionCard({ session, index }: { session: (typeof MOCK_SESSIONS)[0]; i
         </button>
       </div>
 
-      {/* Action row */}
       <div
         style={{
           display: 'flex',
@@ -742,7 +749,6 @@ function EarningsCard() {
         Earnings
       </div>
 
-      {/* This week */}
       <div>
         <div
           style={{
@@ -752,49 +758,24 @@ function EarningsCard() {
             marginBottom: '10px',
           }}
         >
-          <span
-            style={{
-              fontFamily: "'Hanken Grotesk', sans-serif",
-              fontSize: '13px',
-              color: T.ink2,
-            }}
-          >
+          <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>
             This week
           </span>
-          <span
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 600,
-              fontSize: '22px',
-              color: T.ink,
-            }}
-          >
+          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '22px', color: T.ink }}>
             ${weeklyAmount}
             <span style={{ fontSize: '13px', color: T.ink3, marginLeft: '4px', fontWeight: 400 }}>/ ${weeklyGoal}</span>
           </span>
         </div>
-        <div
-          style={{
-            height: '6px',
-            borderRadius: '999px',
-            background: '#E5E7EB',
-            overflow: 'hidden',
-          }}
-        >
+        <div style={{ height: '6px', borderRadius: '999px', background: '#E5E7EB', overflow: 'hidden' }}>
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.9, delay: 0.4, ease: 'easeOut' }}
-            style={{
-              height: '100%',
-              borderRadius: '999px',
-              background: T.cyan,
-            }}
+            style={{ height: '100%', borderRadius: '999px', background: T.cyan }}
           />
         </div>
       </div>
 
-      {/* Pending payout */}
       <div
         style={{
           display: 'flex',
@@ -805,34 +786,14 @@ function EarningsCard() {
         }}
       >
         <div>
-          <div
-            style={{
-              fontFamily: "'Hanken Grotesk', sans-serif",
-              fontSize: '13px',
-              color: T.ink2,
-              marginBottom: '2px',
-            }}
-          >
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, marginBottom: '2px' }}>
             Pending payout
           </div>
-          <div
-            style={{
-              fontFamily: "'Hanken Grotesk', sans-serif",
-              fontSize: '12px',
-              color: T.ink3,
-            }}
-          >
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>
             Stripe payout Friday
           </div>
         </div>
-        <span
-          style={{
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 600,
-            fontSize: '22px',
-            color: T.ink,
-          }}
-        >
+        <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '22px', color: T.ink }}>
           ${pending}
         </span>
       </div>
@@ -873,6 +834,10 @@ function Sidebar({
   sidebarOpen: boolean
   onToggle: () => void
 }) {
+  const todaySessions = MOCK_SESSIONS.filter((s) => s.isToday).length
+  const weeklyDone = 7
+  const weeklyGoal = 10
+
   return (
     <motion.div
       animate={{ width: sidebarOpen ? 240 : 72 }}
@@ -882,219 +847,310 @@ function Sidebar({
         top: 0,
         left: 0,
         height: '100vh',
-        background: '#FFFFFF',
-        borderRight: '1px solid rgba(0,0,0,0.08)',
         zIndex: 50,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
+        overflow: 'visible',
       }}
     >
-      {/* Wordmark + logo mark */}
+      {/* Inner content — clips sidebar body */}
       <div
         style={{
-          padding: '24px 24px 20px',
+          position: 'absolute',
+          inset: 0,
+          background: '#FFFFFF',
+          borderRight: '1px solid rgba(0,0,0,0.08)',
           display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          flexShrink: 0,
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
       >
-        {/* Logo mark */}
+        {/* Wordmark + logo mark */}
         <div
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: '6px',
-            background: T.cyan,
+            padding: '24px 24px 20px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            gap: '10px',
             flexShrink: 0,
           }}
         >
-          <span
+          <div
             style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700,
-              fontSize: '16px',
-              color: '#FFFFFF',
-              lineHeight: 1,
+              width: 28,
+              height: 28,
+              borderRadius: '6px',
+              background: T.cyan,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
-            F
-          </span>
-        </div>
-        {sidebarOpen && (
-          <span
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 800,
-              fontSize: '22px',
-              color: T.cyan,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            FARM
-          </span>
-        )}
-      </div>
-
-      {/* Divider */}
-      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', marginBottom: '8px', flexShrink: 0 }} />
-
-      {/* Nav items */}
-      <nav
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '4px',
-          padding: '8px 0',
-          flex: 1,
-        }}
-      >
-        {NAV_ITEMS.map(({ key, label, Icon }) => {
-          const isActive = key === active
-          return (
-            <button
-              key={key}
-              onClick={() => onSelect(key)}
-              onMouseEnter={(e) => {
-                if (!isActive)
-                  (e.currentTarget as HTMLButtonElement).style.background = '#F3F4F6'
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive)
-                  (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
-              }}
+            <span
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: sidebarOpen ? '12px' : '0',
-                justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                padding: sidebarOpen ? '10px 24px' : '10px 0',
-                borderRadius: '10px',
-                background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent',
-                border: 'none',
-                color: isActive ? T.cyan : T.ink2,
-                fontFamily: "'Hanken Grotesk', sans-serif",
-                fontSize: '14px',
-                fontWeight: isActive ? 600 : 500,
-                cursor: 'pointer',
-                textAlign: 'left',
-                width: '100%',
-                minHeight: '44px',
-                transition: 'background 0.15s',
-                flexShrink: 0,
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                fontSize: '16px',
+                color: '#FFFFFF',
+                lineHeight: 1,
               }}
             >
-              <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', width: 20 }}>
-                <Icon size={20} />
-              </span>
-              {sidebarOpen && (
-                <span style={{ whiteSpace: 'nowrap' }}>{label}</span>
-              )}
-            </button>
-          )
-        })}
-      </nav>
+              F
+            </span>
+          </div>
+          {sidebarOpen && (
+            <span
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 800,
+                fontSize: '22px',
+                color: T.cyan,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              FARM
+            </span>
+          )}
+        </div>
 
-      {/* Divider */}
-      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
+        {/* Divider */}
+        <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', marginBottom: '8px', flexShrink: 0 }} />
 
-      {/* Toggle button */}
+        {/* Nav items */}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '8px 0', flexShrink: 0 }}>
+          {NAV_ITEMS.map(({ key, label, Icon }) => {
+            const isActive = key === active
+            return (
+              <button
+                key={key}
+                onClick={() => onSelect(key)}
+                onMouseEnter={(e) => {
+                  if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = '#F3F4F6'
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: sidebarOpen ? '12px' : '0',
+                  justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                  padding: sidebarOpen ? '14px 24px' : '14px 0',
+                  borderRadius: '10px',
+                  background: isActive ? 'rgba(0,188,200,0.08)' : 'transparent',
+                  border: 'none',
+                  color: isActive ? T.cyan : T.ink2,
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontSize: '14px',
+                  fontWeight: isActive ? 600 : 500,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                  minHeight: '44px',
+                  transition: 'background 0.15s',
+                  flexShrink: 0,
+                }}
+              >
+                <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', width: 20 }}>
+                  <Icon size={20} />
+                </span>
+                {sidebarOpen && <span style={{ whiteSpace: 'nowrap' }}>{label}</span>}
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* Today section — fills remaining space */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+          {/* Divider with margin */}
+          <div style={{ height: '1px', background: '#E5E7EB', margin: '16px 0', flexShrink: 0 }} />
+
+          {sidebarOpen ? (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {/* TODAY label */}
+              <div
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 500,
+                  fontSize: '11px',
+                  letterSpacing: '0.08em',
+                  color: T.ink3,
+                  textTransform: 'uppercase',
+                  padding: '0 24px',
+                  marginBottom: '12px',
+                }}
+              >
+                Today
+              </div>
+
+              {/* Date line */}
+              <div
+                style={{
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontSize: '13px',
+                  color: '#374151',
+                  padding: '0 24px',
+                  marginBottom: '4px',
+                }}
+              >
+                {formatTodayDate()}
+              </div>
+
+              {/* Sessions row */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 24px',
+                  color: T.cyan,
+                }}
+              >
+                <IconCalendar size={16} />
+                <span
+                  style={{
+                    fontFamily: "'Hanken Grotesk', sans-serif",
+                    fontSize: '13px',
+                    color: '#374151',
+                  }}
+                >
+                  {todaySessions} sessions today
+                </span>
+              </div>
+
+              {/* Weekly goal */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0 24px',
+                }}
+              >
+                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>
+                  Weekly goal
+                </span>
+                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>
+                  {weeklyDone}/{weeklyGoal}
+                </span>
+              </div>
+              <div style={{ height: '4px', background: '#E5E7EB', borderRadius: '999px', overflow: 'hidden', margin: '6px 24px 0' }}>
+                <div
+                  style={{
+                    width: `${(weeklyDone / weeklyGoal) * 100}%`,
+                    height: '100%',
+                    background: T.cyan,
+                    borderRadius: '999px',
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0', color: T.cyan }}>
+              <IconCalendar size={16} />
+            </div>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
+
+        {/* Trainer info */}
+        <div
+          style={{
+            padding: '16px 12px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            justifyContent: sidebarOpen ? 'flex-start' : 'center',
+            flexShrink: 0,
+          }}
+        >
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: '999px',
+              background: T.cyanLight,
+              border: `2px solid ${T.cyanBorder}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              fontSize: '14px',
+              color: T.cyan,
+              flexShrink: 0,
+            }}
+          >
+            {MOCK_TRAINER.initials}
+          </div>
+          {sidebarOpen && (
+            <div style={{ overflow: 'hidden' }}>
+              <div
+                style={{
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: T.ink,
+                  lineHeight: 1.3,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {MOCK_TRAINER.name}
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontSize: '12px',
+                  color: T.ink3,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Trainer
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Protruding toggle tab */}
       <button
         onClick={onToggle}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = '#F3F4F6'
+          const icon = (e.currentTarget as HTMLButtonElement).querySelector('svg')
+          if (icon) icon.style.color = '#374151'
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
+          const icon = (e.currentTarget as HTMLButtonElement).querySelector('svg')
+          if (icon) icon.style.color = T.ink3
         }}
         style={{
-          width: '100%',
-          padding: '12px 24px',
+          position: 'absolute',
+          right: '-16px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: '16px',
+          height: '48px',
+          background: '#FFFFFF',
+          border: '1px solid rgba(0,0,0,0.08)',
+          borderLeft: 'none',
+          borderRadius: '0 8px 8px 0',
           display: 'flex',
-          justifyContent: sidebarOpen ? 'flex-end' : 'center',
           alignItems: 'center',
-          background: 'transparent',
-          border: 'none',
-          color: T.ink3,
+          justifyContent: 'center',
           cursor: 'pointer',
-          flexShrink: 0,
-          minHeight: '44px',
-          transition: 'background 0.15s',
+          boxShadow: '2px 0 8px rgba(0,0,0,0.06)',
+          padding: 0,
         }}
       >
         {sidebarOpen ? (
-          <ChevronLeft size={20} color={T.ink3} />
+          <ChevronLeft size={14} color={T.ink3} />
         ) : (
-          <ChevronRight size={20} color={T.ink3} />
+          <ChevronRight size={14} color={T.ink3} />
         )}
       </button>
-
-      {/* Divider */}
-      <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', flexShrink: 0 }} />
-
-      {/* Trainer info pinned to bottom */}
-      <div
-        style={{
-          padding: '16px 12px 24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          justifyContent: sidebarOpen ? 'flex-start' : 'center',
-          flexShrink: 0,
-        }}
-      >
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: '999px',
-            background: T.cyanLight,
-            border: `2px solid ${T.cyanBorder}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 700,
-            fontSize: '14px',
-            color: T.cyan,
-            flexShrink: 0,
-          }}
-        >
-          MT
-        </div>
-        {sidebarOpen && (
-          <div style={{ overflow: 'hidden' }}>
-            <div
-              style={{
-                fontFamily: "'Hanken Grotesk', sans-serif",
-                fontSize: '14px',
-                fontWeight: 600,
-                color: T.ink,
-                lineHeight: 1.3,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Marcus Torres
-            </div>
-            <div
-              style={{
-                fontFamily: "'Hanken Grotesk', sans-serif",
-                fontSize: '12px',
-                color: T.ink3,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Trainer
-            </div>
-          </div>
-        )}
-      </div>
     </motion.div>
   )
 }
@@ -1104,24 +1160,42 @@ function Sidebar({
 function DesktopHeader({ sidebarOpen }: { sidebarOpen: boolean }) {
   return (
     <motion.header
-      animate={{ left: sidebarOpen ? 240 : 72 }}
+      animate={{ left: sidebarOpen ? 240 : 72, width: `calc(100% - ${sidebarOpen ? 240 : 72}px)` }}
       transition={{ duration: 0.25, ease: 'easeInOut' }}
       style={{
         position: 'fixed',
         top: 0,
         right: 0,
-        height: '64px',
+        height: '52px',
         background: 'rgba(248,248,246,0.9)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         borderBottom: '1px solid rgba(0,0,0,0.08)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
         padding: '0 24px',
         zIndex: 40,
       }}
     >
+      {/* Breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ color: T.ink3, display: 'flex', alignItems: 'center' }}>
+          <IconHome size={16} />
+        </span>
+        <span
+          style={{
+            fontFamily: "'Hanken Grotesk', sans-serif",
+            fontSize: '14px',
+            color: '#374151',
+            fontWeight: 500,
+          }}
+        >
+          Dashboard
+        </span>
+      </div>
+
+      {/* Actions */}
       <button
         style={{
           background: 'transparent',
@@ -1160,7 +1234,7 @@ function MobileHeader({
           top: 0,
           left: 0,
           right: 0,
-          height: '64px',
+          height: '52px',
           background: 'rgba(255,255,255,0.92)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
@@ -1231,7 +1305,7 @@ function MobileHeader({
             transition={{ duration: 0.2 }}
             style={{
               position: 'fixed',
-              top: '64px',
+              top: '52px',
               left: 0,
               right: 0,
               background: '#FFFFFF',
@@ -1240,13 +1314,7 @@ function MobileHeader({
               zIndex: 45,
             }}
           >
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '8px',
-              }}
-            >
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               {NAV_ITEMS.map(({ key, label, Icon }) => {
                 const isActive = key === activeNav
                 return (
@@ -1312,41 +1380,37 @@ export default function TrainerDashboardPage() {
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, position: 'relative' }}>
-
-      {/* Ambient orb — cyan, top-right */}
+    <div
+      style={{
+        minHeight: '100vh',
+        position: 'relative',
+      }}
+    >
+      {/* Fixed background image layer */}
       <div
         style={{
           position: 'fixed',
-          top: '-100px',
-          right: '-100px',
-          width: '600px',
-          height: '600px',
-          borderRadius: '999px',
-          background: 'rgba(0,188,200,0.06)',
-          filter: 'blur(120px)',
+          inset: 0,
           zIndex: 0,
+          backgroundImage: `url('/backgrounds/${MOCK_TRAINER.sport}.jpg')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      />
+
+      {/* Fixed overlay */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1,
+          background: 'rgba(248,248,246,0.92)',
           pointerEvents: 'none',
         }}
       />
 
-      {/* Ambient orb — indigo, bottom-left */}
-      <div
-        style={{
-          position: 'fixed',
-          bottom: '-100px',
-          left: isMobile ? '-100px' : '140px',
-          width: '500px',
-          height: '500px',
-          borderRadius: '999px',
-          background: 'rgba(99,102,241,0.06)',
-          filter: 'blur(100px)',
-          zIndex: 0,
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Nav — sidebar on desktop, dropdown on mobile */}
+      {/* Nav */}
       {isMobile ? (
         <MobileHeader activeNav={activeNav} onSelect={setActiveNav} />
       ) : (
@@ -1367,91 +1431,92 @@ export default function TrainerDashboardPage() {
         transition={{ duration: 0.25, ease: 'easeInOut' }}
         style={{
           position: 'relative',
-          zIndex: 1,
-          paddingTop: '64px',
+          zIndex: 2,
+          paddingTop: '52px',
           paddingBottom: '40px',
         }}
       >
-        {/* Greeting */}
-        <div style={{ padding: '24px 20px 0', marginBottom: '24px' }}>
-          <div
-            style={{
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 600,
-              fontSize: '28px',
-              color: '#111827',
-            }}
-          >
-            {getGreeting()}, Marcus.
-          </div>
-          <div
-            style={{
-              fontSize: '14px',
-              color: '#9CA3AF',
-              marginTop: '4px',
-              fontFamily: "'Hanken Grotesk', sans-serif",
-            }}
-          >
-            Here&apos;s your day at a glance.
-          </div>
-        </div>
-
-        {/* Stat strip — horizontal scroll */}
         <div
           style={{
-            display: 'flex',
-            gap: '10px',
-            overflowX: 'auto',
-            padding: '0 20px',
-            scrollbarWidth: 'none' as const,
-          }}
-        >
-          <StatTile value="7" label="Sessions this week" index={0} accentColor="#6366F1" />
-          <StatTile value="485" label="Earnings this week" isEarnings index={1} accentColor="#00BCC8" />
-          <StatTile value="2" label="Upcoming today" index={2} accentColor="#F59E0B" />
-          <StatTile value="4.9" label="Avg rating" index={3} suffix={<IconStar />} accentColor="#10B981" />
-        </div>
-
-        {/* Content area */}
-        <div
-          style={{
-            padding: '20px',
+            padding: '32px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
+            gap: '24px',
           }}
         >
-          <SectionLabel>Next Session</SectionLabel>
-          <NextSessionCard session={nextSession} />
-
-          <SectionLabel>Schedule</SectionLabel>
-          <WeeklyStrip activeDay={activeDay} onDaySelect={setActiveDay} />
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {filteredSessions.length === 0 ? (
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: '40px 20px',
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontWeight: 700,
-                  fontSize: '15px',
-                  color: T.ink3,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                No sessions on {activeDay}
-              </div>
-            ) : (
-              filteredSessions.map((session, i) => (
-                <SessionCard key={session.id} session={session} index={i} />
-              ))
-            )}
+          {/* Greeting */}
+          <div>
+            <div
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 600,
+                fontSize: '28px',
+                color: '#111827',
+              }}
+            >
+              {getGreeting()}, Marcus.
+            </div>
+            <div
+              style={{
+                fontSize: '14px',
+                color: '#9CA3AF',
+                marginTop: '4px',
+                fontFamily: "'Hanken Grotesk', sans-serif",
+              }}
+            >
+              Here&apos;s your day at a glance.
+            </div>
           </div>
 
-          <SectionLabel>Summary</SectionLabel>
-          <EarningsCard />
+          {/* Stat strip — horizontal scroll */}
+          <div
+            style={{
+              display: 'flex',
+              gap: '10px',
+              overflowX: 'auto',
+              scrollbarWidth: 'none' as const,
+            }}
+          >
+            <StatTile value="7" label="Sessions this week" index={0} accentColor="#6366F1" />
+            <StatTile value="485" label="Earnings this week" isEarnings index={1} accentColor="#00BCC8" />
+            <StatTile value="2" label="Upcoming today" index={2} accentColor="#F59E0B" />
+            <StatTile value="4.9" label="Avg rating" index={3} suffix={<IconStar />} accentColor="#10B981" />
+          </div>
+
+          {/* Content area */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <SectionLabel>Next Session</SectionLabel>
+            <NextSessionCard session={nextSession} />
+
+            <SectionLabel>Schedule</SectionLabel>
+            <WeeklyStrip activeDay={activeDay} onDaySelect={setActiveDay} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {filteredSessions.length === 0 ? (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: '40px 20px',
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700,
+                    fontSize: '15px',
+                    color: T.ink3,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  No sessions on {activeDay}
+                </div>
+              ) : (
+                filteredSessions.map((session, i) => (
+                  <SessionCard key={session.id} session={session} index={i} />
+                ))
+              )}
+            </div>
+
+            <SectionLabel>Summary</SectionLabel>
+            <EarningsCard />
+          </div>
         </div>
       </motion.main>
     </div>
