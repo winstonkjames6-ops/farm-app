@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
@@ -176,10 +176,11 @@ const IconX = () => (
 // ── Nav items ──────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { key: 'home', label: 'Home', Icon: IconHome },
-  { key: 'schedule', label: 'Schedule', Icon: IconCalendar },
-  { key: 'earnings', label: 'Earnings', Icon: IconDollarSign },
-  { key: 'profile', label: 'Profile', Icon: IconUser },
+  { key: 'home', label: 'Home', Icon: IconHome, badge: false },
+  { key: 'schedule', label: 'Schedule', Icon: IconCalendar, badge: false },
+  { key: 'earnings', label: 'Earnings', Icon: IconDollarSign, badge: false },
+  { key: 'messages', label: 'Messages', Icon: MessageSquare, badge: true },
+  { key: 'profile', label: 'Profile', Icon: IconUser, badge: false },
 ]
 
 // ── Stat tile ──────────────────────────────────────────────────────────────────
@@ -925,7 +926,7 @@ function Sidebar({
 
         {/* Nav items */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '8px 0', flexShrink: 0 }}>
-          {NAV_ITEMS.map(({ key, label, Icon }) => {
+          {NAV_ITEMS.map(({ key, label, Icon, badge }) => {
             const isActive = key === active
             return (
               <button
@@ -938,6 +939,7 @@ function Sidebar({
                   if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'
                 }}
                 style={{
+                  position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
                   gap: sidebarOpen ? '12px' : '0',
@@ -962,6 +964,20 @@ function Sidebar({
                   <Icon size={20} />
                 </span>
                 {sidebarOpen && <span style={{ whiteSpace: 'nowrap' }}>{label}</span>}
+                {badge && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '20px',
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: '#00BCC8',
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
               </button>
             )
           })}
