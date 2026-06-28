@@ -1194,7 +1194,7 @@ function MessagesView() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
       >
-        <div style={{ padding: '32px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '32px' }}>
           <button
             onClick={() => setActiveThread(null)}
             style={{
@@ -1206,64 +1206,80 @@ function MessagesView() {
             ← Messages
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: '999px', background: T.cyanLight, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.cyan,
-            }}>
-              {activeMessage.parentInitials}
-            </div>
-            <div>
-              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px', color: T.ink }}>
-                {activeMessage.parentName}
-              </div>
-              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>
-                {activeMessage.childName} · {activeMessage.sport}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {mockConversation.map((msg, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: msg.from === 'trainer' ? 'flex-end' : 'flex-start' }}>
+          <div style={{
+            background: T.card,
+            border: `1px solid ${T.border}`,
+            borderRadius: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}>
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
                 <div style={{
-                  padding: '12px 16px',
-                  borderRadius: msg.from === 'trainer' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                  background: msg.from === 'trainer' ? T.cyan : T.card,
-                  border: msg.from === 'trainer' ? 'none' : `1px solid ${T.border}`,
-                  color: msg.from === 'trainer' ? '#FFFFFF' : T.ink,
-                  fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', maxWidth: '72%',
+                  width: 44, height: 44, borderRadius: '999px', background: T.cyanLight, flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.cyan,
                 }}>
-                  {msg.text}
+                  {activeMessage.parentInitials}
+                </div>
+                <div>
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px', color: T.ink }}>
+                    {activeMessage.parentName}
+                  </div>
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>
+                    {activeMessage.childName} · {activeMessage.sport}
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
 
-          <div style={{
-            display: 'flex', gap: '8px', alignItems: 'center',
-            marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${T.border}`,
-          }}>
-            <input
-              type="text"
-              placeholder={`Message ${activeMessage.parentName}...`}
-              style={{
-                flex: 1, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)',
-                borderRadius: '999px', padding: '12px 20px', fontSize: '16px',
-                fontFamily: "'Hanken Grotesk', sans-serif", outline: 'none',
-              }}
-            />
-            <button style={{
-              width: 44, height: 44, borderRadius: '999px', flexShrink: 0,
-              background: T.cyan, color: '#FFFFFF', border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              <div style={{
+                display: 'flex', flexDirection: 'column', gap: '8px',
+                minHeight: '200px', overflowY: 'auto', padding: '16px 0',
+              }}>
+                {mockConversation.map((msg, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: msg.from === 'trainer' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{
+                      padding: '12px 16px',
+                      borderRadius: msg.from === 'trainer' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                      background: msg.from === 'trainer' ? T.cyan : T.card,
+                      border: msg.from === 'trainer' ? 'none' : `1px solid ${T.border}`,
+                      color: msg.from === 'trainer' ? '#FFFFFF' : T.ink,
+                      fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', maxWidth: '72%',
+                    }}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{
+              display: 'flex', gap: '8px', alignItems: 'center',
+              padding: '16px 24px',
+              borderTop: `1px solid ${T.border}`,
+              background: T.card,
             }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13" />
-                <polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
-            </button>
+              <input
+                type="text"
+                placeholder={`Message ${activeMessage.parentName}...`}
+                style={{
+                  flex: 1, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)',
+                  borderRadius: '999px', padding: '12px 20px', fontSize: '16px',
+                  fontFamily: "'Hanken Grotesk', sans-serif", outline: 'none',
+                }}
+              />
+              <button style={{
+                width: 44, height: 44, borderRadius: '999px', flexShrink: 0,
+                background: T.cyan, color: '#FFFFFF', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </motion.div>
