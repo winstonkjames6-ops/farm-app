@@ -205,7 +205,8 @@ function StatTile({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 + index * 0.08 }}
       style={{
-        background: T.card,
+        background: 'rgba(255,255,255,0.90)',
+        backdropFilter: 'blur(8px)',
         border: `1px solid ${T.border}`,
         borderLeft: `4px solid ${accentColor}`,
         borderRadius: '12px',
@@ -331,7 +332,8 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
       style={{
-        background: 'rgba(0,188,200,0.10)',
+        background: 'rgba(255,255,255,0.88)',
+        backdropFilter: 'blur(8px)',
         border: `1px solid rgba(0,188,200,0.25)`,
         borderLeft: `4px solid ${T.cyan}`,
         borderRadius: '16px',
@@ -496,9 +498,9 @@ function WeeklyStrip({
               gap: '5px',
               padding: '8px 14px',
               borderRadius: '999px',
-              background: isActive ? T.cyan : 'transparent',
-              border: `1px solid ${isActive ? T.cyan : '#E5E7EB'}`,
-              color: isActive ? '#FFFFFF' : T.ink3,
+              background: isActive ? T.cyan : 'rgba(255,255,255,0.85)',
+              border: `1px solid ${isActive ? T.cyan : 'rgba(0,0,0,0.15)'}`,
+              color: isActive ? '#FFFFFF' : '#374151',
               fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 700,
               fontSize: '13px',
@@ -553,7 +555,8 @@ function SessionCard({ session, index }: { session: (typeof MOCK_SESSIONS)[0]; i
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28, delay: index * 0.06 }}
       style={{
-        background: T.card,
+        background: 'rgba(255,255,255,0.90)',
+        backdropFilter: 'blur(8px)',
         border: `1px solid ${T.border}`,
         borderRadius: '14px',
         padding: '16px 20px',
@@ -729,7 +732,8 @@ function EarningsCard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.15 }}
       style={{
-        background: T.card,
+        background: 'rgba(255,255,255,0.90)',
+        backdropFilter: 'blur(8px)',
         border: `1px solid ${T.border}`,
         borderRadius: '14px',
         padding: '20px',
@@ -808,10 +812,10 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <div
       style={{
         fontFamily: "'Barlow Condensed', sans-serif",
-        fontWeight: 500,
+        fontWeight: 600,
         fontSize: '11px',
         letterSpacing: '0.08em',
-        color: T.ink3,
+        color: '#111827',
         textTransform: 'uppercase',
         marginBottom: '12px',
       }}
@@ -856,7 +860,9 @@ function Sidebar({
         style={{
           position: 'absolute',
           inset: 0,
-          background: '#FFFFFF',
+          background: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           borderRight: '1px solid rgba(0,0,0,0.08)',
           display: 'flex',
           flexDirection: 'column',
@@ -1167,7 +1173,7 @@ function DesktopHeader({ sidebarOpen }: { sidebarOpen: boolean }) {
         top: 0,
         right: 0,
         height: '52px',
-        background: 'rgba(248,248,246,0.9)',
+        background: 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         borderBottom: '1px solid rgba(0,0,0,0.08)',
@@ -1405,7 +1411,7 @@ export default function TrainerDashboardPage() {
           position: 'fixed',
           inset: 0,
           zIndex: 1,
-          background: 'rgba(248,248,246,0.75)',
+          background: 'rgba(248,248,246,0.60)',
           pointerEvents: 'none',
         }}
       />
@@ -1459,7 +1465,7 @@ export default function TrainerDashboardPage() {
             <div
               style={{
                 fontSize: '14px',
-                color: '#9CA3AF',
+                color: '#374151',
                 marginTop: '4px',
                 fontFamily: "'Hanken Grotesk', sans-serif",
               }}
