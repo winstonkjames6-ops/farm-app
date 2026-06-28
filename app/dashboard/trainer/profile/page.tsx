@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   MessageSquare,
   Eye,
   Camera,
@@ -503,6 +504,7 @@ function MobileHeader({ activeNav, onSelect }: { activeNav: string; onSelect: (k
 
 function ProfilePhotoSection() {
   const profileStrength = PROFILE_ITEMS.filter((i) => i.completed).reduce((sum, i) => sum + parseInt(i.boost), 0)
+  const [strengthExpanded, setStrengthExpanded] = useState(false)
 
   return (
     <SectionCard id="section-photo">
@@ -516,44 +518,66 @@ function ProfilePhotoSection() {
         <div style={{ flex: 1, minWidth: '180px' }}>
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '24px', color: T.ink, marginBottom: '8px' }}>Marcus Torres</div>
           <div style={{ display: 'inline-block', background: 'rgba(0,188,200,0.1)', color: T.cyan, borderRadius: '6px', padding: '4px 12px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '12px' }}>Soccer</div>
-          <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '6px' }}>
-            Profile {profileStrength}% complete
-          </div>
-          <div style={{ width: '200px', height: '4px', background: '#E5E7EB', borderRadius: '999px', overflow: 'hidden', marginBottom: '16px' }}>
-            <div style={{ width: `${profileStrength}%`, height: '100%', background: T.cyan, borderRadius: '999px' }} />
-          </div>
-          <div style={{ width: '100%', maxWidth: '320px' }}>
-            {PROFILE_ITEMS.map((item, i) => (
-              <div
-                key={item.key}
-                onClick={() => !item.completed && scrollTo(item.sectionId)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '8px 0',
-                  borderBottom: i < PROFILE_ITEMS.length - 1 ? '1px solid #F3F4F6' : 'none',
-                  cursor: item.completed ? 'default' : 'pointer',
-                }}
-              >
-                {item.completed
-                  ? <CheckCircle size={16} color="#10B981" style={{ flexShrink: 0 }} />
-                  : <Circle size={16} color="#D1D5DB" style={{ flexShrink: 0 }} />}
-                <span style={{
-                  flex: 1,
-                  fontSize: '13px',
-                  fontFamily: "'Hanken Grotesk', sans-serif",
-                  color: item.completed ? '#6B7280' : '#374151',
-                  textDecoration: item.completed ? 'line-through' : 'none',
-                }}>
-                  {item.label}
-                </span>
-                {!item.completed && (
-                  <span style={{ fontSize: '12px', color: T.cyan, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500, flexShrink: 0 }}>
-                    {item.boost}
-                  </span>
-                )}
+          <div
+            onClick={() => setStrengthExpanded((e) => !e)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', cursor: 'pointer', maxWidth: '320px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+              <div style={{ width: '140px', height: '4px', background: '#E5E7EB', borderRadius: '999px', overflow: 'hidden', flexShrink: 0 }}>
+                <div style={{ width: `${profileStrength}%`, height: '100%', background: T.cyan, borderRadius: '999px' }} />
               </div>
-            ))}
+              <span style={{ fontSize: '13px', color: '#374151', fontFamily: "'Hanken Grotesk', sans-serif" }}>{profileStrength}% complete</span>
+            </div>
+            <ChevronDown
+              size={16}
+              color="#9CA3AF"
+              style={{ transform: strengthExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}
+            />
           </div>
+          <AnimatePresence>
+            {strengthExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ overflow: 'hidden' }}
+              >
+                <div style={{ width: '100%', maxWidth: '320px' }}>
+                  {PROFILE_ITEMS.map((item, i) => (
+                    <div
+                      key={item.key}
+                      onClick={() => !item.completed && scrollTo(item.sectionId)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '8px 0',
+                        borderBottom: i < PROFILE_ITEMS.length - 1 ? '1px solid #F3F4F6' : 'none',
+                        cursor: item.completed ? 'default' : 'pointer',
+                      }}
+                    >
+                      {item.completed
+                        ? <CheckCircle size={16} color="#10B981" style={{ flexShrink: 0 }} />
+                        : <Circle size={16} color="#D1D5DB" style={{ flexShrink: 0 }} />}
+                      <span style={{
+                        flex: 1,
+                        fontSize: '13px',
+                        fontFamily: "'Hanken Grotesk', sans-serif",
+                        color: item.completed ? '#6B7280' : '#374151',
+                        textDecoration: item.completed ? 'line-through' : 'none',
+                      }}>
+                        {item.label}
+                      </span>
+                      {!item.completed && (
+                        <span style={{ fontSize: '12px', color: T.cyan, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500, flexShrink: 0 }}>
+                          {item.boost}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
       <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
@@ -706,10 +730,11 @@ function IntroVideoSection() {
 
 // ── Section: Specialties ───────────────────────────────────────────────────────
 
-function SpecialtiesSection() {
+function SpecialtiesSection({ primarySport, setPrimarySport }: { primarySport: string; setPrimarySport: (s: string) => void }) {
   const [selectedSports, setSelectedSports] = useState<string[]>(['Soccer'])
   const [selectedAges, setSelectedAges] = useState<string[]>(['U9-U10', 'U11-U12'])
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['In-Person'])
+  const [pillPopover, setPillPopover] = useState<string | null>(null)
 
   function toggle(arr: string[], setArr: (a: string[]) => void, item: string) {
     setArr(arr.includes(item) ? arr.filter((x) => x !== item) : [...arr, item])
@@ -726,6 +751,16 @@ function SpecialtiesSection() {
     }
   }
 
+  function handleSportClick(sport: string) {
+    if (sport.toLowerCase() === primarySport) return
+    const isSelected = selectedSports.includes(sport)
+    if (!isSelected) {
+      setSelectedSports((prev) => [...prev, sport])
+    } else {
+      setPillPopover(pillPopover === sport ? null : sport)
+    }
+  }
+
   return (
     <SectionCard id="section-specialties">
       <CardLabel>Specialties</CardLabel>
@@ -733,11 +768,49 @@ function SpecialtiesSection() {
         <div>
           <FieldLabel>Sports</FieldLabel>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '6px' }}>
-            {SPORTS.map((sport) => (
-              <motion.button key={sport} whileTap={{ scale: 0.95 }} onClick={() => toggle(selectedSports, setSelectedSports, sport)} style={pillStyle(selectedSports.includes(sport))}>
-                {sport}
-              </motion.button>
-            ))}
+            {SPORTS.map((sport) => {
+              const isPrimary = sport.toLowerCase() === primarySport
+              const isSelected = selectedSports.includes(sport)
+              return (
+                <div key={sport} style={{ position: 'relative' }}>
+                  <motion.button
+                    whileTap={isPrimary ? {} : { scale: 0.95 }}
+                    onClick={() => handleSportClick(sport)}
+                    title={isPrimary ? 'This is your primary sport' : undefined}
+                    style={isPrimary ? {
+                      borderRadius: '999px', padding: '6px 16px', fontSize: '13px',
+                      fontFamily: "'Hanken Grotesk', sans-serif",
+                      border: '2px solid #00BCC8',
+                      background: 'rgba(0,188,200,0.15)',
+                      color: '#00BCC8',
+                      cursor: 'default', minHeight: '44px', display: 'flex', alignItems: 'center', gap: '4px',
+                    } : pillStyle(isSelected)}
+                  >
+                    {isPrimary && <Star size={12} fill="#00BCC8" color="#00BCC8" />}
+                    {sport}
+                  </motion.button>
+                  {pillPopover === sport && (
+                    <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: '#111827', color: '#FFFFFF', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', zIndex: 20, whiteSpace: 'nowrap', display: 'flex', gap: '12px' }}>
+                      <span
+                        style={{ cursor: 'pointer' }}
+                        onClick={(e) => { e.stopPropagation(); setPrimarySport(sport.toLowerCase()); setPillPopover(null) }}
+                      >
+                        Set as primary
+                      </span>
+                      <span
+                        style={{ cursor: 'pointer' }}
+                        onClick={(e) => { e.stopPropagation(); setSelectedSports((prev) => prev.filter((s) => s !== sport)); setPillPopover(null) }}
+                      >
+                        Remove
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          <div style={{ fontSize: '12px', color: '#9CA3AF', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>
+            Your primary sport sets your profile background image.
           </div>
         </div>
         <div>
@@ -1244,6 +1317,8 @@ export default function TrainerProfilePage() {
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [paused, setPaused] = useState(false)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
+  const [primarySport, setPrimarySport] = useState('soccer')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -1256,7 +1331,7 @@ export default function TrainerProfilePage() {
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: `url('/backgrounds/soccer.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }} />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: `url('/backgrounds/${primarySport}.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }} />
       <div style={{ position: 'fixed', inset: 0, zIndex: 1, background: 'rgba(248,248,246,0.78)', pointerEvents: 'none' }} />
 
       {isMobile ? (
@@ -1276,6 +1351,7 @@ export default function TrainerProfilePage() {
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
           {/* Status banner */}
+          {!bannerDismissed && (
           <div
             style={{
               borderRadius: '10px',
@@ -1299,21 +1375,32 @@ export default function TrainerProfilePage() {
                 {paused ? "Your profile is paused — you won't appear in search" : 'Your profile is live — parents can find and book you'}
               </span>
             </div>
-            {paused ? (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {paused ? (
+                <button
+                  onClick={() => setPaused(false)}
+                  style={{ background: '#F59E0B', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', flexShrink: 0, minHeight: '44px' }}
+                >
+                  Resume profile
+                </button>
+              ) : (
+                <button
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(0,0,0,0.12)', color: '#374151', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", background: 'transparent', cursor: 'pointer', flexShrink: 0, minHeight: '44px' }}
+                >
+                  <Eye size={14} /> View public profile
+                </button>
+              )}
               <button
-                onClick={() => setPaused(false)}
-                style={{ background: '#F59E0B', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', flexShrink: 0, minHeight: '44px' }}
+                onClick={() => setBannerDismissed(true)}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.06)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '4px', marginLeft: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                Resume profile
+                <XIcon size={16} color="#6B7280" />
               </button>
-            ) : (
-              <button
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(0,0,0,0.12)', color: '#374151', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", background: 'transparent', cursor: 'pointer', flexShrink: 0, minHeight: '44px' }}
-              >
-                <Eye size={14} /> View public profile
-              </button>
-            )}
+            </div>
           </div>
+          )}
 
           {/* Page title */}
           <div>
@@ -1328,7 +1415,7 @@ export default function TrainerProfilePage() {
           <BasicInfoSection />
           <SocialLinksSection />
           <IntroVideoSection />
-          <SpecialtiesSection />
+          <SpecialtiesSection primarySport={primarySport} setPrimarySport={setPrimarySport} />
           <RateSection />
           <AvailabilitySection />
           <CredentialsSection />
