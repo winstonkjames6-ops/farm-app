@@ -175,8 +175,8 @@ export default function MessagesPage() {
               key={conv.id}
               onClick={() => selectConversation(conv.id)}
               style={{
-                width: '100%', textAlign: 'left', padding: '16px 20px',
-                cursor: 'pointer', border: 'none', background: 'none',
+                width: '100%', textAlign: 'left', padding: '16px 20px 16px 17px',
+                cursor: 'pointer', border: 'none', background: 'none', minWidth: 0, overflow: 'hidden',
                 borderLeft: activeId === conv.id ? `3px solid ${T.accent}` : '3px solid transparent',
                 borderBottom: `1px solid ${T.line}`,
                 backgroundColor: activeId === conv.id ? 'rgba(0,188,200,0.08)' : 'transparent',
@@ -194,7 +194,7 @@ export default function MessagesPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
                     <span style={{
                       fontSize: 13, color: T.ink3,
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%',
                     }}>{conv.lastMessage}</span>
                     {conv.unread > 0 && (
                       <span style={{
