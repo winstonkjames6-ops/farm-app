@@ -364,7 +364,7 @@ function MobileHeader({ activeNav }: { activeNav: string }) {
 // ── Layout ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const pathname = usePathname()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
@@ -422,13 +422,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Page content */}
-      <motion.main
-        animate={{ marginLeft: sidebarWidth }}
-        transition={{ duration: 0.25, ease: 'easeInOut' }}
-        style={{ position: 'relative', zIndex: 2, paddingTop: '52px', paddingBottom: '40px' }}
+      <main
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          paddingTop: '52px',
+          paddingBottom: '40px',
+          marginLeft: isMobile ? 0 : sidebarWidth,
+          transition: 'margin-left 0.25s ease-in-out',
+        }}
       >
         {children}
-      </motion.main>
+      </main>
     </div>
   )
 }
