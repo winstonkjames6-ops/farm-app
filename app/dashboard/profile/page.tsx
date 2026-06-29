@@ -353,16 +353,83 @@ function BasicInfoSection() {
   )
 }
 
+// ── Athlete permission categories ─────────────────────────────────────────────
+
+const ATHLETE_PERMISSION_CATEGORIES = [
+  {
+    label: 'Session Control',
+    items: [
+      { key: 'shareSessionClips',          label: 'Allow trainer to share session clips' },
+      { key: 'progressNotesAfterSession',  label: 'Allow progress notes after each session' },
+      { key: 'parentalApprovalReschedule', label: 'Parental approval required for rescheduling' },
+      { key: 'cancelLessThan24hr',         label: 'Allow trainer to cancel with less than 24hr notice' },
+      { key: 'parentPresentInPerson',      label: 'Require parent present for in-person sessions' },
+      { key: 'remoteWithoutParent',        label: 'Allow remote sessions without parent supervision' },
+    ],
+  },
+  {
+    label: 'Communication',
+    items: [
+      { key: 'directMessageAthlete',  label: 'Allow trainer to message athlete directly (vs parent only)' },
+      { key: 'sessionRecapEmails',    label: 'Receive session recap emails' },
+      { key: 'notifyProfileViewed',   label: 'Notify me when trainer views athlete profile' },
+      { key: 'trainerSuggestDrills',  label: 'Allow trainer to suggest drills between sessions' },
+    ],
+  },
+  {
+    label: 'Profile & Visibility',
+    items: [
+      { key: 'showProfileBeforeBooking', label: 'Show athlete profile to trainers before booking' },
+      { key: 'testimonialAnonymized',    label: "Show athlete in trainer's testimonials (anonymized)" },
+      { key: 'farmSuccessStories',       label: 'Allow athlete to appear in FARM success stories' },
+      { key: 'hideAgeFromSearch',        label: 'Hide athlete age from public search' },
+    ],
+  },
+  {
+    label: 'Progress & Tracking',
+    items: [
+      { key: 'trainerSetGoals',           label: 'Allow trainer to set session goals' },
+      { key: 'trackSkillRatings',         label: 'Allow trainer to track skill ratings over time' },
+      { key: 'shareProgressOtherCoaches', label: 'Share athlete progress with other coaches' },
+      { key: 'monthlyProgressReport',     label: 'Receive monthly progress report' },
+    ],
+  },
+  {
+    label: 'Booking & Payments',
+    items: [
+      { key: 'approveBeforeAthleteBook', label: 'Require my approval before athlete can book independently' },
+      { key: 'trainerOfferPackages',     label: 'Allow trainer to offer package deals to my athlete' },
+      { key: 'autoApproveRebooking',     label: 'Auto-approve rebooking with same trainer' },
+    ],
+  },
+]
+
+const PERM_KEYS = ATHLETE_PERMISSION_CATEGORIES.flatMap((c) => c.items.map((it) => it.key))
+
 // ── Section: Athletes ──────────────────────────────────────────────────────────
 
 function AthletesSection() {
   const [athletes, setAthletes] = useState(MOCK_ATHLETES)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState<'details' | 'permissions'>('details')
+
+  const [athletePerms, setAthletePerms] = useState<Record<number, Record<string, boolean>>>(
+    () => Object.fromEntries(
+      MOCK_ATHLETES.map((a) => [a.id, Object.fromEntries(PERM_KEYS.map((k) => [k, false]))])
+    )
+  )
 
   function handleChange(id: number, field: string, value: string | number) {
     setAthletes((prev) =>
       prev.map((a) => a.id === id ? { ...a, [field]: value } : a)
     )
+  }
+
+  function togglePerm(athleteId: number, key: string) {
+    setAthletePerms((prev) => ({
+      ...prev,
+      [athleteId]: { ...prev[athleteId], [key]: !prev[athleteId][key] },
+    }))
   }
 
   const selectStyle: React.CSSProperties = {
@@ -387,58 +454,155 @@ function AthletesSection() {
                 paddingBottom: '16px',
                 borderBottom: `1px solid ${T.line}`,
               }}>
+                {/* Pill tab toggle */}
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 80px',
-                  gap: '12px', marginBottom: '12px',
+                  display: 'flex',
+                  background: '#F3F4F6',
+                  borderRadius: '999px',
+                  padding: '3px',
+                  marginBottom: '16px',
                 }}>
-                  <div>
-                    <FieldLabel>Name</FieldLabel>
-                    <input
-                      style={inputBase} value={athlete.name}
-                      onChange={(e) => handleChange(athlete.id, 'name', e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <FieldLabel>Age</FieldLabel>
-                    <input
-                      style={inputBase} value={athlete.age} type="number"
-                      onChange={(e) => handleChange(athlete.id, 'age', parseInt(e.target.value))}
-                    />
-                  </div>
+                  {(['details', 'permissions'] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      style={{
+                        flex: 1,
+                        height: '38px',
+                        borderRadius: '999px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: activeTab === tab ? T.cyan : 'transparent',
+                        color: activeTab === tab ? '#FFFFFF' : T.ink2,
+                        fontSize: '14px',
+                        fontFamily: "'Hanken Grotesk', sans-serif",
+                        fontWeight: 600,
+                        transition: 'background 0.15s, color 0.15s',
+                      }}
+                    >
+                      {tab === 'details' ? 'Details' : 'Permissions'}
+                    </button>
+                  ))}
                 </div>
-                <div style={{ marginBottom: '16px' }}>
-                  <FieldLabel>Sport</FieldLabel>
-                  <select
-                    value={athlete.sport}
-                    onChange={(e) => handleChange(athlete.id, 'sport', e.target.value)}
-                    style={selectStyle}
-                  >
-                    {SPORTS.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    style={{
-                      flex: 1, height: '44px',
-                      background: T.cyan, color: '#FFFFFF',
-                      border: 'none', borderRadius: '8px', fontSize: '14px',
-                      fontFamily: "'Hanken Grotesk', sans-serif",
-                      fontWeight: 600, cursor: 'pointer',
-                    }}
-                  >Save</button>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    style={{
-                      height: '44px', padding: '0 16px',
-                      background: 'transparent', color: T.ink2,
-                      border: '1px solid rgba(0,0,0,0.12)',
-                      borderRadius: '8px', fontSize: '14px',
-                      fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer',
-                    }}
-                  >Cancel</button>
-                </div>
+
+                {activeTab === 'details' ? (
+                  <>
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 80px',
+                      gap: '12px', marginBottom: '12px',
+                    }}>
+                      <div>
+                        <FieldLabel>Name</FieldLabel>
+                        <input
+                          style={inputBase} value={athlete.name}
+                          onChange={(e) => handleChange(athlete.id, 'name', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <FieldLabel>Age</FieldLabel>
+                        <input
+                          style={inputBase} value={athlete.age} type="number"
+                          onChange={(e) => handleChange(athlete.id, 'age', parseInt(e.target.value))}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ marginBottom: '16px' }}>
+                      <FieldLabel>Sport</FieldLabel>
+                      <select
+                        value={athlete.sport}
+                        onChange={(e) => handleChange(athlete.id, 'sport', e.target.value)}
+                        style={selectStyle}
+                      >
+                        {SPORTS.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        style={{
+                          flex: 1, height: '44px',
+                          background: T.cyan, color: '#FFFFFF',
+                          border: 'none', borderRadius: '8px', fontSize: '14px',
+                          fontFamily: "'Hanken Grotesk', sans-serif",
+                          fontWeight: 600, cursor: 'pointer',
+                        }}
+                      >Save</button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        style={{
+                          height: '44px', padding: '0 16px',
+                          background: 'transparent', color: T.ink2,
+                          border: '1px solid rgba(0,0,0,0.12)',
+                          borderRadius: '8px', fontSize: '14px',
+                          fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer',
+                        }}
+                      >Cancel</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      {ATHLETE_PERMISSION_CATEGORIES.map((category) => (
+                        <div key={category.label}>
+                          <div style={{
+                            fontSize: '11px',
+                            fontFamily: "'Hanken Grotesk', sans-serif",
+                            fontWeight: 700,
+                            color: T.ink2,
+                            textTransform: 'uppercase' as const,
+                            letterSpacing: '0.08em',
+                            marginBottom: '4px',
+                          }}>
+                            {category.label}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            {category.items.map((item, ii) => (
+                              <div
+                                key={item.key}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: '16px',
+                                  minHeight: '44px',
+                                  padding: '10px 0',
+                                  borderBottom: ii < category.items.length - 1
+                                    ? `1px solid ${T.line}` : 'none',
+                                }}
+                              >
+                                <span style={{
+                                  fontSize: '16px',
+                                  color: T.ink,
+                                  fontFamily: "'Hanken Grotesk', sans-serif",
+                                  fontWeight: 400,
+                                  lineHeight: 1.4,
+                                  flex: 1,
+                                }}>
+                                  {item.label}
+                                </span>
+                                <div style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  minWidth: '44px',
+                                  minHeight: '44px',
+                                  flexShrink: 0,
+                                }}>
+                                  <ToggleSwitch
+                                    on={athletePerms[athlete.id]?.[item.key] ?? false}
+                                    onChange={() => togglePerm(athlete.id, item.key)}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <SaveButton />
+                  </>
+                )}
               </div>
             ) : (
               <div style={{
@@ -464,11 +628,12 @@ function AthletesSection() {
                   }}>Age {athlete.age} · {athlete.sport}</div>
                 </div>
                 <button
-                  onClick={() => setEditingId(athlete.id)}
+                  onClick={() => { setEditingId(athlete.id); setActiveTab('details') }}
                   style={{
                     background: 'transparent', border: 'none',
                     cursor: 'pointer', color: T.cyan, fontSize: '13px',
                     fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600,
+                    minHeight: '44px', padding: '0 4px',
                   }}
                 >Edit</button>
               </div>
@@ -567,129 +732,6 @@ function NotificationsSection() {
             </div>
             <div style={{ width: '52px', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
               <ToggleSwitch on={state[row.key].sms} onChange={() => toggle(row.key, 'sms')} />
-            </div>
-          </div>
-        ))}
-      </div>
-      <SaveButton />
-    </SectionCard>
-  )
-}
-
-// ── Section: Athlete Permissions ──────────────────────────────────────────────
-
-const ATHLETE_PERMISSION_CATEGORIES = [
-  {
-    label: 'Session Control',
-    items: [
-      { key: 'shareSessionClips',          label: 'Allow trainer to share session clips' },
-      { key: 'progressNotesAfterSession',  label: 'Allow progress notes after each session' },
-      { key: 'parentalApprovalReschedule', label: 'Parental approval required for rescheduling' },
-      { key: 'cancelLessThan24hr',         label: 'Allow trainer to cancel with less than 24hr notice' },
-      { key: 'parentPresentInPerson',      label: 'Require parent present for in-person sessions' },
-      { key: 'remoteWithoutParent',        label: 'Allow remote sessions without parent supervision' },
-    ],
-  },
-  {
-    label: 'Communication',
-    items: [
-      { key: 'directMessageAthlete',   label: 'Allow trainer to message athlete directly (vs parent only)' },
-      { key: 'sessionRecapEmails',     label: 'Receive session recap emails' },
-      { key: 'notifyProfileViewed',    label: 'Notify me when trainer views athlete profile' },
-      { key: 'trainerSuggestDrills',  label: 'Allow trainer to suggest drills between sessions' },
-    ],
-  },
-  {
-    label: 'Profile & Visibility',
-    items: [
-      { key: 'showProfileBeforeBooking', label: 'Show athlete profile to trainers before booking' },
-      { key: 'testimonialAnonymized',    label: "Show athlete in trainer's testimonials (anonymized)" },
-      { key: 'farmSuccessStories',       label: 'Allow athlete to appear in FARM success stories' },
-      { key: 'hideAgeFromSearch',        label: 'Hide athlete age from public search' },
-    ],
-  },
-  {
-    label: 'Progress & Tracking',
-    items: [
-      { key: 'trainerSetGoals',           label: 'Allow trainer to set session goals' },
-      { key: 'trackSkillRatings',         label: 'Allow trainer to track skill ratings over time' },
-      { key: 'shareProgressOtherCoaches', label: 'Share athlete progress with other coaches' },
-      { key: 'monthlyProgressReport',     label: 'Receive monthly progress report' },
-    ],
-  },
-  {
-    label: 'Booking & Payments',
-    items: [
-      { key: 'approveBeforeAthleteBook', label: 'Require my approval before athlete can book independently' },
-      { key: 'trainerOfferPackages',     label: 'Allow trainer to offer package deals to my athlete' },
-      { key: 'autoApproveRebooking',     label: 'Auto-approve rebooking with same trainer' },
-    ],
-  },
-]
-
-function AthletePermissionsSection() {
-  const allKeys = ATHLETE_PERMISSION_CATEGORIES.flatMap((cat) => cat.items.map((item) => item.key))
-  const [perms, setPerms] = useState<Record<string, boolean>>(
-    Object.fromEntries(allKeys.map((k) => [k, false]))
-  )
-
-  function toggle(key: string) {
-    setPerms((prev) => ({ ...prev, [key]: !prev[key] }))
-  }
-
-  return (
-    <SectionCard>
-      <CardLabel>Athlete Permissions</CardLabel>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {ATHLETE_PERMISSION_CATEGORIES.map((category) => (
-          <div key={category.label}>
-            <div style={{
-              fontSize: '11px',
-              fontFamily: "'Hanken Grotesk', sans-serif",
-              fontWeight: 700,
-              color: T.ink2,
-              textTransform: 'uppercase' as const,
-              letterSpacing: '0.08em',
-              marginBottom: '4px',
-            }}>
-              {category.label}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {category.items.map((item, ii) => (
-                <div
-                  key={item.key}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '16px',
-                    minHeight: '44px',
-                    padding: '10px 0',
-                    borderBottom: ii < category.items.length - 1 ? `1px solid ${T.line}` : 'none',
-                  }}
-                >
-                  <span style={{
-                    fontSize: '16px',
-                    color: T.ink,
-                    fontFamily: "'Hanken Grotesk', sans-serif",
-                    fontWeight: 400,
-                    lineHeight: 1.4,
-                    flex: 1,
-                  }}>
-                    {item.label}
-                  </span>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minWidth: '44px',
-                    minHeight: '44px',
-                    flexShrink: 0,
-                  }}>
-                    <ToggleSwitch on={perms[item.key]} onChange={() => toggle(item.key)} />
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         ))}
@@ -1041,7 +1083,6 @@ function EditMode({ onBack }: { onBack: () => void }) {
         <BasicInfoSection />
         <AthletesSection />
         <NotificationsSection />
-        <AthletePermissionsSection />
         <DangerZoneSection />
       </div>
     </div>
