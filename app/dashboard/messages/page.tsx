@@ -91,11 +91,10 @@ export default function MessagesPage() {
       style={{
         background: T.bg,
         color: T.ink,
-        minHeight: 'calc(100vh - 52px)',
+        height: 'calc(100vh - 52px)',
         display: 'flex',
         flexDirection: 'column',
-        fontFamily: "'Hanken Grotesk', sans-serif",
-        WebkitFontSmoothing: 'antialiased',
+        overflow: 'hidden',
       }}
     >
       <style>{`
@@ -105,6 +104,7 @@ export default function MessagesPage() {
           flex: 1;
           min-height: 0;
           overflow: hidden;
+          height: 100%;
         }
         @media (max-width: 720px) {
           .msg-grid { grid-template-columns: 1fr; }

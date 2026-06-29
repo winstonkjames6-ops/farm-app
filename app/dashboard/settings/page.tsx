@@ -34,17 +34,27 @@ const cardStyle: React.CSSProperties = {
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 style={{
-      fontFamily: "'Archivo', sans-serif",
-      fontWeight: 700,
-      fontSize: '13px',
-      letterSpacing: '.14em',
-      textTransform: 'uppercase',
-      color: T.ink3,
-      margin: '0 0 12px',
+    <div style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      marginBottom: '12px',
     }}>
-      {children}
-    </h2>
+      <span style={{
+        fontFamily: "'Barlow Condensed', sans-serif",
+        fontWeight: 700,
+        fontSize: '11px',
+        letterSpacing: '.12em',
+        textTransform: 'uppercase' as const,
+        color: '#FFFFFF',
+        background: 'rgba(0,0,0,0.32)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        padding: '3px 10px',
+        borderRadius: '999px',
+      }}>
+        {children}
+      </span>
+    </div>
   )
 }
 
