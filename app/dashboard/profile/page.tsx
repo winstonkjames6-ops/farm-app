@@ -647,6 +647,7 @@ function ViewMode({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
       {/* Profile card */}
       <div style={{
         background: 'rgba(255,255,255,0.92)',
@@ -654,77 +655,167 @@ function ViewMode({
         WebkitBackdropFilter: 'blur(12px)',
         borderRadius: '16px',
         border: '1px solid rgba(0,0,0,0.08)',
-        padding: '32px 24px',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: '12px', textAlign: 'center', position: 'relative',
+        overflow: 'hidden',
       }}>
-        {/* Edit button top right */}
-        <button
-          onClick={onEdit}
-          style={{
-            position: 'absolute', top: '16px', right: '16px',
-            border: '1.5px solid rgba(0,0,0,0.12)', color: T.ink2,
-            background: 'transparent', borderRadius: '10px',
-            padding: '7px 16px',
-            fontFamily: "'Archivo', sans-serif", fontWeight: 700,
-            fontSize: '13px', cursor: 'pointer',
-          }}
-        >Edit profile</button>
-
-        {/* Avatar */}
+        {/* Header band */}
         <div style={{
-          width: 88, height: 88, borderRadius: '999px',
-          background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: "'Barlow Condensed', sans-serif",
-          fontWeight: 700, fontSize: '28px', color: '#FFFFFF',
-        }}>{initials}</div>
-
-        {/* Name */}
-        <div>
-          <div style={{
-            fontFamily: "'Archivo Black', 'Archivo', sans-serif",
-            fontWeight: 900, fontSize: '26px', color: T.ink, lineHeight: 1.1,
-          }}>{name}</div>
-          <div style={{
-            fontFamily: "'Hanken Grotesk', sans-serif",
-            fontSize: '14px', color: T.ink3, marginTop: '6px',
-          }}>{location}</div>
-        </div>
-
-        {/* Verified badge */}
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '5px',
-          padding: '3px 10px 3px 8px',
-          border: '1.5px solid #00BCC8', borderRadius: '999px',
-          background: 'rgba(0,188,200,0.07)',
+          background: 'linear-gradient(135deg, rgba(0,188,200,0.12) 0%, rgba(0,212,226,0.06) 100%)',
+          borderBottom: '1px solid rgba(0,188,200,0.12)',
+          padding: '28px 24px 20px',
+          display: 'flex', alignItems: 'flex-start',
+          justifyContent: 'space-between', gap: '16px',
         }}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-               stroke="#00BCC8" strokeWidth={2.2}
-               strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-          </svg>
-          <span style={{
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-            fontSize: '10.5px', letterSpacing: '.1em', textTransform: 'uppercase',
-            color: '#00838C',
-          }}>Verified Parent</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+            {/* Avatar */}
+            <div style={{
+              width: 72, height: 72, borderRadius: '999px', flexShrink: 0,
+              background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700, fontSize: '24px', color: '#FFFFFF',
+              boxShadow: '0 4px 12px rgba(0,188,200,0.3)',
+            }}>{initials}</div>
+
+            <div>
+              <div style={{
+                fontFamily: "'Archivo Black', 'Archivo', sans-serif",
+                fontWeight: 900, fontSize: '22px', color: '#111827',
+                lineHeight: 1.1, marginBottom: '4px',
+              }}>{name}</div>
+
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px',
+              }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                     stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span style={{
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontSize: '13px', color: '#6B7280',
+                }}>{location}</span>
+              </div>
+
+              {/* Verified badge */}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                padding: '3px 10px 3px 8px',
+                border: '1.5px solid #00BCC8', borderRadius: '999px',
+                background: 'rgba(0,188,200,0.07)',
+              }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                     stroke="#00BCC8" strokeWidth={2.2}
+                     strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span style={{
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                  fontSize: '10.5px', letterSpacing: '.1em', textTransform: 'uppercase' as const,
+                  color: '#00838C',
+                }}>Verified Parent</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Edit button */}
+          <button
+            onClick={onEdit}
+            style={{
+              flexShrink: 0,
+              border: '1.5px solid rgba(0,0,0,0.12)', color: '#6B7280',
+              background: 'rgba(255,255,255,0.80)', borderRadius: '10px',
+              padding: '7px 16px',
+              fontFamily: "'Archivo', sans-serif", fontWeight: 700,
+              fontSize: '13px', cursor: 'pointer',
+            }}
+          >Edit profile</button>
         </div>
 
-        {/* Member since */}
+        {/* Stat strip */}
         <div style={{
-          fontFamily: "'Hanken Grotesk', sans-serif",
-          fontSize: '13px', color: T.ink3,
-        }}>Member since June 2026</div>
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+          borderBottom: '1px solid rgba(0,0,0,0.07)',
+        }}>
+          {[
+            { value: '3', label: 'Sessions' },
+            { value: '1', label: 'Athlete' },
+            { value: '2', label: 'Sports' },
+          ].map((stat, i) => (
+            <div key={stat.label} style={{
+              padding: '14px 0', textAlign: 'center',
+              borderRight: i < 2 ? '1px solid rgba(0,0,0,0.07)' : 'none',
+            }}>
+              <div style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 800, fontSize: '22px', color: '#111827', lineHeight: 1,
+              }}>{stat.value}</div>
+              <div style={{
+                fontFamily: "'Hanken Grotesk', sans-serif",
+                fontSize: '11px', color: '#9CA3AF', marginTop: '3px',
+                textTransform: 'uppercase' as const, letterSpacing: '.08em', fontWeight: 600,
+              }}>{stat.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Info rows */}
+        <div style={{ padding: '4px 0' }}>
+          {[
+            {
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 17z"/>
+                </svg>
+              ),
+              label: '+1 (512) 555-0182',
+            },
+            {
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              ),
+              label: 'sarah.chen@email.com',
+            },
+            {
+              icon: (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                     stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              ),
+              label: 'Member since June 2026',
+            },
+          ].map((row) => (
+            <div key={row.label} style={{
+              display: 'flex', alignItems: 'center', gap: '12px',
+              padding: '12px 24px',
+              borderBottom: '1px solid rgba(0,0,0,0.05)',
+            }}>
+              <span style={{ flexShrink: 0, display: 'flex' }}>{row.icon}</span>
+              <span style={{
+                fontFamily: "'Hanken Grotesk', sans-serif",
+                fontSize: '14px', color: '#374151',
+              }}>{row.label}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Athletes card — view only */}
+      {/* Athletes card */}
       <div>
         <div style={{ display: 'inline-flex', marginBottom: '12px' }}>
           <span style={{
             fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
             fontSize: '11px', letterSpacing: '.12em',
-            textTransform: 'uppercase', color: '#FFFFFF',
+            textTransform: 'uppercase' as const, color: '#FFFFFF',
             background: 'rgba(0,0,0,0.38)',
             backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
             padding: '3px 10px', borderRadius: '999px',
@@ -738,32 +829,50 @@ function ViewMode({
         }}>
           {MOCK_ATHLETES.map((athlete, i) => (
             <div key={athlete.id} style={{
-              display: 'flex', alignItems: 'center', gap: '12px',
+              display: 'flex', alignItems: 'center', gap: '14px',
               padding: '16px 0',
               borderBottom: i < MOCK_ATHLETES.length - 1
-                ? `1px solid ${T.line}` : 'none',
+                ? '1px solid rgba(0,0,0,0.07)' : 'none',
             }}>
               <div style={{
-                width: 44, height: 44, borderRadius: '999px',
-                background: T.surface2, flexShrink: 0,
+                width: 46, height: 46, borderRadius: '999px', flexShrink: 0,
+                background: 'linear-gradient(140deg, rgba(0,188,200,0.15), rgba(0,212,226,0.08))',
+                border: '1.5px solid rgba(0,188,200,0.2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 700, fontSize: '14px', color: T.ink,
+                fontWeight: 700, fontSize: '14px', color: '#00838C',
               }}>{athlete.initials}</div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <div style={{
                   fontFamily: "'Archivo', sans-serif",
-                  fontWeight: 600, fontSize: '15px', color: T.ink,
+                  fontWeight: 700, fontSize: '15px', color: '#111827',
                 }}>{athlete.name}</div>
-                <div style={{
-                  fontFamily: "'Hanken Grotesk', sans-serif",
-                  fontSize: '13px', color: T.ink3,
-                }}>Age {athlete.age} · {athlete.sport}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
+                  <span style={{
+                    fontFamily: "'Hanken Grotesk', sans-serif",
+                    fontSize: '13px', color: '#6B7280',
+                  }}>Age {athlete.age}</span>
+                  <span style={{ color: '#D1D5DB', fontSize: '12px' }}>·</span>
+                  <span style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700, fontSize: '12px',
+                    letterSpacing: '.08em', textTransform: 'uppercase' as const,
+                    color: '#00BCC8',
+                    background: 'rgba(0,188,200,0.08)',
+                    padding: '1px 8px', borderRadius: '999px',
+                  }}>{athlete.sport}</span>
+                </div>
               </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                   stroke="#D1D5DB" strokeWidth={2}
+                   strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
             </div>
           ))}
         </div>
       </div>
+
     </div>
   )
 }
