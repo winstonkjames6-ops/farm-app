@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { TrainerSportProvider, useTrainerSport } from './sport-context'
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
@@ -368,6 +369,15 @@ function MobileHeader({ activeNav }: { activeNav: string }) {
 // ── Layout ─────────────────────────────────────────────────────────────────────
 
 export default function TrainerDashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <TrainerSportProvider>
+      <TrainerDashboardInner>{children}</TrainerDashboardInner>
+    </TrainerSportProvider>
+  )
+}
+
+function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
+  const { primarySport } = useTrainerSport()
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const pathname = usePathname()
@@ -392,10 +402,10 @@ export default function TrainerDashboardLayout({ children }: { children: React.R
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
-      {/* Background image */}
+      {/* Background image — reacts to trainer's primary sport */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 0,
-        backgroundImage: `url('/backgrounds/${MOCK_TRAINER.sport}.jpg')`,
+        backgroundImage: `url('/backgrounds/${primarySport}.jpg')`,
         backgroundSize: 'cover', backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
       }} />

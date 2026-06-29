@@ -576,6 +576,129 @@ function NotificationsSection() {
   )
 }
 
+// ── Section: Athlete Permissions ──────────────────────────────────────────────
+
+const ATHLETE_PERMISSION_CATEGORIES = [
+  {
+    label: 'Session Control',
+    items: [
+      { key: 'shareSessionClips',          label: 'Allow trainer to share session clips' },
+      { key: 'progressNotesAfterSession',  label: 'Allow progress notes after each session' },
+      { key: 'parentalApprovalReschedule', label: 'Parental approval required for rescheduling' },
+      { key: 'cancelLessThan24hr',         label: 'Allow trainer to cancel with less than 24hr notice' },
+      { key: 'parentPresentInPerson',      label: 'Require parent present for in-person sessions' },
+      { key: 'remoteWithoutParent',        label: 'Allow remote sessions without parent supervision' },
+    ],
+  },
+  {
+    label: 'Communication',
+    items: [
+      { key: 'directMessageAthlete',   label: 'Allow trainer to message athlete directly (vs parent only)' },
+      { key: 'sessionRecapEmails',     label: 'Receive session recap emails' },
+      { key: 'notifyProfileViewed',    label: 'Notify me when trainer views athlete profile' },
+      { key: 'trainerSuggestDrills',  label: 'Allow trainer to suggest drills between sessions' },
+    ],
+  },
+  {
+    label: 'Profile & Visibility',
+    items: [
+      { key: 'showProfileBeforeBooking', label: 'Show athlete profile to trainers before booking' },
+      { key: 'testimonialAnonymized',    label: "Show athlete in trainer's testimonials (anonymized)" },
+      { key: 'farmSuccessStories',       label: 'Allow athlete to appear in FARM success stories' },
+      { key: 'hideAgeFromSearch',        label: 'Hide athlete age from public search' },
+    ],
+  },
+  {
+    label: 'Progress & Tracking',
+    items: [
+      { key: 'trainerSetGoals',           label: 'Allow trainer to set session goals' },
+      { key: 'trackSkillRatings',         label: 'Allow trainer to track skill ratings over time' },
+      { key: 'shareProgressOtherCoaches', label: 'Share athlete progress with other coaches' },
+      { key: 'monthlyProgressReport',     label: 'Receive monthly progress report' },
+    ],
+  },
+  {
+    label: 'Booking & Payments',
+    items: [
+      { key: 'approveBeforeAthleteBook', label: 'Require my approval before athlete can book independently' },
+      { key: 'trainerOfferPackages',     label: 'Allow trainer to offer package deals to my athlete' },
+      { key: 'autoApproveRebooking',     label: 'Auto-approve rebooking with same trainer' },
+    ],
+  },
+]
+
+function AthletePermissionsSection() {
+  const allKeys = ATHLETE_PERMISSION_CATEGORIES.flatMap((cat) => cat.items.map((item) => item.key))
+  const [perms, setPerms] = useState<Record<string, boolean>>(
+    Object.fromEntries(allKeys.map((k) => [k, false]))
+  )
+
+  function toggle(key: string) {
+    setPerms((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  return (
+    <SectionCard>
+      <CardLabel>Athlete Permissions</CardLabel>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        {ATHLETE_PERMISSION_CATEGORIES.map((category) => (
+          <div key={category.label}>
+            <div style={{
+              fontSize: '11px',
+              fontFamily: "'Hanken Grotesk', sans-serif",
+              fontWeight: 700,
+              color: T.ink2,
+              textTransform: 'uppercase' as const,
+              letterSpacing: '0.08em',
+              marginBottom: '4px',
+            }}>
+              {category.label}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {category.items.map((item, ii) => (
+                <div
+                  key={item.key}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '16px',
+                    minHeight: '44px',
+                    padding: '10px 0',
+                    borderBottom: ii < category.items.length - 1 ? `1px solid ${T.line}` : 'none',
+                  }}
+                >
+                  <span style={{
+                    fontSize: '16px',
+                    color: T.ink,
+                    fontFamily: "'Hanken Grotesk', sans-serif",
+                    fontWeight: 400,
+                    lineHeight: 1.4,
+                    flex: 1,
+                  }}>
+                    {item.label}
+                  </span>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: '44px',
+                    minHeight: '44px',
+                    flexShrink: 0,
+                  }}>
+                    <ToggleSwitch on={perms[item.key]} onChange={() => toggle(item.key)} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <SaveButton />
+    </SectionCard>
+  )
+}
+
 // ── Section: Danger Zone ───────────────────────────────────────────────────────
 
 function DangerZoneSection() {
@@ -918,6 +1041,7 @@ function EditMode({ onBack }: { onBack: () => void }) {
         <BasicInfoSection />
         <AthletesSection />
         <NotificationsSection />
+        <AthletePermissionsSection />
         <DangerZoneSection />
       </div>
     </div>

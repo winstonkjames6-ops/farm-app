@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTrainerSport } from '../sport-context'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import {
@@ -915,7 +916,7 @@ function DangerZoneSection({ paused, setPaused }: { paused: boolean; setPaused: 
 export default function TrainerProfilePage() {
   const [paused, setPaused] = useState(false)
   const [bannerDismissed, setBannerDismissed] = useState(false)
-  const [primarySport, setPrimarySport] = useState('soccer')
+  const { primarySport, setPrimarySport } = useTrainerSport()
 
   return (
     <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
