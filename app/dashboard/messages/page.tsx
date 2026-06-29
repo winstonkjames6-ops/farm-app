@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import Link from 'next/link'
 
 const T = {
   bg: '#F8F8F6',
@@ -92,7 +91,7 @@ export default function MessagesPage() {
       style={{
         background: T.bg,
         color: T.ink,
-        height: '100vh',
+        minHeight: 'calc(100vh - 52px)',
         display: 'flex',
         flexDirection: 'column',
         fontFamily: "'Hanken Grotesk', sans-serif",
@@ -116,26 +115,6 @@ export default function MessagesPage() {
         .msg-back-btn { display: none; }
         * { box-sizing: border-box; }
       `}</style>
-
-      {/* Nav */}
-      <nav style={{
-        height: 60, borderBottom: `1px solid ${T.border}`,
-        display: 'flex', alignItems: 'center', padding: '0 24px',
-        justifyContent: 'space-between', flexShrink: 0,
-        background: 'rgba(248,248,246,0.92)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
-      }}>
-        <Link href="/" style={{ textDecoration: 'none' }}>
-          <span style={{
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 22,
-            color: T.accent, letterSpacing: '.06em',
-          }}>FARM</span>
-        </Link>
-        <Link href="/dashboard" style={{
-          fontSize: 12, fontWeight: 700, color: T.ink2, textDecoration: 'none',
-          padding: '7px 14px', border: '1px solid rgba(0,0,0,0.10)',
-          fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.08em', textTransform: 'uppercase' as const,
-        }}>← Dashboard</Link>
-      </nav>
 
       <div className="msg-grid" style={{ flex: 1, minHeight: 0 }}>
 

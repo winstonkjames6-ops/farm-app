@@ -306,7 +306,7 @@ export default function DashboardPage() {
   return (
     <div
       className="min-h-screen antialiased"
-      style={{ background: T.bg, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}
+      style={{ color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}
     >
       {/* Main */}
       <div className="max-w-2xl mx-auto px-6 py-10 pb-24">

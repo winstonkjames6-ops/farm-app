@@ -120,7 +120,7 @@ const NAV_ITEMS = [
 const NAV_HREFS: Record<string, string> = {
   home:     '/dashboard',
   search:   '/search',
-  messages: '/messages',
+  messages: '/dashboard/messages',
   profile:  '/dashboard/profile',
   settings: '/dashboard/settings',
 }
@@ -364,6 +364,17 @@ function MobileHeader({ activeNav }: { activeNav: string }) {
 // ── Layout ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+
+  // Trainer routes have their own layout — render nothing extra
+  if (pathname.startsWith('/dashboard/trainer')) {
+    return <>{children}</>
+  }
+
+  return <ParentDashboardLayout>{children}</ParentDashboardLayout>
+}
+
+function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobile, setIsMobile] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const pathname = usePathname()
@@ -376,15 +387,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // Trainer routes have their own layout — don't double-wrap
-  if (pathname.startsWith('/dashboard/trainer')) {
-    return <>{children}</>
-  }
-
   const getActiveNav = () => {
     if (pathname === '/dashboard') return 'home'
     if (pathname.startsWith('/search')) return 'search'
-    if (pathname.startsWith('/messages')) return 'messages'
+    if (pathname.startsWith('/dashboard/messages')) return 'messages'
     if (pathname.startsWith('/dashboard/profile')) return 'profile'
     if (pathname.startsWith('/dashboard/settings')) return 'settings'
     return 'home'
@@ -393,21 +399,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
-      {/* Background image */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 0,
         backgroundImage: `url('/backgrounds/${MOCK_PARENT.sport}.jpg')`,
         backgroundSize: 'cover', backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
       }} />
-
-      {/* Overlay */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 1,
         background: 'rgba(248,248,246,0.60)', pointerEvents: 'none',
       }} />
-
-      {/* Nav */}
       {isMobile ? (
         <MobileHeader activeNav={activeNav} />
       ) : (
@@ -420,8 +421,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <DesktopHeader sidebarOpen={sidebarOpen} />
         </>
       )}
-
-      {/* Page content */}
       <main
         style={{
           position: 'relative',
