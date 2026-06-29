@@ -283,12 +283,23 @@ function EmptyState() {
 
 function SectionHeading({ children }) {
   return (
-    <h2
-      className="text-[13px] font-bold tracking-widest uppercase mb-4"
-      style={{ color: T.ink3, fontFamily: "'Archivo', sans-serif", letterSpacing: '.14em' }}
-    >
-      {children}
-    </h2>
+    <div style={{ display: 'inline-flex', alignItems: 'center', marginBottom: '12px' }}>
+      <span style={{
+        fontFamily: "'Barlow Condensed', sans-serif",
+        fontWeight: 700,
+        fontSize: '11px',
+        letterSpacing: '.12em',
+        textTransform: 'uppercase',
+        color: '#FFFFFF',
+        background: 'rgba(0,0,0,0.38)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        padding: '3px 10px',
+        borderRadius: '999px',
+      }}>
+        {children}
+      </span>
+    </div>
   )
 }
 

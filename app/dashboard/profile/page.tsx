@@ -47,7 +47,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
         letterSpacing: '.12em',
         textTransform: 'uppercase' as const,
         color: '#FFFFFF',
-        background: 'rgba(0,0,0,0.32)',
+        background: 'rgba(0,0,0,0.38)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         padding: '3px 10px',
