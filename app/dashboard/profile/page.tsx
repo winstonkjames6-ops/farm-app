@@ -143,6 +143,7 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: () => void }) {
         transition: 'background 0.2s',
         flexShrink: 0,
         justifyContent: on ? 'flex-end' : 'flex-start',
+        overflow: 'visible',
       }}
     >
       <div style={{
@@ -477,13 +478,14 @@ function AthletesSection() {
                           fontSize: '13px',
                           fontFamily: "'Hanken Grotesk', sans-serif",
                           cursor: 'pointer',
-                          background: tab === t ? '#00BCC8' : 'transparent',
-                          color: tab === t ? '#FFFFFF' : '#6B7280',
-                          border: tab === t ? 'none' : '1px solid rgba(0,0,0,0.12)',
+                          background: tab === t ? T.cyan : '#F3F4F6',
+                          color: tab === t ? '#FFFFFF' : T.ink2,
+                          border: 'none',
                           fontWeight: 600,
+                          textTransform: 'capitalize' as const,
                         }}
                       >
-                        {t === 'details' ? 'Details' : 'Permissions'}
+                        {t}
                       </button>
                     ))}
                   </div>
