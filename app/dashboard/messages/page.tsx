@@ -117,7 +117,7 @@ export default function MessagesPage() {
         display: 'flex',
         flexDirection: 'column',
         padding: '24px',
-        gap: '16px',
+        gap: '0',
         overflow: 'hidden',
         overflowX: 'hidden',
         width: '100%',
@@ -136,7 +136,7 @@ export default function MessagesPage() {
         }
         @media (max-width: 768px) {
           .msg-row { grid-template-columns: 1fr !important; }
-          .msg-sidebar-hidden { display: none !important; }
+          .msg-list-hidden { display: none !important; }
           .msg-panel-hidden { display: none !important; }
           .msg-back-btn { display: flex !important; }
         }

@@ -132,28 +132,12 @@ function SaveButton({ onClick }: { onClick?: () => void }) {
 
 function ToggleSwitch({ on, onChange }: { on: boolean; onChange: () => void }) {
   return (
-    <button
+    <div
       onClick={onChange}
-      style={{
-        width: '50px', height: '28px', borderRadius: '999px',
-        background: on ? '#00BCC8' : '#D1D5DB',
-        border: 'none', cursor: 'pointer',
-        display: 'flex', alignItems: 'center',
-        padding: '3px',
-        transition: 'background 0.2s',
-        flexShrink: 0,
-        justifyContent: on ? 'flex-end' : 'flex-start',
-        boxSizing: 'border-box',
-      }}
+      style={{ width: '44px', height: '24px', borderRadius: '999px', background: on ? T.cyan : '#E5E7EB', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s ease', display: 'inline-block' }}
     >
-      <div style={{
-        width: '22px', height: '22px',
-        borderRadius: '50%', background: '#FFFFFF',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-        flexShrink: 0,
-        transition: 'all 0.15s ease',
-      }} />
-    </button>
+      <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#FFFFFF', position: 'absolute', top: '2px', left: on ? '22px' : '2px', transition: 'left 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+    </div>
   )
 }
 
