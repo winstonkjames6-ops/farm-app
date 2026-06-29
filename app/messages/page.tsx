@@ -5,14 +5,14 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 
 const T = {
-  bg: '#09090B',
-  surface: '#111113',
-  surface2: '#18181B',
-  border: 'rgba(255,255,255,0.08)',
-  yellow: '#00BCC8',
-  ink: '#FAFAFA',
-  ink2: '#A1A1AA',
-  ink3: '#52525B',
+  bg: '#F8F8F6',
+  surface: '#FFFFFF',
+  surface2: '#F0EFEB',
+  border: 'rgba(0,0,0,0.08)',
+  accent: '#00BCC8',
+  ink: '#1A1A1A',
+  ink2: '#4A4A4A',
+  ink3: '#9A9A9A',
 }
 
 type MsgSender = 'parent' | 'trainer'
@@ -121,17 +121,18 @@ export default function MessagesPage() {
       <nav style={{
         height: 60, borderBottom: `1px solid ${T.border}`,
         display: 'flex', alignItems: 'center', padding: '0 24px',
-        justifyContent: 'space-between', flexShrink: 0, background: T.surface,
+        justifyContent: 'space-between', flexShrink: 0,
+        background: 'rgba(248,248,246,0.92)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
       }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <span style={{
             fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 22,
-            color: T.yellow, letterSpacing: '.06em',
+            color: T.accent, letterSpacing: '.06em',
           }}>FARM</span>
         </Link>
         <Link href="/dashboard" style={{
           fontSize: 12, fontWeight: 700, color: T.ink2, textDecoration: 'none',
-          padding: '7px 14px', border: `1px solid ${T.border}`,
+          padding: '7px 14px', border: '1px solid rgba(0,0,0,0.10)',
           fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.08em', textTransform: 'uppercase' as const,
         }}>← Dashboard</Link>
       </nav>
@@ -164,7 +165,7 @@ export default function MessagesPage() {
               style={{
                 width: '100%', textAlign: 'left', padding: '16px 20px',
                 cursor: 'pointer', border: 'none',
-                borderLeft: activeId === conv.id ? `3px solid ${T.yellow}` : `3px solid transparent`,
+                borderLeft: activeId === conv.id ? `3px solid ${T.accent}` : `3px solid transparent`,
                 borderBottom: `1px solid ${T.border}`,
                 backgroundColor: activeId === conv.id ? T.surface2 : 'transparent',
               }}
@@ -172,9 +173,9 @@ export default function MessagesPage() {
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{
                   width: 42, height: 42, flexShrink: 0,
-                  background: '#1E1E22', border: `1px solid ${T.border}`,
+                  background: T.surface2, border: `1px solid ${T.border}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: 13, color: T.yellow,
+                  fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: 13, color: T.accent,
                 }}>{conv.initials}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
@@ -188,7 +189,7 @@ export default function MessagesPage() {
                     }}>{conv.lastMessage}</span>
                     {conv.unread > 0 && (
                       <span style={{
-                        background: T.yellow, color: '#000', fontSize: 10, fontWeight: 800,
+                        background: T.accent, color: '#FFFFFF', fontSize: 10, fontWeight: 800,
                         width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
                         flexShrink: 0,
                       }}>{conv.unread}</span>
@@ -220,10 +221,10 @@ export default function MessagesPage() {
               }}
             >←</button>
             <div style={{
-              width: 38, height: 38, flexShrink: 0, background: '#1E1E22',
+              width: 38, height: 38, flexShrink: 0, background: T.surface2,
               border: `1px solid ${T.border}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: 12, color: T.yellow,
+              fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: 12, color: T.accent,
             }}>{active.initials}</div>
             <div>
               <div style={{ fontWeight: 700, fontSize: 15, color: T.ink }}>{active.trainerName}</div>
@@ -253,15 +254,15 @@ export default function MessagesPage() {
                 <div style={{
                   maxWidth: '66%',
                   padding: '11px 16px',
-                  background: msg.sender === 'parent' ? T.yellow : T.surface2,
-                  color: msg.sender === 'parent' ? '#000' : T.ink,
+                  background: msg.sender === 'parent' ? T.accent : T.surface2,
+                  color: msg.sender === 'parent' ? '#FFFFFF' : T.ink,
                   fontSize: 14, lineHeight: 1.55,
                   fontWeight: msg.sender === 'parent' ? 500 : 400,
                 }}>
                   <div>{msg.text}</div>
                   <div style={{
                     fontSize: 11, marginTop: 5,
-                    color: msg.sender === 'parent' ? 'rgba(0,0,0,0.45)' : T.ink3,
+                    color: msg.sender === 'parent' ? 'rgba(255,255,255,0.65)' : T.ink3,
                     textAlign: 'right',
                   }}>{msg.time}</div>
                 </div>
@@ -280,13 +281,13 @@ export default function MessagesPage() {
               onChange={(e) => setInputVal(e.target.value)}
               placeholder="Type a message..."
               style={{
-                flex: 1, background: T.surface2, border: `1px solid ${T.border}`,
+                flex: 1, background: T.surface2, border: '1px solid rgba(0,0,0,0.10)',
                 color: T.ink, padding: '11px 16px', fontSize: 14, outline: 'none',
                 fontFamily: "'Hanken Grotesk', sans-serif",
               }}
             />
             <button style={{
-              background: T.yellow, color: '#000', border: 'none', cursor: 'pointer',
+              background: T.accent, color: '#FFFFFF', border: 'none', cursor: 'pointer',
               padding: '11px 22px', fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 800, fontSize: 14, letterSpacing: '.08em', flexShrink: 0,
             }}>SEND</button>
