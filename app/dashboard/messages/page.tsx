@@ -119,6 +119,8 @@ export default function MessagesPage() {
         padding: '24px',
         gap: '16px',
         overflow: 'hidden',
+        overflowX: 'hidden',
+        width: '100%',
         color: T.ink,
         fontFamily: "'Hanken Grotesk', sans-serif",
       }}
@@ -131,8 +133,11 @@ export default function MessagesPage() {
           flex: 1;
           min-height: 0;
         }
-        @media (max-width: 720px) {
-          .msg-row { grid-template-columns: 1fr; }
+        @media (max-width: 768px) {
+          .msg-row {
+            grid-template-columns: 1fr !important;
+            width: 100%;
+          }
           .msg-list-hidden { display: none !important; }
           .msg-panel-hidden { display: none !important; }
           .msg-back-btn { display: flex !important; }
@@ -141,7 +146,7 @@ export default function MessagesPage() {
         * { box-sizing: border-box; }
       `}</style>
 
-      <div className="msg-row">
+      <div className="msg-row" style={{ overflow: 'hidden', minWidth: 0 }}>
 
         {/* Conversation list card */}
         <motion.div
