@@ -116,7 +116,8 @@ export default function MessagesPage() {
         height: 'calc(100vh - 52px)',
         display: 'flex',
         flexDirection: 'column',
-        padding: '24px',
+        padding: '24px 24px 24px 24px',
+        boxSizing: 'border-box',
         gap: '0',
         overflow: 'hidden',
         overflowX: 'hidden',
@@ -128,7 +129,7 @@ export default function MessagesPage() {
       <style>{`
         .msg-row {
           display: grid;
-          grid-template-columns: 300px 1fr;
+          grid-template-columns: 280px 1fr;
           flex: 1;
           min-height: 0;
           overflow: hidden;
@@ -144,7 +145,7 @@ export default function MessagesPage() {
         * { box-sizing: border-box; }
       `}</style>
 
-      <div className="msg-row" style={{ flex: 1, minHeight: 0, overflow: 'hidden', minWidth: 0, width: '100%' }}>
+      <div className="msg-row" style={{ flex: 1, minHeight: 0, overflow: 'hidden', minWidth: 0, width: '100%', gap: '16px' }}>
 
         {/* Conversation list card */}
         <motion.div
@@ -269,7 +270,7 @@ export default function MessagesPage() {
                   fontSize: 14, lineHeight: 1.55,
                   fontWeight: msg.sender === 'parent' ? 500 : 400,
                 }}>
-                  <div>{msg.text}</div>
+                  <div style={{ minHeight: '1em' }}>{msg.text}</div>
                   <div style={{
                     fontSize: 11, marginTop: 4,
                     color: msg.sender === 'parent' ? 'rgba(255,255,255,0.65)' : T.ink3,
