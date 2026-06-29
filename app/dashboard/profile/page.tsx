@@ -136,19 +136,20 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: () => void }) {
       onClick={onChange}
       style={{
         width: '44px', height: '24px', borderRadius: '999px',
-        background: on ? T.cyan : '#E5E7EB',
+        background: on ? '#00BCC8' : '#E5E7EB',
         border: 'none', cursor: 'pointer',
-        position: 'relative', transition: 'background 0.2s',
-        flexShrink: 0, padding: 0,
+        display: 'flex', alignItems: 'center',
+        padding: '2px',
+        transition: 'background 0.2s',
+        flexShrink: 0,
+        justifyContent: on ? 'flex-end' : 'flex-start',
       }}
     >
       <div style={{
-        position: 'absolute', top: '2px',
-        left: on ? '22px' : '2px',
         width: '20px', height: '20px',
         borderRadius: '50%', background: '#FFFFFF',
         boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-        transition: 'left 0.2s ease',
+        flexShrink: 0,
       }} />
     </button>
   )
@@ -411,8 +412,11 @@ const PERM_KEYS = ATHLETE_PERMISSION_CATEGORIES.flatMap((c) => c.items.map((it) 
 function AthletesSection() {
   const [athletes, setAthletes] = useState(MOCK_ATHLETES)
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [activeTab, setActiveTab] = useState<'details' | 'permissions'>('details')
 
+  // Per-athlete active tab — default 'details'
+  const [activeTab, setActiveTab] = useState<Record<number, 'details' | 'permissions'>>({})
+
+  // Per-athlete permission toggles — all false by default
   const [athletePerms, setAthletePerms] = useState<Record<number, Record<string, boolean>>>(
     () => Object.fromEntries(
       MOCK_ATHLETES.map((a) => [a.id, Object.fromEntries(PERM_KEYS.map((k) => [k, false]))])
@@ -432,6 +436,10 @@ function AthletesSection() {
     }))
   }
 
+  function setTab(athleteId: number, tab: 'details' | 'permissions') {
+    setActiveTab((prev) => ({ ...prev, [athleteId]: tab }))
+  }
+
   const selectStyle: React.CSSProperties = {
     ...inputBase,
     appearance: 'none', WebkitAppearance: 'none',
@@ -446,200 +454,191 @@ function AthletesSection() {
     <SectionCard id="section-athletes">
       <CardLabel>Athletes</CardLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-        {athletes.map((athlete, i) => (
-          <div key={athlete.id}>
-            {editingId === athlete.id ? (
-              <div style={{
-                paddingTop: i > 0 ? '16px' : '0',
-                paddingBottom: '16px',
-                borderBottom: `1px solid ${T.line}`,
-              }}>
-                {/* Pill tab toggle */}
+        {athletes.map((athlete, i) => {
+          const tab = activeTab[athlete.id] ?? 'details'
+          return (
+            <div key={athlete.id}>
+              {editingId === athlete.id ? (
                 <div style={{
-                  display: 'flex',
-                  background: '#F3F4F6',
-                  borderRadius: '999px',
-                  padding: '3px',
-                  marginBottom: '16px',
+                  paddingTop: i > 0 ? '16px' : '0',
+                  paddingBottom: '16px',
+                  borderBottom: `1px solid ${T.line}`,
                 }}>
-                  {(['details', 'permissions'] as const).map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      style={{
-                        flex: 1,
-                        height: '38px',
-                        borderRadius: '999px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        background: activeTab === tab ? T.cyan : 'transparent',
-                        color: activeTab === tab ? '#FFFFFF' : T.ink2,
-                        fontSize: '14px',
-                        fontFamily: "'Hanken Grotesk', sans-serif",
-                        fontWeight: 600,
-                        transition: 'background 0.15s, color 0.15s',
-                      }}
-                    >
-                      {tab === 'details' ? 'Details' : 'Permissions'}
-                    </button>
-                  ))}
-                </div>
-
-                {activeTab === 'details' ? (
-                  <>
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 80px',
-                      gap: '12px', marginBottom: '12px',
-                    }}>
-                      <div>
-                        <FieldLabel>Name</FieldLabel>
-                        <input
-                          style={inputBase} value={athlete.name}
-                          onChange={(e) => handleChange(athlete.id, 'name', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <FieldLabel>Age</FieldLabel>
-                        <input
-                          style={inputBase} value={athlete.age} type="number"
-                          onChange={(e) => handleChange(athlete.id, 'age', parseInt(e.target.value))}
-                        />
-                      </div>
-                    </div>
-                    <div style={{ marginBottom: '16px' }}>
-                      <FieldLabel>Sport</FieldLabel>
-                      <select
-                        value={athlete.sport}
-                        onChange={(e) => handleChange(athlete.id, 'sport', e.target.value)}
-                        style={selectStyle}
-                      >
-                        {SPORTS.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                  {/* Tab buttons */}
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                    {(['details', 'permissions'] as const).map((t) => (
                       <button
-                        onClick={() => setEditingId(null)}
+                        key={t}
+                        onClick={() => setTab(athlete.id, t)}
                         style={{
-                          flex: 1, height: '44px',
-                          background: T.cyan, color: '#FFFFFF',
-                          border: 'none', borderRadius: '8px', fontSize: '14px',
+                          height: '32px',
+                          padding: '0 16px',
+                          borderRadius: '8px',
+                          fontSize: '13px',
                           fontFamily: "'Hanken Grotesk', sans-serif",
-                          fontWeight: 600, cursor: 'pointer',
+                          cursor: 'pointer',
+                          background: tab === t ? '#00BCC8' : 'transparent',
+                          color: tab === t ? '#FFFFFF' : '#6B7280',
+                          border: tab === t ? 'none' : '1px solid rgba(0,0,0,0.12)',
+                          fontWeight: 600,
                         }}
-                      >Save</button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        style={{
-                          height: '44px', padding: '0 16px',
-                          background: 'transparent', color: T.ink2,
-                          border: '1px solid rgba(0,0,0,0.12)',
-                          borderRadius: '8px', fontSize: '14px',
-                          fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer',
-                        }}
-                      >Cancel</button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                      >
+                        {t === 'details' ? 'Details' : 'Permissions'}
+                      </button>
+                    ))}
+                  </div>
+
+                  {tab === 'details' ? (
+                    <>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 80px',
+                        gap: '12px', marginBottom: '12px',
+                      }}>
+                        <div>
+                          <FieldLabel>Name</FieldLabel>
+                          <input
+                            style={inputBase} value={athlete.name}
+                            onChange={(e) => handleChange(athlete.id, 'name', e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <FieldLabel>Age</FieldLabel>
+                          <input
+                            style={inputBase} value={athlete.age} type="number"
+                            onChange={(e) => handleChange(athlete.id, 'age', parseInt(e.target.value))}
+                          />
+                        </div>
+                      </div>
+                      <div style={{ marginBottom: '16px' }}>
+                        <FieldLabel>Sport</FieldLabel>
+                        <select
+                          value={athlete.sport}
+                          onChange={(e) => handleChange(athlete.id, 'sport', e.target.value)}
+                          style={selectStyle}
+                        >
+                          {SPORTS.map((s) => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          style={{
+                            flex: 1, height: '44px',
+                            background: T.cyan, color: '#FFFFFF',
+                            border: 'none', borderRadius: '8px', fontSize: '14px',
+                            fontFamily: "'Hanken Grotesk', sans-serif",
+                            fontWeight: 600, cursor: 'pointer',
+                          }}
+                        >Save</button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          style={{
+                            height: '44px', padding: '0 16px',
+                            background: 'transparent', color: T.ink2,
+                            border: '1px solid rgba(0,0,0,0.12)',
+                            borderRadius: '8px', fontSize: '14px',
+                            fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer',
+                          }}
+                        >Cancel</button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
                       {ATHLETE_PERMISSION_CATEGORIES.map((category) => (
                         <div key={category.label}>
                           <div style={{
                             fontSize: '11px',
                             fontFamily: "'Hanken Grotesk', sans-serif",
                             fontWeight: 700,
-                            color: T.ink2,
+                            color: '#9CA3AF',
                             textTransform: 'uppercase' as const,
-                            letterSpacing: '0.08em',
-                            marginBottom: '4px',
+                            letterSpacing: '0.1em',
+                            paddingTop: '16px',
+                            paddingBottom: '8px',
                           }}>
                             {category.label}
                           </div>
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            {category.items.map((item, ii) => (
-                              <div
-                                key={item.key}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                  gap: '16px',
-                                  minHeight: '44px',
-                                  padding: '10px 0',
-                                  borderBottom: ii < category.items.length - 1
-                                    ? `1px solid ${T.line}` : 'none',
-                                }}
-                              >
-                                <span style={{
-                                  fontSize: '16px',
-                                  color: T.ink,
-                                  fontFamily: "'Hanken Grotesk', sans-serif",
-                                  fontWeight: 400,
-                                  lineHeight: 1.4,
-                                  flex: 1,
-                                }}>
-                                  {item.label}
-                                </span>
-                                <div style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  minWidth: '44px',
-                                  minHeight: '44px',
-                                  flexShrink: 0,
-                                }}>
-                                  <ToggleSwitch
-                                    on={athletePerms[athlete.id]?.[item.key] ?? false}
-                                    onChange={() => togglePerm(athlete.id, item.key)}
-                                  />
-                                </div>
+                          {category.items.map((item) => (
+                            <div
+                              key={item.key}
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '14px 0',
+                                borderBottom: '1px solid rgba(0,0,0,0.08)',
+                              }}
+                            >
+                              <span style={{
+                                fontSize: '14px',
+                                color: '#111827',
+                                fontFamily: "'Hanken Grotesk', sans-serif",
+                                paddingRight: '16px',
+                              }}>
+                                {item.label}
+                              </span>
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                minWidth: '44px',
+                                minHeight: '44px',
+                                flexShrink: 0,
+                              }}>
+                                <ToggleSwitch
+                                  on={athletePerms[athlete.id]?.[item.key] ?? false}
+                                  onChange={() => togglePerm(athlete.id, item.key)}
+                                />
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          ))}
                         </div>
                       ))}
-                    </div>
-                    <SaveButton />
-                  </>
-                )}
-              </div>
-            ) : (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '12px',
-                paddingTop: i > 0 ? '16px' : '0', paddingBottom: '16px',
-                borderBottom: `1px solid ${T.line}`,
-              }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: '999px',
-                  background: T.surface2, flexShrink: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontWeight: 700, fontSize: '14px', color: T.ink,
-                }}>{athlete.initials}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontFamily: "'Archivo', sans-serif",
-                    fontWeight: 600, fontSize: '15px', color: T.ink,
-                  }}>{athlete.name}</div>
-                  <div style={{
-                    fontFamily: "'Hanken Grotesk', sans-serif",
-                    fontSize: '13px', color: T.ink3,
-                  }}>Age {athlete.age} · {athlete.sport}</div>
+                      <SaveButton />
+                    </>
+                  )}
                 </div>
-                <button
-                  onClick={() => { setEditingId(athlete.id); setActiveTab('details') }}
-                  style={{
-                    background: 'transparent', border: 'none',
-                    cursor: 'pointer', color: T.cyan, fontSize: '13px',
-                    fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600,
-                    minHeight: '44px', padding: '0 4px',
-                  }}
-                >Edit</button>
-              </div>
-            )}
-          </div>
-        ))}
+              ) : (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                  paddingTop: i > 0 ? '16px' : '0', paddingBottom: '16px',
+                  borderBottom: `1px solid ${T.line}`,
+                }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: '999px',
+                    background: T.surface2, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700, fontSize: '14px', color: T.ink,
+                  }}>{athlete.initials}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontFamily: "'Archivo', sans-serif",
+                      fontWeight: 600, fontSize: '15px', color: T.ink,
+                    }}>{athlete.name}</div>
+                    <div style={{
+                      fontFamily: "'Hanken Grotesk', sans-serif",
+                      fontSize: '13px', color: T.ink3,
+                    }}>Age {athlete.age} · {athlete.sport}</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingId(athlete.id)
+                      setTab(athlete.id, 'details')
+                    }}
+                    style={{
+                      background: 'transparent', border: 'none',
+                      cursor: 'pointer', color: T.cyan, fontSize: '13px',
+                      fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600,
+                      minHeight: '44px', padding: '0 4px',
+                    }}
+                  >Edit</button>
+                </div>
+              )}
+            </div>
+          )
+        })}
 
         {/* Add athlete */}
         <Link
