@@ -129,16 +129,14 @@ export default function MessagesPage() {
         .msg-row {
           display: grid;
           grid-template-columns: 300px 1fr;
-          gap: 16px;
           flex: 1;
           min-height: 0;
+          overflow: hidden;
+          width: 100%;
         }
         @media (max-width: 768px) {
-          .msg-row {
-            grid-template-columns: 1fr !important;
-            width: 100%;
-          }
-          .msg-list-hidden { display: none !important; }
+          .msg-row { grid-template-columns: 1fr !important; }
+          .msg-sidebar-hidden { display: none !important; }
           .msg-panel-hidden { display: none !important; }
           .msg-back-btn { display: flex !important; }
         }
@@ -146,7 +144,7 @@ export default function MessagesPage() {
         * { box-sizing: border-box; }
       `}</style>
 
-      <div className="msg-row" style={{ overflow: 'hidden', minWidth: 0 }}>
+      <div className="msg-row" style={{ flex: 1, minHeight: 0, overflow: 'hidden', minWidth: 0, width: '100%' }}>
 
         {/* Conversation list card */}
         <motion.div
