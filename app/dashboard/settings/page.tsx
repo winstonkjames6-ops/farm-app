@@ -241,6 +241,98 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Account */}
+          <div>
+            <SectionHeading>Account</SectionHeading>
+            <div style={cardStyle}>
+              {[
+                {
+                  label: 'Notifications',
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                         stroke={T.ink3} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                  ),
+                },
+                {
+                  label: 'Payment methods',
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                         stroke={T.ink3} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                      <line x1="1" y1="10" x2="23" y2="10"/>
+                    </svg>
+                  ),
+                },
+                {
+                  label: 'Session history',
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                         stroke={T.ink3} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                  ),
+                },
+                {
+                  label: 'Help & support',
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                         stroke={T.ink3} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                  ),
+                },
+              ].map((row, i, arr) => (
+                <div key={row.label} style={{
+                  display: 'flex', alignItems: 'center', gap: '16px',
+                  paddingTop: '16px', paddingBottom: '16px',
+                  borderBottom: i < arr.length - 1 ? `1px solid ${T.line}` : 'none',
+                  cursor: 'pointer',
+                }}>
+                  <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>{row.icon}</span>
+                  <span style={{ flex: 1, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '15px', color: T.ink }}>
+                    {row.label}
+                  </span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke={T.ink3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Account actions */}
+          <div>
+            <SectionHeading>Account actions</SectionHeading>
+            <div style={cardStyle}>
+              <div style={{
+                display: 'flex', alignItems: 'center',
+                paddingTop: '16px', paddingBottom: '16px',
+                borderBottom: `1px solid ${T.line}`, cursor: 'pointer',
+              }}>
+                <span style={{
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontSize: '15px', fontWeight: 600, color: T.ink2,
+                }}>Log out</span>
+              </div>
+              <div style={{
+                display: 'flex', alignItems: 'center',
+                paddingTop: '16px', paddingBottom: '16px', cursor: 'pointer',
+              }}>
+                <span style={{
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontSize: '15px', fontWeight: 600, color: '#EF4444',
+                }}>Delete account</span>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

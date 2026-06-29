@@ -14,6 +14,10 @@ const MOCK_PARENT = {
   sport: 'soccer',
 }
 
+const MOCK_ATHLETES = [
+  { name: 'Liam Chen', age: 13, sport: 'soccer' },
+]
+
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
 const T = {
@@ -401,7 +405,11 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
     <div style={{ minHeight: '100vh', position: 'relative' }}>
       <div style={{
         position: 'fixed', inset: 0, zIndex: 0,
-        backgroundImage: `url('/backgrounds/${MOCK_PARENT.sport}.jpg')`,
+        backgroundImage: `url('/backgrounds/${
+          MOCK_ATHLETES.length > 0
+            ? MOCK_ATHLETES[0].sport.toLowerCase()
+            : MOCK_PARENT.sport
+        }.jpg')`,
         backgroundSize: 'cover', backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
       }} />
