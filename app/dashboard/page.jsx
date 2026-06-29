@@ -309,7 +309,7 @@ export default function DashboardPage() {
       style={{ background: T.bg, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}
     >
       {/* Main */}
-      <main className="max-w-2xl mx-auto px-6 py-10 pb-24">
+      <div className="max-w-2xl mx-auto px-6 py-10 pb-24">
 
         {/* Review nudge banner */}
         {showReviewNudge && (
@@ -471,7 +471,7 @@ export default function DashboardPage() {
 
           </div>
         )}
-      </main>
+      </div>
 
       <style>{`
         @media (max-width: 480px) {
