@@ -4,14 +4,24 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 
 const T = {
-  bg: '#F8F8F6',
-  surface: '#FFFFFF',
+  card: 'rgba(255,255,255,0.92)',
   surface2: '#F0EFEB',
-  border: 'rgba(0,0,0,0.08)',
   accent: '#00BCC8',
   ink: '#1A1A1A',
   ink2: '#4A4A4A',
   ink3: '#9A9A9A',
+  line: 'rgba(0,0,0,0.08)',
+}
+
+const cardStyle: React.CSSProperties = {
+  background: T.card,
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  borderRadius: '16px',
+  border: '1px solid rgba(0,0,0,0.08)',
+  overflow: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
 }
 
 type MsgSender = 'parent' | 'trainer'
@@ -74,6 +84,20 @@ const CONVERSATIONS: Conversation[] = [
   },
 ]
 
+function Avatar({ initials, size }: { initials: string; size: number }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '999px', flexShrink: 0,
+      background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+      fontSize: size === 42 ? 13 : 12, color: '#FFFFFF',
+    }}>
+      {initials}
+    </div>
+  )
+}
+
 export default function MessagesPage() {
   const [activeId, setActiveId] = useState(1)
   const [mobileShowPanel, setMobileShowPanel] = useState(false)
@@ -89,76 +113,78 @@ export default function MessagesPage() {
   return (
     <div
       style={{
-        background: T.bg,
-        color: T.ink,
         height: 'calc(100vh - 52px)',
         display: 'flex',
         flexDirection: 'column',
+        padding: '24px',
+        gap: '16px',
         overflow: 'hidden',
+        color: T.ink,
+        fontFamily: "'Hanken Grotesk', sans-serif",
       }}
     >
       <style>{`
-        .msg-grid {
+        .msg-row {
           display: grid;
           grid-template-columns: 300px 1fr;
+          gap: 16px;
           flex: 1;
           min-height: 0;
-          overflow: hidden;
-          height: 100%;
         }
         @media (max-width: 720px) {
-          .msg-grid { grid-template-columns: 1fr; }
-          .msg-sidebar-hidden { display: none !important; }
+          .msg-row { grid-template-columns: 1fr; }
+          .msg-list-hidden { display: none !important; }
           .msg-panel-hidden { display: none !important; }
-          .msg-back-btn { display: block !important; }
+          .msg-back-btn { display: flex !important; }
         }
         .msg-back-btn { display: none; }
         * { box-sizing: border-box; }
       `}</style>
 
-      <div className="msg-grid" style={{ flex: 1, minHeight: 0 }}>
+      <div className="msg-row">
 
-        {/* Sidebar */}
+        {/* Conversation list card */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className={mobileShowPanel ? 'msg-sidebar-hidden' : ''}
-          style={{
-            borderRight: `1px solid ${T.border}`,
-            background: T.surface,
-            display: 'flex', flexDirection: 'column', overflowY: 'auto',
-          }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.2, 0.7, 0.2, 1] }}
+          className={mobileShowPanel ? 'msg-list-hidden' : ''}
+          style={{ ...cardStyle, overflowY: 'auto' }}
         >
-          <div style={{ padding: '20px 20px 16px', borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
+          {/* List header */}
+          <div style={{
+            padding: '20px 20px 16px',
+            borderBottom: `1px solid ${T.line}`,
+            flexShrink: 0,
+          }}>
             <h1 style={{
-              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 22,
-              color: T.ink, margin: 0, letterSpacing: '.06em', textTransform: 'uppercase' as const,
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 800, fontSize: 20,
+              color: T.ink, margin: 0,
+              letterSpacing: '.06em', textTransform: 'uppercase',
             }}>Messages</h1>
           </div>
 
+          {/* Rows */}
           {CONVERSATIONS.map((conv) => (
             <button
               key={conv.id}
               onClick={() => selectConversation(conv.id)}
               style={{
                 width: '100%', textAlign: 'left', padding: '16px 20px',
-                cursor: 'pointer', border: 'none',
-                borderLeft: activeId === conv.id ? `3px solid ${T.accent}` : `3px solid transparent`,
-                borderBottom: `1px solid ${T.border}`,
-                backgroundColor: activeId === conv.id ? T.surface2 : 'transparent',
+                cursor: 'pointer', border: 'none', background: 'none',
+                borderLeft: activeId === conv.id ? `3px solid ${T.accent}` : '3px solid transparent',
+                borderBottom: `1px solid ${T.line}`,
+                backgroundColor: activeId === conv.id ? 'rgba(0,188,200,0.08)' : 'transparent',
               }}
             >
               <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                <div style={{
-                  width: 42, height: 42, flexShrink: 0,
-                  background: T.surface2, border: `1px solid ${T.border}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: 13, color: T.accent,
-                }}>{conv.initials}</div>
+                <Avatar initials={conv.initials} size={42} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: T.ink }}>{conv.trainerName}</span>
+                    <span style={{
+                      fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink,
+                    }}>{conv.trainerName}</span>
                     <span style={{ fontSize: 11, color: T.ink3, flexShrink: 0, marginLeft: 6 }}>{conv.timestamp}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
@@ -169,8 +195,8 @@ export default function MessagesPage() {
                     {conv.unread > 0 && (
                       <span style={{
                         background: T.accent, color: '#FFFFFF', fontSize: 10, fontWeight: 800,
-                        width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0,
+                        width: 18, height: 18, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                       }}>{conv.unread}</span>
                     )}
                   </div>
@@ -180,16 +206,19 @@ export default function MessagesPage() {
           ))}
         </motion.div>
 
-        {/* Conversation panel */}
-        <div
+        {/* Thread panel card */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.2, 0.7, 0.2, 1], delay: 0.05 }}
           className={!mobileShowPanel ? 'msg-panel-hidden' : ''}
-          style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', background: T.bg }}
+          style={cardStyle}
         >
           {/* Panel header */}
           <div style={{
-            padding: '14px 24px', borderBottom: `1px solid ${T.border}`,
+            padding: '16px 20px',
+            borderBottom: `1px solid ${T.line}`,
             display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0,
-            background: T.surface,
           }}>
             <button
               onClick={() => setMobileShowPanel(false)}
@@ -197,16 +226,14 @@ export default function MessagesPage() {
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 color: T.ink2, padding: '4px 8px', fontSize: 18, lineHeight: 1,
+                alignItems: 'center',
               }}
             >←</button>
-            <div style={{
-              width: 38, height: 38, flexShrink: 0, background: T.surface2,
-              border: `1px solid ${T.border}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: 12, color: T.accent,
-            }}>{active.initials}</div>
+            <Avatar initials={active.initials} size={38} />
             <div>
-              <div style={{ fontWeight: 700, fontSize: 15, color: T.ink }}>{active.trainerName}</div>
+              <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>
+                {active.trainerName}
+              </div>
               <div style={{ fontSize: 12, color: T.ink3 }}>{active.sport} Trainer</div>
             </div>
           </div>
@@ -235,12 +262,13 @@ export default function MessagesPage() {
                   padding: '11px 16px',
                   background: msg.sender === 'parent' ? T.accent : T.surface2,
                   color: msg.sender === 'parent' ? '#FFFFFF' : T.ink,
+                  borderRadius: msg.sender === 'parent' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                   fontSize: 14, lineHeight: 1.55,
                   fontWeight: msg.sender === 'parent' ? 500 : 400,
                 }}>
                   <div>{msg.text}</div>
                   <div style={{
-                    fontSize: 11, marginTop: 5,
+                    fontSize: 11, marginTop: 4,
                     color: msg.sender === 'parent' ? 'rgba(255,255,255,0.65)' : T.ink3,
                     textAlign: 'right',
                   }}>{msg.time}</div>
@@ -251,8 +279,11 @@ export default function MessagesPage() {
 
           {/* Input bar */}
           <div style={{
-            padding: '14px 24px', borderTop: `1px solid ${T.border}`, flexShrink: 0,
-            display: 'flex', gap: 10, alignItems: 'stretch', background: T.surface,
+            padding: '14px 20px',
+            borderTop: `1px solid ${T.line}`,
+            flexShrink: 0,
+            display: 'flex', gap: 10, alignItems: 'stretch',
+            background: 'rgba(255,255,255,0.60)',
           }}>
             <input
               type="text"
@@ -260,18 +291,21 @@ export default function MessagesPage() {
               onChange={(e) => setInputVal(e.target.value)}
               placeholder="Type a message..."
               style={{
-                flex: 1, background: T.surface2, border: '1px solid rgba(0,0,0,0.10)',
+                flex: 1, background: T.surface2,
+                border: '1px solid rgba(0,0,0,0.10)',
+                borderRadius: '10px',
                 color: T.ink, padding: '11px 16px', fontSize: 14, outline: 'none',
                 fontFamily: "'Hanken Grotesk', sans-serif",
               }}
             />
             <button style={{
               background: T.accent, color: '#FFFFFF', border: 'none', cursor: 'pointer',
+              borderRadius: '10px',
               padding: '11px 22px', fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 800, fontSize: 14, letterSpacing: '.08em', flexShrink: 0,
             }}>SEND</button>
           </div>
-        </div>
+        </motion.div>
 
       </div>
     </div>
