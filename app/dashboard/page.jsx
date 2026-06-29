@@ -401,7 +401,7 @@ export default function DashboardPage() {
               }}>Verified Parent</span>
             </div>
           </div>
-          <p className="text-[15px] mb-5" style={{ color: T.ink3 }}>
+          <p className="text-[15px] mb-5" style={{ color: T.ink2 }}>
             Manage your sessions and track your athlete&apos;s progress
           </p>
 
