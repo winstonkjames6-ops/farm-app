@@ -308,43 +308,6 @@ export default function DashboardPage() {
       className="min-h-screen antialiased"
       style={{ background: T.bg, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}
     >
-      {/* Nav */}
-      <nav
-        className="sticky top-0 z-50 border-b"
-        style={{
-          background: 'rgba(248,248,246,0.88)',
-          backdropFilter: 'blur(14px)',
-          WebkitBackdropFilter: 'blur(14px)',
-          borderColor: T.line,
-        }}
-      >
-        <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 no-underline">
-            <span
-              className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-base"
-              style={{ background: T.accent, color: T.accentInk, fontFamily: "'Archivo', sans-serif", fontSize: 15 }}
-            >
-              F
-            </span>
-            <span
-              className="font-extrabold text-xl tracking-wide"
-              style={{ fontFamily: "'Archivo', sans-serif", color: T.ink }}
-            >
-              FARM
-            </span>
-          </Link>
-          <Link
-            href="/search"
-            className="text-sm font-semibold px-4 py-2 rounded-full no-underline transition-[border-color] duration-150"
-            style={{ border: `1.5px solid ${T.line}`, color: T.ink2 }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.24)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
-          >
-            Find trainers
-          </Link>
-        </div>
-      </nav>
-
       {/* Main */}
       <main className="max-w-2xl mx-auto px-6 py-10 pb-24">
 
