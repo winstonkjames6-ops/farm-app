@@ -374,6 +374,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (pathname.startsWith('/dashboard/trainer')) {
     return <>{children}</>
   }
+  if (pathname.startsWith('/dashboard/athlete')) {
+    return <>{children}</>
+  }
 
   return <ParentDashboardLayout>{children}</ParentDashboardLayout>
 }
