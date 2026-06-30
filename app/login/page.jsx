@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
@@ -72,7 +73,14 @@ export default function LoginPage() {
   const [emailFocus, setEmailFocus] = useState(false)
   const [passwordFocus, setPasswordFocus] = useState(false)
 
-  const signupHref = role === 'parent' ? '/parent-signup' : '/trainer-signup'
+  const signupHref = role === 'parent' ? '/parent-signup' : role === 'trainer' ? '/trainer-signup' : '/parent-signup'
+
+  const router = useRouter()
+  function handleSignIn() {
+    if (role === 'trainer') router.push('/dashboard/trainer')
+    else if (role === 'athlete') router.push('/dashboard/athlete')
+    else router.push('/dashboard')
+  }
 
   return (
     <div style={{
@@ -133,7 +141,7 @@ export default function LoginPage() {
             border: '1px solid rgba(0,0,0,0.08)',
             borderRadius: '12px', padding: '5px',
           }}>
-            {['parent', 'trainer'].map((r) => {
+            {['parent', 'trainer', 'athlete'].map((r) => {
               const active = role === r
               return (
                 <button
@@ -218,6 +226,7 @@ export default function LoginPage() {
 
           {/* Submit */}
           <button
+            onClick={handleSignIn}
             style={{
               width: '100%', padding: '14px', borderRadius: '11px', border: 'none', minHeight: '44px',
               background: '#00BCC8', color: '#FFFFFF',

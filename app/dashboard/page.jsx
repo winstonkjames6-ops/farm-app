@@ -267,7 +267,7 @@ function EmptyState() {
       <p className="text-[17px] font-semibold mb-1" style={{ color: T.ink }}>No sessions yet</p>
       <p className="text-[14.5px] mb-6" style={{ color: T.ink3 }}>Book your first session to get started</p>
       <Link
-        href="/search"
+        href="/dashboard/search"
         className="inline-flex items-center gap-2 font-bold text-[15px] px-6 py-3 rounded-xl transition-[filter] duration-150"
         style={{ background: T.accent, color: T.accentInk, textDecoration: 'none' }}
         onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.07)' }}

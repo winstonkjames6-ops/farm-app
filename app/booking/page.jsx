@@ -362,6 +362,9 @@ function PaymentScreen({ format, onNext, onBack }) {
             </svg>
             Secured by Stripe
           </div>
+          <p style={{ textAlign: 'center', fontSize: '12px', color: T.ink3, marginTop: '8px' }}>
+            Demo mode — no real payment processed
+          </p>
         </div>
 
         {/* Order summary */}
