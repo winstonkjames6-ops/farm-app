@@ -66,20 +66,15 @@ const inputBase = {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
-  const [role, setRole] = useState('parent')
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailFocus, setEmailFocus] = useState(false)
   const [passwordFocus, setPasswordFocus] = useState(false)
 
-  const signupHref = role === 'parent' ? '/parent-signup' : role === 'trainer' ? '/trainer-signup' : '/parent-signup'
-
   const router = useRouter()
   function handleSignIn() {
-    if (role === 'trainer') router.push('/dashboard/trainer')
-    else if (role === 'athlete') router.push('/dashboard/athlete')
-    else router.push('/dashboard')
+    router.push('/dashboard')
   }
 
   return (
@@ -132,34 +127,6 @@ export default function LoginPage() {
             <p style={{ color: '#9A9A9A', fontSize: '15px', margin: 0, lineHeight: 1.5 }}>
               Sign in to your FARM account
             </p>
-          </div>
-
-          {/* Role toggle */}
-          <div style={{
-            display: 'flex', gap: '6px', marginBottom: '28px',
-            background: 'rgba(0,0,0,0.04)',
-            border: '1px solid rgba(0,0,0,0.08)',
-            borderRadius: '12px', padding: '5px',
-          }}>
-            {['parent', 'trainer', 'athlete'].map((r) => {
-              const active = role === r
-              return (
-                <button
-                  key={r}
-                  onClick={() => setRole(r)}
-                  style={{
-                    flex: 1, padding: '9px 0', borderRadius: '8px', border: 'none',
-                    cursor: 'pointer', fontSize: '14px', fontWeight: 700,
-                    fontFamily: "'Hanken Grotesk', sans-serif",
-                    transition: 'all .18s ease', minHeight: '44px',
-                    background: active ? '#1A1A1A' : 'transparent',
-                    color: active ? '#FFFFFF' : '#9A9A9A',
-                  }}
-                >
-                  {r.charAt(0).toUpperCase() + r.slice(1)}
-                </button>
-              )
-            })}
           </div>
 
           {/* Email */}
@@ -276,7 +243,7 @@ export default function LoginPage() {
           {/* Sign up link */}
           <p style={{ textAlign: 'center', fontSize: '14px', color: '#9A9A9A', margin: 0 }}>
             Don&apos;t have an account?{' '}
-            <Link href={signupHref} style={{
+            <Link href="/signup" style={{
               color: '#00BCC8', textDecoration: 'none', fontWeight: 700,
               transition: 'opacity .15s ease',
             }}
