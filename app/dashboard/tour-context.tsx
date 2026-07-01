@@ -133,29 +133,14 @@ export function TourProvider({ children, role = 'parent' }: { children: ReactNod
 
   const steps = PARENT_TOUR_STEPS
 
-  // Effect 1: On first visit, set pending flag and navigate to step 0
   useEffect(() => {
-    const seen = localStorage.getItem('farm-tour-seen')
-    if (!seen) {
-      localStorage.setItem('farm-tour-pending', 'true')
-      router.push(steps[0].route)
-    } else {
-      setHasSeenTour(true)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    // Tour auto-launch disabled — pending auth integration
+    // Re-enable when TourProvider moves above DashboardLayout
+    setHasSeenTour(true)
+    localStorage.removeItem('farm-tour-pending') // clean up any stuck flags
+  }, [])
 
-  // Effect 2: Watch pathname — when we land on step 0 route with pending flag, activate
-  useEffect(() => {
-    const pending = localStorage.getItem('farm-tour-pending')
-    if (pending && typeof window !== 'undefined') {
-      const onStep0Route = window.location.pathname === steps[0].route
-      if (onStep0Route) {
-        localStorage.removeItem('farm-tour-pending')
-        const t = setTimeout(() => setActive(true), 500)
-        return () => clearTimeout(t)
-      }
-    }
-  }) // No dependency array — runs on every render, checks pathname each time
+  // Tour pathname watcher disabled — see auto-launch comment above
 
   const currentStep = active ? steps[stepIndex] : null
 
