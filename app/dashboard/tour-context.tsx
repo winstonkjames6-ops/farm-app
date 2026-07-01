@@ -133,17 +133,10 @@ export function TourProvider({ children, role = 'parent' }: { children: ReactNod
 
   const steps = PARENT_TOUR_STEPS
 
+  // Effect 1: On first visit, set pending flag and navigate to step 0
   useEffect(() => {
     const seen = localStorage.getItem('farm-tour-seen')
-    const pending = localStorage.getItem('farm-tour-pending')
-
-    if (pending) {
-      // We navigated here to start the tour — activate now
-      localStorage.removeItem('farm-tour-pending')
-      const t = setTimeout(() => setActive(true), 600)
-      return () => clearTimeout(t)
-    } else if (!seen) {
-      // First visit — set pending flag and navigate to step 0 route
+    if (!seen) {
       localStorage.setItem('farm-tour-pending', 'true')
       router.push(steps[0].route)
     } else {
@@ -151,18 +144,30 @@ export function TourProvider({ children, role = 'parent' }: { children: ReactNod
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Effect 2: Watch pathname — when we land on step 0 route with pending flag, activate
+  useEffect(() => {
+    const pending = localStorage.getItem('farm-tour-pending')
+    if (pending && typeof window !== 'undefined') {
+      const onStep0Route = window.location.pathname === steps[0].route
+      if (onStep0Route) {
+        localStorage.removeItem('farm-tour-pending')
+        const t = setTimeout(() => setActive(true), 500)
+        return () => clearTimeout(t)
+      }
+    }
+  }) // No dependency array — runs on every render, checks pathname each time
+
   const currentStep = active ? steps[stepIndex] : null
 
   const startTour = useCallback(() => {
     setStepIndex(0)
     const currentPath = window.location.pathname
     if (currentPath === steps[0].route) {
-      // Already on the right page — activate directly
       setActive(true)
     } else {
-      // Navigate first, activate on remount via pending flag
       localStorage.setItem('farm-tour-pending', 'true')
       router.push(steps[0].route)
+      // Effect 2 will detect pending flag on next render after navigation
     }
   }, [router, steps])
 
