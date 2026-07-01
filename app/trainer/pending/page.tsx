@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 
 const ACCENT = '#00BCC8'
 
@@ -88,11 +88,11 @@ function StepIcon({ state }: { state: 'done' | 'active' | 'locked' }) {
   )
 }
 
-const stepVariants = {
+const stepVariants: Variants = {
   hidden: { opacity: 0, x: -12 },
   visible: (i: number) => ({
     opacity: 1, x: 0,
-    transition: { duration: 0.32, ease: [0.2, 0.7, 0.2, 1], delay: 0.55 + i * 0.1 },
+    transition: { duration: 0.32, ease: [0.2, 0.7, 0.2, 1] as const, delay: 0.55 + i * 0.1 },
   }),
 }
 

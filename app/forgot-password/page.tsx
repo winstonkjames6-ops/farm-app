@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
 
 const inputBase: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box',
@@ -30,9 +30,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.2, 0.7, 0.2, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.2, 0.7, 0.2, 1] as const } },
 }
 
 export default function ForgotPasswordPage() {

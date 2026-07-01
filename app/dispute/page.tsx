@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
 
 const ACCENT = '#00BCC8'
 
@@ -42,17 +42,17 @@ const timelineSteps = [
   { label: 'Resolution issued', state: 'locked' as const, detail: 'A decision is communicated to both parties via email.' },
 ]
 
-const stepVariants = {
+const stepVariants: Variants = {
   hidden: { opacity: 0, x: -10 },
   visible: (i: number) => ({
     opacity: 1, x: 0,
-    transition: { duration: 0.3, ease: [0.2, 0.7, 0.2, 1], delay: 0.2 + i * 0.1 },
+    transition: { duration: 0.3, ease: [0.2, 0.7, 0.2, 1] as const, delay: 0.2 + i * 0.1 },
   }),
 }
 
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.2, 0.7, 0.2, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.2, 0.7, 0.2, 1] as const } },
 }
 
 function TimelineIcon({ state }: { state: 'active' | 'pending' | 'locked' }) {
