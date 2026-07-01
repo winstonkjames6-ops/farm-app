@@ -581,8 +581,12 @@ export default function SearchPage() {
               </button>
             </div>
           ) : (
-            <div id="tour-search-first-card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-              {filtered.map((trainer, i) => <TrainerCard key={trainer.id} trainer={trainer} index={i} />)}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+              {filtered.map((trainer, i) => (
+                <div key={trainer.id} id={i === 0 ? 'tour-search-first-card' : undefined}>
+                  <TrainerCard trainer={trainer} index={i} />
+                </div>
+              ))}
             </div>
           )}
         </div>

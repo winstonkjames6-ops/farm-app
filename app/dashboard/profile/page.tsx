@@ -437,6 +437,7 @@ function AthletesSection() {
   }
 
   return (
+    <div id="tour-profile-permissions-anchor" style={{ scrollMarginTop: '80px' }}>
     <SectionCard id="tour-profile-permissions">
       <CardLabel>Athletes</CardLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
@@ -659,6 +660,7 @@ function AthletesSection() {
         </Link>
       </div>
     </SectionCard>
+    </div>
   )
 }
 
@@ -677,6 +679,7 @@ function NotificationsSection() {
   }
 
   return (
+    <div id="tour-profile-notifications-anchor" style={{ scrollMarginTop: '80px' }}>
     <SectionCard id="tour-profile-notifications">
       <CardLabel>Notifications</CardLabel>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -724,6 +727,7 @@ function NotificationsSection() {
       </div>
       <SaveButton />
     </SectionCard>
+    </div>
   )
 }
 

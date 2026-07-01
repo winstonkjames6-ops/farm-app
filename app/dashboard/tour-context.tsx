@@ -87,7 +87,7 @@ const PARENT_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'profile-notifications',
-    targetId: 'tour-profile-notifications',
+    targetId: 'tour-profile-notifications-anchor',
     title: 'Notification settings',
     body: 'Choose how and when FARM contacts you — session reminders, trainer messages, and more.',
     position: 'bottom',
@@ -95,7 +95,7 @@ const PARENT_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'profile-permissions',
-    targetId: 'tour-profile-permissions',
+    targetId: 'tour-profile-permissions-anchor',
     title: 'Athlete permissions',
     body: 'Fine-grained controls for what trainers can do with your athlete. You\'re always in control.',
     position: 'top',
@@ -136,12 +136,14 @@ export function TourProvider({ children, role = 'parent' }: { children: ReactNod
   useEffect(() => {
     const seen = localStorage.getItem('farm-tour-seen')
     if (!seen) {
-      const t = setTimeout(() => setActive(true), 800)
+      // Navigate to step 0 route first, then activate after render
+      router.push(steps[0].route)
+      const t = setTimeout(() => setActive(true), 1000)
       return () => clearTimeout(t)
     } else {
       setHasSeenTour(true)
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentStep = active ? steps[stepIndex] : null
 
