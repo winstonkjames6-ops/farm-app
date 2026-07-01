@@ -4,27 +4,68 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTour } from './tour-context'
 
-function useElementRect(targetId: string | null, active: boolean) {
+function useElementRect(targetId: string | null, active: boolean, stepIndex: number) {
   const [rect, setRect] = useState<DOMRect | null>(null)
 
   useEffect(() => {
     if (!targetId || !active) { setRect(null); return }
 
+    let rafId: number
+    let scrollTimeout: ReturnType<typeof setTimeout>
+
     function measure() {
       const el = document.getElementById(targetId!)
-      if (el) setRect(el.getBoundingClientRect())
+      if (el) {
+        // Scroll element into view so it's visible before measuring
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        // Wait for scroll to complete then measure
+        scrollTimeout = setTimeout(() => {
+          const el2 = document.getElementById(targetId!)
+          if (el2) setRect(el2.getBoundingClientRect())
+        }, 400)
+      }
     }
 
-    measure()
-    const t1 = setTimeout(measure, 300)
-    const t2 = setTimeout(measure, 600)
+    // Re-measure on scroll — keeps spotlight locked to element
+    function onScroll() {
+      cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        const el = document.getElementById(targetId!)
+        if (el) setRect(el.getBoundingClientRect())
+      })
+    }
+
+    // Initial measure — delay longer after step changes to allow route/render
+    const t1 = setTimeout(measure, 100)
+    const t2 = setTimeout(() => {
+      const el = document.getElementById(targetId!)
+      if (el) setRect(el.getBoundingClientRect())
+    }, 800)
+    const t3 = setTimeout(() => {
+      const el = document.getElementById(targetId!)
+      if (el) setRect(el.getBoundingClientRect())
+    }, 1200)
+
     window.addEventListener('resize', measure)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    // Also listen on the main scrollable container
+    document.querySelectorAll('main').forEach(el => {
+      el.addEventListener('scroll', onScroll, { passive: true })
+    })
+
     return () => {
       clearTimeout(t1)
       clearTimeout(t2)
+      clearTimeout(t3)
+      clearTimeout(scrollTimeout)
+      cancelAnimationFrame(rafId)
       window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', onScroll)
+      document.querySelectorAll('main').forEach(el => {
+        el.removeEventListener('scroll', onScroll)
+      })
     }
-  }, [targetId, active])
+  }, [targetId, active, stepIndex])
 
   return rect
 }
@@ -33,7 +74,7 @@ const PAD = 12
 
 export default function TourOverlay() {
   const { active, currentStep, stepIndex, steps, nextStep, prevStep, endTour } = useTour()
-  const rect = useElementRect(currentStep?.targetId ?? null, active)
+  const rect = useElementRect(currentStep?.targetId ?? null, active, stepIndex)
 
   if (!active || !currentStep) return null
 
@@ -70,7 +111,8 @@ export default function TourOverlay() {
       arrowSide = 'right'
     }
     tooltipX = Math.max(16, Math.min(tooltipX, vw - tooltipW - 16))
-    tooltipY = Math.max(16, Math.min(tooltipY, vh - 200))
+    const tooltipHeight = 220 // approximate
+    tooltipY = Math.max(16, Math.min(tooltipY, vh - tooltipHeight - 16))
   } else {
     tooltipX = vw / 2 - tooltipW / 2
     tooltipY = vh / 2 - 100

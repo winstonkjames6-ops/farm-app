@@ -165,9 +165,12 @@ export function TourProvider({ children, role = 'parent' }: { children: ReactNod
     }
     const nextRoute = steps[next].route
     const currentRoute = steps[stepIndex].route
-    setStepIndex(next)
     if (nextRoute !== currentRoute) {
       router.push(nextRoute)
+      // Delay stepIndex update until new page has time to render
+      setTimeout(() => setStepIndex(next), 600)
+    } else {
+      setStepIndex(next)
     }
   }, [stepIndex, steps, endTour, router])
 
@@ -176,9 +179,11 @@ export function TourProvider({ children, role = 'parent' }: { children: ReactNod
     if (prev < 0) return
     const prevRoute = steps[prev].route
     const currentRoute = steps[stepIndex].route
-    setStepIndex(prev)
     if (prevRoute !== currentRoute) {
       router.push(prevRoute)
+      setTimeout(() => setStepIndex(prev), 600)
+    } else {
+      setStepIndex(prev)
     }
   }, [stepIndex, steps, router])
 
