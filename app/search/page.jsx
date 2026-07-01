@@ -454,7 +454,7 @@ export default function SearchPage() {
             FARM
           </Link>
           <Link
-            href="/trainer-signup"
+            href="/signup"
             style={{
               fontFamily: barlow, fontWeight: 700, fontSize: '13px',
               letterSpacing: '.1em', textTransform: 'uppercase',

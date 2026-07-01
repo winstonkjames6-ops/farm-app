@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { createClient } from '@/utils/supabase/client'
 
 // ── Eye icon ──────────────────────────────────────────────────────────────────
 
@@ -71,9 +72,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [emailFocus, setEmailFocus] = useState(false)
   const [passwordFocus, setPasswordFocus] = useState(false)
+  const [authError, setAuthError] = useState(null)
 
   const router = useRouter()
-  function handleSignIn() {
+  async function handleSignIn() {
+    setAuthError(null)
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setAuthError(error.message)
+      return
+    }
     router.push('/dashboard')
   }
 
@@ -190,6 +199,12 @@ export default function LoginPage() {
               </Link>
             </div>
           </Field>
+
+          {authError && (
+            <p style={{ fontSize: '13px', color: '#EF4444', margin: '0 0 14px', padding: '10px 14px', background: 'rgba(239,68,68,0.06)', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.18)' }}>
+              {authError}
+            </p>
+          )}
 
           {/* Submit */}
           <button

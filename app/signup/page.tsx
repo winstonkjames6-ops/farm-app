@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import { createClient } from '@/utils/supabase/client'
 
 const T = {
   bg: '#F8F8F6',
@@ -101,6 +102,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [focused, setFocused] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [authError, setAuthError] = useState<string | null>(null)
   const router = useRouter()
 
   const [inviteCopied, setInviteCopied] = useState(false)
@@ -168,7 +170,22 @@ export default function SignupPage() {
     else if (form.role === 'trainer') setStep('onboarding-trainer')
   }
 
-  function handleParentDone() {
+  async function handleParentDone() {
+    const supabase = createClient()
+    const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password })
+    if (error) {
+      setAuthError(error.message)
+      setStep('account')
+      return
+    }
+    if (data.user) {
+      await supabase.from('profiles').insert({
+        id: data.user.id,
+        role: 'parent',
+        name: `${form.firstName} ${form.lastName}`,
+        email: form.email,
+      })
+    }
     setStep('done')
     router.push('/onboarding?role=parent')
   }
@@ -422,6 +439,12 @@ export default function SignupPage() {
             </div>
             {errors.password && <p style={{ fontSize: '12px', color: T.error, margin: '4px 0 0' }}>{errors.password}</p>}
           </div>
+
+          {authError && (
+            <p style={{ fontSize: '13px', color: T.error, margin: '0 0 14px', padding: '10px 14px', background: 'rgba(239,68,68,0.06)', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.18)' }}>
+              {authError}
+            </p>
+          )}
 
           <button
             onClick={handleAccountContinue}

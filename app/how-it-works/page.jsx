@@ -352,7 +352,7 @@ export default function HowItWorksPage() {
           <StepsSection
             label="For Trainers"
             steps={TRAINER_STEPS}
-            cta={{ label: 'Apply as a trainer', href: '/trainer-signup' }}
+            cta={{ label: 'Apply as a trainer', href: '/signup' }}
           />
 
           <FAQStrip />

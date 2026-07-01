@@ -441,7 +441,7 @@ export default function Home() {
               ))}
             </div>
             <div style={{ textAlign: 'center' }}>
-              <Link href="/parent-signup" style={{
+              <Link href="/signup" style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 background: 'var(--accent)', color: 'var(--accent-ink)', border: 'none',
                 padding: '15px 30px',
@@ -546,7 +546,7 @@ export default function Home() {
                   <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: '11px', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>Total</div>
                   <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '28px', color: 'var(--ink)' }}>$55.00</div>
                 </div>
-                <Link href="/parent-signup" style={{
+                <Link href="/signup" style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                   background: 'var(--accent)', color: 'var(--accent-ink)', textDecoration: 'none',
                   fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800,
@@ -651,7 +651,7 @@ export default function Home() {
               Join 30+ parents and trainers building the future of youth sports training.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', justifyContent: 'center' }}>
-              <Link href="/parent-signup" style={{
+              <Link href="/signup" style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 background: 'var(--accent)', color: 'var(--accent-ink)', border: 'none',
                 padding: '15px 30px',
@@ -659,7 +659,7 @@ export default function Home() {
                 fontSize: '14px', letterSpacing: '.1em', textTransform: 'uppercase',
                 textDecoration: 'none', cursor: 'pointer', transition: 'filter .15s ease',
               }}>Find a trainer</Link>
-              <Link href="/trainer-signup" style={{
+              <Link href="/signup" style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 background: 'transparent', color: 'var(--ink)',
                 border: '1px solid rgba(255,255,255,.22)',

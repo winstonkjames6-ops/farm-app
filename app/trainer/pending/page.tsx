@@ -250,7 +250,7 @@ export default function TrainerPendingPage() {
             transition={{ duration: 0.3, delay: 1 }}
           >
             <Link
-              href="/trainer-signup"
+              href="/signup"
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 width: '100%', padding: '13px',
