@@ -437,7 +437,7 @@ function AthletesSection() {
   }
 
   return (
-    <SectionCard id="section-athletes">
+    <SectionCard id="tour-profile-permissions">
       <CardLabel>Athletes</CardLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
         {athletes.map((athlete, i) => {
@@ -677,7 +677,7 @@ function NotificationsSection() {
   }
 
   return (
-    <SectionCard id="section-notifications">
+    <SectionCard id="tour-profile-notifications">
       <CardLabel>Notifications</CardLabel>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {/* Column headers */}
@@ -961,7 +961,7 @@ function ViewMode({
       </div>
 
       {/* Athletes card */}
-      <div>
+      <div id="tour-profile-athletes">
         <div style={{ display: 'inline-flex', marginBottom: '12px' }}>
           <span style={{
             fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,

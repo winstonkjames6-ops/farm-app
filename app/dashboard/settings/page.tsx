@@ -152,7 +152,7 @@ export default function SettingsPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
           {/* Notifications */}
-          <div>
+          <div id="tour-settings-overview">
             <SectionHeading>Notifications</SectionHeading>
             <div style={cardStyle}>
               <ToggleRow

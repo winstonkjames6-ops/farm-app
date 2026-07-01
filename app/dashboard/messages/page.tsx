@@ -149,6 +149,7 @@ export default function MessagesPage() {
 
         {/* Conversation list card */}
         <motion.div
+          id="tour-messages-list"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: [0.2, 0.7, 0.2, 1] }}
@@ -282,7 +283,7 @@ export default function MessagesPage() {
           </motion.div>
 
           {/* Input bar */}
-          <div style={{
+          <div id="tour-messages-input" style={{
             padding: '14px 20px',
             borderTop: `1px solid ${T.line}`,
             flexShrink: 0,

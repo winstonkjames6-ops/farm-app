@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { TourProvider, useTour } from './tour-context'
+import TourOverlay from './tour-overlay'
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
@@ -154,6 +156,27 @@ const PAGE_HELP: Record<string, { title: string; body: string }> = {
   },
 }
 
+function TourTrigger() {
+  const { startTour } = useTour()
+  return (
+    <button
+      onClick={startTour}
+      style={{
+        width: '100%', height: '36px', borderRadius: '8px',
+        background: 'rgba(0,188,200,0.08)', border: '1px solid rgba(0,188,200,0.2)',
+        color: '#00BCC8', fontSize: '13px', fontWeight: 700,
+        cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif",
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+      }}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      Take the tour
+    </button>
+  )
+}
+
 function PageHelpButton({ pathname }: { pathname: string }) {
   const [open, setOpen] = useState(false)
 
@@ -247,6 +270,9 @@ function PageHelpButton({ pathname }: { pathname: string }) {
               <p style={{ fontSize: '13px', lineHeight: 1.6, color: T.ink2, margin: 0 }}>
                 {help.body}
               </p>
+              <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', marginTop: '14px', paddingTop: '14px' }}>
+                <TourTrigger />
+              </div>
             </motion.div>
           </>
         )}
@@ -531,42 +557,45 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
   const activeNav = getActiveNav()
 
   return (
-    <div style={{ minHeight: '100vh', position: 'relative' }}>
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 0,
-        backgroundImage: `url('/backgrounds/parent.jpg')`,
-        backgroundSize: 'cover', backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-      }} />
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 1,
-        background: 'rgba(248,248,246,0.60)', pointerEvents: 'none',
-      }} />
-      {isMobile ? (
-        <MobileHeader activeNav={activeNav} />
-      ) : (
-        <>
-          <Sidebar
-            active={activeNav}
-            sidebarOpen={sidebarOpen}
-            onToggle={() => setSidebarOpen((o) => !o)}
-          />
-          <DesktopHeader sidebarOpen={sidebarOpen} />
-        </>
-      )}
-      <main
-        style={{
-          position: 'relative',
-          zIndex: 2,
-          paddingTop: '52px',
-          paddingBottom: '40px',
-          marginLeft: isMobile ? 0 : sidebarWidth,
-          transition: 'margin-left 0.25s ease-in-out',
-        }}
-      >
-        {children}
-      </main>
-      <PageHelpButton pathname={pathname} />
-    </div>
+    <TourProvider role="parent">
+      <div style={{ minHeight: '100vh', position: 'relative' }}>
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 0,
+          backgroundImage: `url('/backgrounds/parent.jpg')`,
+          backgroundSize: 'cover', backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }} />
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1,
+          background: 'rgba(248,248,246,0.60)', pointerEvents: 'none',
+        }} />
+        {isMobile ? (
+          <MobileHeader activeNav={activeNav} />
+        ) : (
+          <>
+            <Sidebar
+              active={activeNav}
+              sidebarOpen={sidebarOpen}
+              onToggle={() => setSidebarOpen((o) => !o)}
+            />
+            <DesktopHeader sidebarOpen={sidebarOpen} />
+          </>
+        )}
+        <main
+          style={{
+            position: 'relative',
+            zIndex: 2,
+            paddingTop: '52px',
+            paddingBottom: '40px',
+            marginLeft: isMobile ? 0 : sidebarWidth,
+            transition: 'margin-left 0.25s ease-in-out',
+          }}
+        >
+          {children}
+        </main>
+        <PageHelpButton pathname={pathname} />
+        <TourOverlay />
+      </div>
+    </TourProvider>
   )
 }

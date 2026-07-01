@@ -372,6 +372,7 @@ export default function DashboardPage() {
 
         {/* Header */}
         <motion.div
+          id="tour-home-header"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1] }}
@@ -429,7 +430,7 @@ export default function DashboardPage() {
 
             {/* Upcoming */}
             {upcoming.length > 0 && (
-              <section>
+              <section id="tour-home-upcoming">
                 <SectionHeading>Upcoming</SectionHeading>
                 <div className="flex flex-col gap-4">
                   {upcoming.map((b, i) => (
@@ -453,6 +454,7 @@ export default function DashboardPage() {
 
             {/* Athletes */}
             <motion.section
+              id="tour-home-athletes"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.38, ease: [0.2, 0.7, 0.2, 1], delay: 0.35 }}

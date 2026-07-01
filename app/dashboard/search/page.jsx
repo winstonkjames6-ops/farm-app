@@ -468,7 +468,7 @@ export default function SearchPage() {
         </p>
 
         {/* Search input */}
-        <div style={{ position: 'relative', maxWidth: '560px' }}>
+        <div id="tour-search-bar" style={{ position: 'relative', maxWidth: '560px' }}>
           <svg
             width="16" height="16" viewBox="0 0 24 24" fill="none"
             stroke="rgba(0,0,0,0.40)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
@@ -531,7 +531,7 @@ export default function SearchPage() {
         }}
       >
         {/* Sidebar — desktop only */}
-        <div className="desktop-sidebar" style={{
+        <div id="tour-search-filters" className="desktop-sidebar" style={{
           background: '#F8F8F6', border: '1px solid rgba(0,0,0,0.08)',
           padding: '24px', position: 'sticky', top: '72px',
         }}>
@@ -581,7 +581,7 @@ export default function SearchPage() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+            <div id="tour-search-first-card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
               {filtered.map((trainer, i) => <TrainerCard key={trainer.id} trainer={trainer} index={i} />)}
             </div>
           )}
