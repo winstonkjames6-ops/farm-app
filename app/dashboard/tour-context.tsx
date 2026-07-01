@@ -135,11 +135,17 @@ export function TourProvider({ children, role = 'parent' }: { children: ReactNod
 
   useEffect(() => {
     const seen = localStorage.getItem('farm-tour-seen')
-    if (!seen) {
-      // Navigate to step 0 route first, then activate after render
-      router.push(steps[0].route)
-      const t = setTimeout(() => setActive(true), 1000)
+    const pending = localStorage.getItem('farm-tour-pending')
+
+    if (pending) {
+      // We navigated here to start the tour — activate now
+      localStorage.removeItem('farm-tour-pending')
+      const t = setTimeout(() => setActive(true), 600)
       return () => clearTimeout(t)
+    } else if (!seen) {
+      // First visit — set pending flag and navigate to step 0 route
+      localStorage.setItem('farm-tour-pending', 'true')
+      router.push(steps[0].route)
     } else {
       setHasSeenTour(true)
     }
@@ -149,8 +155,15 @@ export function TourProvider({ children, role = 'parent' }: { children: ReactNod
 
   const startTour = useCallback(() => {
     setStepIndex(0)
-    setActive(true)
-    router.push(steps[0].route)
+    const currentPath = window.location.pathname
+    if (currentPath === steps[0].route) {
+      // Already on the right page — activate directly
+      setActive(true)
+    } else {
+      // Navigate first, activate on remount via pending flag
+      localStorage.setItem('farm-tour-pending', 'true')
+      router.push(steps[0].route)
+    }
   }, [router, steps])
 
   const endTour = useCallback(() => {
