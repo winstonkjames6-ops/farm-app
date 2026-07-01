@@ -366,6 +366,132 @@ function MobileHeader({ activeNav }: { activeNav: string }) {
   )
 }
 
+// ── Page help ──────────────────────────────────────────────────────────────────
+
+const PAGE_HELP: Record<string, { title: string; body: string }> = {
+  '/dashboard/trainer': {
+    title: 'Trainer Home',
+    body: "Your home shows today's sessions, upcoming bookings, and your weekly earnings. Use this as your daily command center.",
+  },
+  '/dashboard/trainer/schedule': {
+    title: 'Schedule',
+    body: 'Manage your availability and view confirmed bookings. Set recurring weekly slots — parents can only book during these windows.',
+  },
+  '/dashboard/trainer/earnings': {
+    title: 'Earnings',
+    body: 'Track your session revenue, pending payouts, and Stripe payment history. You keep 85% of every session rate you set.',
+  },
+  '/dashboard/trainer/messages': {
+    title: 'Messages',
+    body: 'Chat with parents who have booked or are considering booking you. Keep communication on-platform to stay protected.',
+  },
+  '/dashboard/trainer/profile': {
+    title: 'Your Profile',
+    body: 'Update your bio, credentials, hourly rate, and session formats. A complete profile gets significantly more bookings.',
+  },
+}
+
+function PageHelpButton({ pathname }: { pathname: string }) {
+  const [open, setOpen] = useState(false)
+
+  const key = Object.keys(PAGE_HELP).find(k =>
+    k === pathname || (k !== '/dashboard/trainer' && pathname.startsWith(k))
+  ) ?? '/dashboard/trainer'
+  const help = PAGE_HELP[key]
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        style={{
+          position: 'fixed', bottom: '28px', right: '28px', zIndex: 100,
+          width: '44px', height: '44px', borderRadius: '50%',
+          background: T.cyan, border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 16px rgba(0,188,200,0.35)',
+          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontWeight: 700, fontSize: '20px', color: '#FFFFFF',
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.transform = 'scale(1.08)'
+          e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,188,200,0.45)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.transform = 'scale(1)'
+          e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,188,200,0.35)'
+        }}
+      >
+        ?
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setOpen(false)}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 101,
+                background: 'rgba(0,0,0,0.25)',
+                backdropFilter: 'blur(2px)',
+                WebkitBackdropFilter: 'blur(2px)',
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.97 }}
+              transition={{ duration: 0.25, ease: [0.2, 0.7, 0.2, 1] }}
+              style={{
+                position: 'fixed', bottom: '84px', right: '28px', zIndex: 102,
+                width: '300px',
+                background: 'rgba(255,255,255,0.96)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                borderRadius: '16px',
+                border: '1px solid rgba(0,0,0,0.08)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                padding: '20px',
+                fontFamily: "'Hanken Grotesk', sans-serif",
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '28px', height: '28px', borderRadius: '8px',
+                    background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700, fontSize: '14px', color: '#FFFFFF',
+                  }}>?</div>
+                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.ink, letterSpacing: '0.02em' }}>
+                    {help.title}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setOpen(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: T.ink3, display: 'flex', alignItems: 'center' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+              <p style={{ fontSize: '13px', lineHeight: 1.6, color: T.ink2, margin: 0 }}>
+                {help.body}
+              </p>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+
 // ── Layout ─────────────────────────────────────────────────────────────────────
 
 export default function TrainerDashboardLayout({ children }: { children: React.ReactNode }) {
@@ -438,6 +564,7 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
       >
         {children}
       </motion.main>
+      <PageHelpButton pathname={pathname} />
     </div>
   )
 }

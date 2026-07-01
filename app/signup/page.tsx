@@ -150,12 +150,12 @@ export default function SignupPage() {
 
   function handleParentDone() {
     setStep('done')
-    router.push('/dashboard/search')
+    router.push('/onboarding?role=parent')
   }
 
   function handleTrainerDone() {
     setStep('done')
-    router.push('/dashboard/trainer/schedule')
+    router.push('/onboarding?role=trainer')
   }
 
   function goBack() {
