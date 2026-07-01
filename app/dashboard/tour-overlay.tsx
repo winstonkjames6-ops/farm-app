@@ -36,15 +36,19 @@ function useElementRect(targetId: string | null, active: boolean, stepIndex: num
     }
 
     // Initial measure — delay longer after step changes to allow route/render
-    const t1 = setTimeout(measure, 100)
+    const t1 = setTimeout(measure, 150)
     const t2 = setTimeout(() => {
       const el = document.getElementById(targetId!)
       if (el) setRect(el.getBoundingClientRect())
-    }, 800)
+    }, 900)
     const t3 = setTimeout(() => {
       const el = document.getElementById(targetId!)
       if (el) setRect(el.getBoundingClientRect())
-    }, 1200)
+    }, 1600)
+    const t4 = setTimeout(() => {
+      const el = document.getElementById(targetId!)
+      if (el) setRect(el.getBoundingClientRect())
+    }, 2400)
 
     window.addEventListener('resize', measure)
     window.addEventListener('scroll', onScroll, { passive: true })
@@ -57,6 +61,7 @@ function useElementRect(targetId: string | null, active: boolean, stepIndex: num
       clearTimeout(t1)
       clearTimeout(t2)
       clearTimeout(t3)
+      clearTimeout(t4)
       clearTimeout(scrollTimeout)
       cancelAnimationFrame(rafId)
       window.removeEventListener('resize', measure)
@@ -95,8 +100,14 @@ export default function TourOverlay() {
     const pos = currentStep.position
     if (pos === 'bottom') {
       tooltipX = Math.min(Math.max(rect.left + rect.width / 2 - tooltipW / 2, 16), vw - tooltipW - 16)
-      tooltipY = rect.bottom + PAD + 12
-      arrowSide = 'top'
+      const wouldGoBelow = rect.bottom + PAD + 12 + 220 > vh
+      if (wouldGoBelow) {
+        tooltipY = rect.top - PAD - 12 - 220
+        arrowSide = 'bottom'
+      } else {
+        tooltipY = rect.bottom + PAD + 12
+        arrowSide = 'top'
+      }
     } else if (pos === 'top') {
       tooltipX = Math.min(Math.max(rect.left + rect.width / 2 - tooltipW / 2, 16), vw - tooltipW - 16)
       tooltipY = rect.top - PAD - 12 - 140

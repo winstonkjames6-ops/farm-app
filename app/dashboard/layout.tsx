@@ -179,6 +179,7 @@ function TourTrigger() {
 
 function PageHelpButton({ pathname }: { pathname: string }) {
   const [open, setOpen] = useState(false)
+  const { active: tourActive } = useTour()
 
   const key = Object.keys(PAGE_HELP).find(k =>
     k === pathname || (k !== '/dashboard' && pathname.startsWith(k))
@@ -195,7 +196,9 @@ function PageHelpButton({ pathname }: { pathname: string }) {
           background: T.cyan, border: 'none', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 4px 16px rgba(0,188,200,0.35)',
-          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          opacity: tourActive ? 0 : 1,
+          pointerEvents: tourActive ? 'none' : 'all',
+          transition: 'transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease',
           fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 700, fontSize: '20px', color: '#FFFFFF',
         }}

@@ -430,11 +430,13 @@ export default function DashboardPage() {
 
             {/* Upcoming */}
             {upcoming.length > 0 && (
-              <section id="tour-home-upcoming">
+              <section>
                 <SectionHeading>Upcoming</SectionHeading>
                 <div className="flex flex-col gap-4">
                   {upcoming.map((b, i) => (
-                    <UpcomingCard key={b.id} booking={b} index={i} />
+                    <div key={b.id} id={i === 0 ? 'tour-home-upcoming' : undefined}>
+                      <UpcomingCard booking={b} index={i} />
+                    </div>
                   ))}
                 </div>
               </section>
