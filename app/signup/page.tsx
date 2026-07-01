@@ -84,7 +84,7 @@ function DotProgress({ total, active }: { total: number; active: number }) {
   )
 }
 
-type Step = 'age' | 'account' | 'role' | 'onboarding-parent' | 'onboarding-trainer' | 'done'
+type Step = 'age' | 'account' | 'parent-invite' | 'role' | 'onboarding-parent' | 'onboarding-trainer' | 'done'
 
 export default function SignupPage() {
   const [step, setStep] = useState<Step>('age')
@@ -102,6 +102,23 @@ export default function SignupPage() {
   const [focused, setFocused] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const router = useRouter()
+
+  const [inviteCopied, setInviteCopied] = useState(false)
+
+  function generateInviteCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    return Array.from({ length: 9 }, (_, i) => i === 4 ? chars[Math.floor(Math.random() * chars.length)] : chars[Math.floor(Math.random() * chars.length)]).join('').slice(0, 4) + '-' + Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+  }
+
+  const [inviteCode] = useState(() => generateInviteCode())
+  const inviteLink = `farmapp.com/invite?code=${inviteCode}`
+
+  function copyInviteLink() {
+    navigator.clipboard.writeText(inviteLink).then(() => {
+      setInviteCopied(true)
+      setTimeout(() => setInviteCopied(false), 3000)
+    })
+  }
 
   function update(field: string, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -140,7 +157,10 @@ export default function SignupPage() {
   }
 
   function handleAccountContinue() {
-    if (validateAccount()) setStep('role')
+    if (validateAccount()) {
+      if (ageWarning) setStep('parent-invite')
+      else setStep('role')
+    }
   }
 
   function handleRoleContinue() {
@@ -160,6 +180,7 @@ export default function SignupPage() {
 
   function goBack() {
     if (step === 'account') setStep('age')
+    else if (step === 'parent-invite') setStep('account')
     else if (step === 'role') setStep('account')
     else if (step === 'onboarding-parent' || step === 'onboarding-trainer') setStep('role')
   }
@@ -185,21 +206,79 @@ export default function SignupPage() {
         return (
           <div style={{ textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-              <WarningIcon color="#F97316" />
+              <div style={{
+                width: '64px', height: '64px', borderRadius: '50%',
+                background: 'rgba(249,115,22,0.1)', border: '2px solid rgba(249,115,22,0.3)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <WarningIcon color="#F97316" />
+              </div>
             </div>
             <h2 style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: '22px', color: T.ink, margin: '0 0 12px' }}>
               You need a parent account
             </h2>
             <p style={{ fontSize: '14px', color: T.ink2, lineHeight: 1.6, margin: '0 0 28px' }}>
-              Athletes under 13 can&apos;t create their own account. Ask a parent or guardian to sign up and add you as an athlete.
+              Athletes under 13 can&apos;t create their own account. Share this link with a parent or guardian — they&apos;ll create the account and you&apos;ll be added automatically.
             </p>
-            <Link href="/signup" style={{ display: 'block', ...cyanBtn, lineHeight: '52px', textDecoration: 'none', textAlign: 'center', marginBottom: '16px' }}>
-              Go to parent signup
-            </Link>
-            <p style={{ fontSize: '13px', color: T.ink3, margin: 0 }}>
+
+            {/* Invite link box */}
+            <div style={{
+              background: '#FFFFFF', border: `1px solid ${T.line}`,
+              borderRadius: '12px', padding: '16px 20px', marginBottom: '16px', textAlign: 'left',
+            }}>
+              <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: T.ink3, margin: '0 0 8px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                Parent invite link
+              </p>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: T.cyan, margin: '0 0 16px', wordBreak: 'break-all', fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                {inviteLink}
+              </p>
+              <button
+                onClick={copyInviteLink}
+                style={{
+                  width: '100%', height: '44px', borderRadius: '8px', border: 'none',
+                  background: inviteCopied ? 'rgba(0,188,200,0.1)' : T.cyan,
+                  color: inviteCopied ? T.cyan : '#FFFFFF',
+                  fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  transition: 'all .2s ease',
+                  outline: inviteCopied ? `1px solid ${T.cyan}` : 'none',
+                }}
+              >
+                {inviteCopied ? (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    Copy invite link
+                  </>
+                )}
+              </button>
+            </div>
+
+            <p style={{ fontSize: '12px', color: T.ink3, margin: '0 0 24px', lineHeight: 1.5 }}>
               Already have a parent account?{' '}
               <Link href="/login" style={{ color: T.cyan, fontWeight: 700, textDecoration: 'none' }}>Sign in</Link>
             </p>
+
+            <button
+              onClick={() => setAgeError(null)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: T.ink3, fontSize: '13px', fontWeight: 500,
+                fontFamily: "'Hanken Grotesk', sans-serif",
+                textDecoration: 'underline',
+              }}
+            >
+              ← Back to age entry
+            </button>
           </div>
         )
       }
@@ -355,6 +434,99 @@ export default function SignupPage() {
             Already have an account?{' '}
             <Link href="/login" style={{ color: T.cyan, fontWeight: 700, textDecoration: 'none' }}>Sign in</Link>
           </p>
+        </>
+      )
+    }
+
+    if (step === 'parent-invite') {
+      return (
+        <>
+          <button onClick={goBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: '14px', padding: '0 0 20px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
+            ← Back
+          </button>
+
+          {/* Icon */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+            <div style={{
+              width: '72px', height: '72px', borderRadius: '50%',
+              background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(0,188,200,0.25)',
+            }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.36 12 19.79 19.79 0 0 1 1.21 3.58 2 2 0 0 1 3.22 1.4h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16.92z" />
+              </svg>
+            </div>
+          </div>
+
+          <h1 style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: '26px', color: T.ink, margin: '0 0 8px', textAlign: 'center' }}>
+            One more step
+          </h1>
+          <p style={{ fontSize: '15px', color: T.ink2, margin: '0 0 32px', lineHeight: 1.6, textAlign: 'center' }}>
+            Since you&apos;re under 18, a parent or guardian needs to approve your account before you can book sessions. Share this link with them to get started.
+          </p>
+
+          {/* Invite link box */}
+          <div style={{
+            background: '#FFFFFF', border: `1px solid ${T.line}`,
+            borderRadius: '12px', padding: '16px 20px', marginBottom: '16px',
+          }}>
+            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: T.ink3, margin: '0 0 8px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
+              Your invite link
+            </p>
+            <p style={{ fontSize: '14px', fontWeight: 600, color: T.cyan, margin: '0 0 16px', wordBreak: 'break-all', fontFamily: "'Hanken Grotesk', sans-serif" }}>
+              {inviteLink}
+            </p>
+            <button
+              onClick={copyInviteLink}
+              style={{
+                width: '100%', height: '44px', borderRadius: '8px', border: 'none',
+                background: inviteCopied ? 'rgba(0,188,200,0.1)' : T.cyan,
+                color: inviteCopied ? T.cyan : '#FFFFFF',
+                fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+                fontFamily: "'Hanken Grotesk', sans-serif",
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                transition: 'all .2s ease',
+                outline: inviteCopied ? `1px solid ${T.cyan}` : 'none',
+              }}
+            >
+              {inviteCopied ? (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Link copied!
+                </>
+              ) : (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  Copy invite link
+                </>
+              )}
+            </button>
+          </div>
+
+          <p style={{ fontSize: '12px', color: T.ink3, textAlign: 'center', lineHeight: 1.5, margin: '0 0 24px' }}>
+            When your parent clicks the link, your profile will be connected to their account automatically.
+          </p>
+
+          {/* I'll do this later */}
+          <button
+            onClick={() => router.push('/dashboard/athlete')}
+            style={{
+              width: '100%', height: '44px', borderRadius: '11px',
+              background: 'transparent', border: `1px solid ${T.line}`,
+              color: T.ink2, fontSize: '14px', fontWeight: 600,
+              cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif",
+              transition: 'border-color .15s ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = T.line }}
+          >
+            I&apos;ll do this later
+          </button>
         </>
       )
     }
