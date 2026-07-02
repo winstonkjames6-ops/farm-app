@@ -1024,8 +1024,8 @@ function ViewMode({
         }}>
           {[
             { value: '3', label: 'Sessions' },
-            { value: '1', label: 'Athlete' },
-            { value: '2', label: 'Sports' },
+            { value: String(athletes.length), label: athletes.length === 1 ? 'Athlete' : 'Athletes' },
+            { value: String(new Set(athletes.map((a) => a.sport).filter(Boolean)).size), label: 'Sports' },
           ].map((stat, i) => (
             <div key={stat.label} style={{
               padding: '14px 0', textAlign: 'center',
