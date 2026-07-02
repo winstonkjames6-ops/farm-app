@@ -623,7 +623,7 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
                         <div>
                           <FieldLabel>Age</FieldLabel>
                           <input
-                            style={inputBase} value={athlete.age} type="number"
+                            style={inputBase} value={athlete.age ?? ''} type="number"
                             onChange={(e) => handleChange(athlete.id, 'age', parseInt(e.target.value))}
                           />
                         </div>
