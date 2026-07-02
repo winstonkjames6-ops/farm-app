@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { createClient } from '@/utils/supabase/client'
 
 // ── Mock data ────────────────────────────────────────────────────────────────
 
@@ -307,6 +308,22 @@ function SectionHeading({ children }) {
 
 export default function DashboardPage() {
   const [showReviewNudge, setShowReviewNudge] = useState(true)
+  const [parentName, setParentName] = useState('')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.name) setParentName(data.name)
+        })
+    })
+  }, [])
 
   const upcoming = BOOKINGS.filter((b) => b.status === 'upcoming')
   const past = BOOKINGS.filter((b) => b.status === 'completed')
@@ -383,7 +400,7 @@ export default function DashboardPage() {
               className="font-black text-[30px] leading-tight tracking-tight"
               style={{ fontFamily: "'Archivo', sans-serif", color: T.ink, letterSpacing: '-.025em', margin: 0 }}
             >
-              Welcome back, Sarah
+              Welcome back{parentName ? `, ${parentName.split(' ')[0]}` : ''}
             </h1>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '5px',

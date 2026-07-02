@@ -179,12 +179,17 @@ export default function SignupPage() {
       return
     }
     if (data.user) {
-      await supabase.from('profiles').insert({
+      const { error: profileError } = await supabase.from('profiles').insert({
         id: data.user.id,
         role: 'parent',
         name: `${form.firstName} ${form.lastName}`,
         email: form.email,
       })
+      if (profileError) {
+        setAuthError('Account created but profile setup failed. Please contact support.')
+        setStep('account')
+        return
+      }
     }
     setStep('done')
     router.push('/onboarding?role=parent')

@@ -7,14 +7,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { TourProvider, useTour } from './tour-context'
 import TourOverlay from './tour-overlay'
+import { createClient } from '@/utils/supabase/client'
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
-
-const MOCK_PARENT = {
-  name: 'Sarah Chen',
-  initials: 'SC',
-  sport: 'soccer',
-}
 
 const MOCK_ATHLETES = [
   { name: 'Liam Chen', age: 13, sport: 'soccer' },
@@ -290,10 +285,14 @@ function Sidebar({
   active,
   sidebarOpen,
   onToggle,
+  parentName,
+  parentInitials,
 }: {
   active: string
   sidebarOpen: boolean
   onToggle: () => void
+  parentName: string
+  parentInitials: string
 }) {
   return (
     <motion.div
@@ -401,11 +400,11 @@ function Sidebar({
         {/* Parent info */}
         <div style={{ padding: '16px 12px 24px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: sidebarOpen ? 'flex-start' : 'center', flexShrink: 0 }}>
           <div style={{ width: 40, height: 40, borderRadius: '999px', background: T.cyanLight, border: `2px solid ${T.cyanBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', color: T.cyan, flexShrink: 0 }}>
-            {MOCK_PARENT.initials}
+            {parentInitials}
           </div>
           {sidebarOpen && (
             <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: T.ink, lineHeight: 1.3, whiteSpace: 'nowrap' }}>{MOCK_PARENT.name}</div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: T.ink, lineHeight: 1.3, whiteSpace: 'nowrap' }}>{parentName}</div>
               <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, whiteSpace: 'nowrap' }}>Parent</div>
             </div>
           )}
@@ -457,7 +456,7 @@ function DesktopHeader({ sidebarOpen }: { sidebarOpen: boolean }) {
 
 // ── Mobile header with dropdown ────────────────────────────────────────────────
 
-function MobileHeader({ activeNav }: { activeNav: string }) {
+function MobileHeader({ activeNav, initials }: { activeNav: string; initials: string }) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -465,7 +464,7 @@ function MobileHeader({ activeNav }: { activeNav: string }) {
       <header style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '52px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', zIndex: 50 }}>
         <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: T.cyan, letterSpacing: '0.12em', textTransform: 'uppercase' }}>FARM</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '13px', color: '#FFFFFF', letterSpacing: '0.04em' }}>SC</div>
+          <div style={{ width: '36px', height: '36px', borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '13px', color: '#FFFFFF', letterSpacing: '0.04em' }}>{initials}</div>
           <button onClick={() => setIsOpen((o) => !o)} style={{ background: 'transparent', border: 'none', color: '#374151', cursor: 'pointer', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isOpen ? <IconX /> : <IconMenu />}
           </button>
@@ -536,9 +535,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return <ParentDashboardLayout>{children}</ParentDashboardLayout>
 }
 
+function computeInitials(name: string): string {
+  if (!name) return ''
+  const words = name.trim().split(/\s+/)
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase()
+}
+
 function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobile, setIsMobile] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [parentName, setParentName] = useState('')
   const pathname = usePathname()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
 
@@ -548,6 +555,23 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.name) setParentName(data.name)
+        })
+    })
+  }, [])
+
+  const parentInitials = computeInitials(parentName)
 
   const getActiveNav = () => {
     if (pathname === '/dashboard') return 'home'
@@ -573,13 +597,15 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
           background: 'rgba(248,248,246,0.60)', pointerEvents: 'none',
         }} />
         {isMobile ? (
-          <MobileHeader activeNav={activeNav} />
+          <MobileHeader activeNav={activeNav} initials={parentInitials} />
         ) : (
           <>
             <Sidebar
               active={activeNav}
               sidebarOpen={sidebarOpen}
               onToggle={() => setSidebarOpen((o) => !o)}
+              parentName={parentName}
+              parentInitials={parentInitials}
             />
             <DesktopHeader sidebarOpen={sidebarOpen} />
           </>
