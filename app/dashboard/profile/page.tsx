@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { ChevronDown, CheckCircle, Circle, Camera } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -111,21 +112,28 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function SaveButton({ onClick }: { onClick?: () => void }) {
+function SaveButton({
+  onClick, loading, disabled,
+}: {
+  onClick?: () => void; loading?: boolean; disabled?: boolean
+}) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled || loading}
       style={{
         width: '100%', height: '44px',
         background: T.cyan, color: '#FFFFFF',
         border: 'none', borderRadius: '8px',
         fontSize: '15px', fontWeight: 600,
         fontFamily: "'Hanken Grotesk', sans-serif",
-        cursor: 'pointer', marginTop: '20px',
+        cursor: (disabled || loading) ? 'not-allowed' : 'pointer',
+        marginTop: '20px',
         letterSpacing: '.02em',
+        opacity: (disabled || loading) ? 0.7 : 1,
       }}
     >
-      Save changes
+      {loading ? 'Saving…' : 'Save changes'}
     </button>
   )
 }
@@ -280,12 +288,76 @@ function PhotoSection({ initials }: { initials: string }) {
 
 // ── Section: Basic Info ────────────────────────────────────────────────────────
 
-function BasicInfoSection() {
-  const [firstName, setFirstName] = useState('Sarah')
-  const [lastName, setLastName]   = useState('Chen')
-  const [email, setEmail]         = useState('sarah.chen@email.com')
+function BasicInfoSection({
+  firstName: initFirst,
+  lastName: initLast,
+  email: confirmedEmail,
+  userId,
+  onSave,
+}: {
+  firstName: string
+  lastName: string
+  email: string
+  userId: string
+  onSave: (updates: { firstName: string; lastName: string }) => void
+}) {
+  const [firstName, setFirstName] = useState(initFirst)
+  const [lastName, setLastName]   = useState(initLast)
+  const [email, setEmail]         = useState(confirmedEmail)
   const [phone, setPhone]         = useState('+1 (512) 555-0182')
   const [location, setLocation]   = useState('Austin, TX')
+
+  const [saving, setSaving]           = useState(false)
+  const [nameError, setNameError]     = useState<string | null>(null)
+  const [emailError, setEmailError]   = useState<string | null>(null)
+  const [emailPending, setEmailPending] = useState<string | null>(null)
+  const [nameSaved, setNameSaved]     = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    setNameError(null)
+    setEmailError(null)
+    setEmailPending(null)
+    setNameSaved(false)
+
+    const supabase = createClient()
+    const nameChanged  = firstName !== initFirst || lastName !== initLast
+    const emailChanged = email !== confirmedEmail
+
+    let nameOk = !nameChanged
+
+    if (nameChanged) {
+      const fullName = `${firstName} ${lastName}`.trim()
+      const { error } = await supabase
+        .from('profiles')
+        .update({ name: fullName })
+        .eq('id', userId)
+      if (error) {
+        setNameError(error.message)
+      } else {
+        onSave({ firstName, lastName })
+        nameOk = true
+      }
+    }
+
+    if (emailChanged) {
+      const { error } = await supabase.auth.updateUser({ email })
+      if (error) {
+        setEmailError(error.message)
+      } else {
+        setEmailPending(
+          `Confirmation email sent to ${email}. Your login email won't change until you click the link in that email.`
+        )
+        setEmail(confirmedEmail)
+      }
+    }
+
+    if (nameOk && !emailChanged) {
+      setNameSaved(true)
+    }
+
+    setSaving(false)
+  }
 
   return (
     <SectionCard id="section-basic-info">
@@ -309,6 +381,14 @@ function BasicInfoSection() {
             />
           </div>
         </div>
+        {nameError && (
+          <div style={{
+            color: T.danger, fontSize: '13px',
+            fontFamily: "'Hanken Grotesk', sans-serif",
+          }}>
+            {nameError}
+          </div>
+        )}
         <div>
           <FieldLabel>Email</FieldLabel>
           <input
@@ -316,6 +396,22 @@ function BasicInfoSection() {
             onChange={(e) => setEmail(e.target.value)}
             style={inputBase}
           />
+          {emailError && (
+            <div style={{
+              color: T.danger, fontSize: '13px', marginTop: '6px',
+              fontFamily: "'Hanken Grotesk', sans-serif",
+            }}>
+              {emailError}
+            </div>
+          )}
+          {emailPending && (
+            <div style={{
+              color: '#059669', fontSize: '13px', marginTop: '6px',
+              fontFamily: "'Hanken Grotesk', sans-serif",
+            }}>
+              {emailPending}
+            </div>
+          )}
         </div>
         <div>
           <FieldLabel>Phone</FieldLabel>
@@ -335,7 +431,15 @@ function BasicInfoSection() {
           />
         </div>
       </div>
-      <SaveButton />
+      {nameSaved && (
+        <div style={{
+          color: '#059669', fontSize: '13px', marginTop: '12px',
+          fontFamily: "'Hanken Grotesk', sans-serif",
+        }}>
+          Changes saved.
+        </div>
+      )}
+      <SaveButton onClick={handleSave} loading={saving} disabled={saving} />
     </SectionCard>
   )
 }
@@ -794,11 +898,11 @@ function DangerZoneSection() {
 // ── View mode (public-facing profile) ─────────────────────────────────────────
 
 function ViewMode({
-  onEdit, name, location
+  onEdit, name, location, email,
 }: {
-  onEdit: () => void; name: string; location: string
+  onEdit: () => void; name: string; location: string; email: string
 }) {
-  const initials = name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+  const initials = name.split(' ').map((n) => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -934,7 +1038,7 @@ function ViewMode({
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
               ),
-              label: 'sarah.chen@email.com',
+              label: email,
             },
             {
               icon: (
@@ -1034,9 +1138,17 @@ function ViewMode({
 
 // ── Edit mode ──────────────────────────────────────────────────────────────────
 
-function EditMode({ onBack }: { onBack: () => void }) {
-  const [name] = useState('Sarah Chen')
-  const initials = name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+function EditMode({
+  onBack, firstName, lastName, email, userId, onProfileUpdate,
+}: {
+  onBack: () => void
+  firstName: string
+  lastName: string
+  email: string
+  userId: string
+  onProfileUpdate: (updates: { firstName: string; lastName: string }) => void
+}) {
+  const initials = [firstName?.[0], lastName?.[0]].filter(Boolean).join('').toUpperCase() || '?'
 
   return (
     <div>
@@ -1070,7 +1182,13 @@ function EditMode({ onBack }: { onBack: () => void }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <PhotoSection initials={initials} />
-        <BasicInfoSection />
+        <BasicInfoSection
+          firstName={firstName}
+          lastName={lastName}
+          email={email}
+          userId={userId}
+          onSave={onProfileUpdate}
+        />
         <AthletesSection />
         <NotificationsSection />
         <DangerZoneSection />
@@ -1081,8 +1199,81 @@ function EditMode({ onBack }: { onBack: () => void }) {
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
+interface ProfileState {
+  firstName: string
+  lastName: string
+  email: string
+}
+
 export default function ParentProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
+  const [profile, setProfile] = useState<ProfileState | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [profileLoading, setProfileLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadProfile() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setProfileLoading(false); return }
+      setUserId(user.id)
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single()
+
+      const fullName = data?.name ?? ''
+      const spaceIdx = fullName.indexOf(' ')
+      const firstName = spaceIdx >= 0 ? fullName.slice(0, spaceIdx) : fullName
+      const lastName  = spaceIdx >= 0 ? fullName.slice(spaceIdx + 1) : ''
+
+      setProfile({ firstName, lastName, email: user.email ?? '' })
+      setProfileLoading(false)
+    }
+    loadProfile()
+  }, [])
+
+  function handleProfileUpdate(updates: { firstName: string; lastName: string }) {
+    setProfile((p) => p ? { ...p, ...updates } : p)
+  }
+
+  if (profileLoading) {
+    return (
+      <div style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{
+          maxWidth: '672px', margin: '0 auto', padding: '32px 24px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          minHeight: '200px',
+        }}>
+          <div style={{
+            fontFamily: "'Hanken Grotesk', sans-serif",
+            fontSize: '14px', color: T.ink3,
+          }}>Loading profile…</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!profile || !userId) {
+    return (
+      <div style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{
+          maxWidth: '672px', margin: '0 auto', padding: '32px 24px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          minHeight: '200px',
+        }}>
+          <div style={{
+            fontFamily: "'Hanken Grotesk', sans-serif",
+            fontSize: '14px', color: T.ink3,
+          }}>Unable to load profile.</div>
+        </div>
+      </div>
+    )
+  }
+
+  const displayName = `${profile.firstName} ${profile.lastName}`.trim()
 
   return (
     <div style={{ position: 'relative', zIndex: 2 }}>
@@ -1094,11 +1285,19 @@ export default function ParentProfilePage() {
           transition={{ duration: 0.25, ease: [0.2, 0.7, 0.2, 1] }}
         >
           {isEditing ? (
-            <EditMode onBack={() => setIsEditing(false)} />
+            <EditMode
+              onBack={() => setIsEditing(false)}
+              firstName={profile.firstName}
+              lastName={profile.lastName}
+              email={profile.email}
+              userId={userId}
+              onProfileUpdate={handleProfileUpdate}
+            />
           ) : (
             <ViewMode
               onEdit={() => setIsEditing(true)}
-              name="Sarah Chen"
+              name={displayName}
+              email={profile.email}
               location="Austin, TX"
             />
           )}
