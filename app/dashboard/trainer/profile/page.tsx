@@ -911,12 +911,100 @@ function DangerZoneSection({ paused, setPaused }: { paused: boolean; setPaused: 
   )
 }
 
+// ── View mode ──────────────────────────────────────────────────────────────────
+
+function TrainerViewMode({ onEdit }: { onEdit: () => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: T.ink }}>Your profile</div>
+          <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px' }}>This is what parents see when they find you.</div>
+        </div>
+        <button
+          onClick={onEdit}
+          style={{ height: '44px', padding: '0 20px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', flexShrink: 0 }}
+        >
+          Edit profile
+        </button>
+      </div>
+
+      {/* Profile card */}
+      <SectionCard id="section-basic-info">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <div style={{ width: 80, height: 80, borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: '#FFFFFF', flexShrink: 0 }}>MT</div>
+          <div>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '26px', color: T.ink, lineHeight: 1.1 }}>Marcus Torres</div>
+            <div style={{ display: 'inline-block', background: 'rgba(0,188,200,0.1)', color: T.cyan, borderRadius: '6px', padding: '3px 10px', fontSize: '12px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginTop: '6px', marginBottom: '6px' }}>Soccer</div>
+            <div style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No tagline added</div>
+          </div>
+        </div>
+
+        <CardLabel>Basic Info</CardLabel>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <MapPin size={16} color={T.ink3} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No location set</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Phone size={16} color={T.ink3} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No phone number</span>
+          </div>
+        </div>
+
+        <FieldLabel>Bio</FieldLabel>
+        <p style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>No bio added yet</p>
+      </SectionCard>
+
+      {/* Social links */}
+      <SectionCard id="section-social">
+        <CardLabel>Social &amp; Media</CardLabel>
+        <p style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic', margin: 0 }}>No social links added</p>
+      </SectionCard>
+
+      {/* Credentials */}
+      <SectionCard id="section-credentials">
+        <CardLabel>Credentials</CardLabel>
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Certifications</div>
+          {INITIAL_CERTS.map((cert, i) => (
+            <div key={cert.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < INITIAL_CERTS.length - 1 ? '1px solid #E5E7EB' : 'none' }}>
+              <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>{cert.name}</div>
+                <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{cert.org} · {cert.year}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Affiliations</div>
+          {INITIAL_AFFS.map((aff, i) => (
+            <div key={aff.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < INITIAL_AFFS.length - 1 ? '1px solid #E5E7EB' : 'none' }}>
+              <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>{aff.name}</div>
+                <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{aff.role} · {aff.years}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+    </div>
+  )
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function TrainerProfilePage() {
   const [paused, setPaused] = useState(false)
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const { primarySport, setPrimarySport } = useTrainerSport()
+  const [isEditing, setIsEditing] = useState(false)
 
   return (
     <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -960,27 +1048,41 @@ export default function TrainerProfilePage() {
         </div>
       )}
 
-      {/* Page title */}
-      <div>
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: T.ink }}>Your profile</div>
-        <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px' }}>This is what parents see when they find you.</div>
-        <button style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(0,0,0,0.12)', color: '#374151', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", background: 'transparent', cursor: 'pointer', minHeight: '44px', marginTop: '12px' }}>
-          <Eye size={16} /> View public profile
-        </button>
-      </div>
-
-      <ProfilePhotoSection />
-      <BasicInfoSection />
-      <SocialLinksSection />
-      <IntroVideoSection />
-      <SpecialtiesSection primarySport={primarySport} setPrimarySport={setPrimarySport} />
-      <RateSection />
-      <AvailabilitySection />
-      <CredentialsSection />
-      <ReviewsSection />
-      <SessionSetupSection />
-      <NotificationsSection />
-      <DangerZoneSection paused={paused} setPaused={setPaused} />
+      <motion.div
+        key={isEditing ? 'edit' : 'view'}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.2, 0.7, 0.2, 1] }}
+      >
+        {isEditing ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: T.ink }}>Edit profile</div>
+                <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px' }}>Changes are saved per section</div>
+              </div>
+              <button
+                onClick={() => setIsEditing(false)}
+                style={{ border: '1px solid rgba(0,0,0,0.12)', color: T.ink2, background: 'transparent', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px', flexShrink: 0 }}
+              >← Done editing</button>
+            </div>
+            <ProfilePhotoSection />
+            <BasicInfoSection />
+            <SocialLinksSection />
+            <IntroVideoSection />
+            <SpecialtiesSection primarySport={primarySport} setPrimarySport={setPrimarySport} />
+            <RateSection />
+            <AvailabilitySection />
+            <CredentialsSection />
+            <ReviewsSection />
+            <SessionSetupSection />
+            <NotificationsSection />
+            <DangerZoneSection paused={paused} setPaused={setPaused} />
+          </div>
+        ) : (
+          <TrainerViewMode onEdit={() => setIsEditing(true)} />
+        )}
+      </motion.div>
     </div>
   )
 }
