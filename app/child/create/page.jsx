@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import { createClient } from '@/utils/supabase/client'
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
@@ -70,6 +71,8 @@ function Field({ label, optional, children }) {
 
 export default function CreateChildPage() {
   const [submitted, setSubmitted] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState(null)
   const [form, setForm] = useState({
     firstName: '', lastName: '', dob: '',
     sport: '', skillLevel: '', position: '',
@@ -78,6 +81,36 @@ export default function CreateChildPage() {
   const [focusedField, setFocusedField] = useState(null)
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
+
+  async function handleSave() {
+    if (!isValid || saving) return
+    setSaving(true)
+    setSaveError(null)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setSaveError('You must be logged in to save an athlete profile.')
+      setSaving(false)
+      return
+    }
+    const { error } = await supabase.from('athletes').insert({
+      parent_id: user.id,
+      name: `${form.firstName} ${form.lastName}`.trim(),
+      dob: form.dob || null,
+      sport: form.sport,
+      skill_level: form.skillLevel,
+      position: form.position || null,
+      goals: form.goals || null,
+      session_format: form.sessionFormat || null,
+    })
+    if (error) {
+      setSaveError(error.message)
+      setSaving(false)
+      return
+    }
+    setSaving(false)
+    setSubmitted(true)
+  }
 
   const age = calcAge(form.dob)
   const initials = form.firstName || form.lastName ? getInitials(form.firstName || '?', form.lastName || '?') : null
@@ -291,21 +324,31 @@ export default function CreateChildPage() {
               </Field>
 
               {/* Submit */}
+              {saveError && (
+                <p style={{
+                  margin: '0 0 12px', padding: '10px 14px', borderRadius: '8px',
+                  background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                  color: '#DC2626', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif",
+                }}>
+                  {saveError}
+                </p>
+              )}
               <button
-                onClick={() => isValid && setSubmitted(true)}
-                disabled={!isValid}
+                onClick={handleSave}
+                disabled={!isValid || saving}
                 style={{
                   width: '100%', padding: '15px', borderRadius: '12px', border: 'none',
-                  background: isValid ? '#00BCC8' : '#F3F4F6',
-                  color: isValid ? '#FFFFFF' : '#9CA3AF',
-                  fontSize: '16px', fontWeight: 700, cursor: isValid ? 'pointer' : 'not-allowed',
+                  background: (isValid && !saving) ? '#00BCC8' : '#F3F4F6',
+                  color: (isValid && !saving) ? '#FFFFFF' : '#9CA3AF',
+                  fontSize: '16px', fontWeight: 700,
+                  cursor: (isValid && !saving) ? 'pointer' : 'not-allowed',
                   fontFamily: "'Hanken Grotesk', sans-serif", transition: 'all 0.15s ease',
                   marginTop: '8px',
                 }}
-                onMouseEnter={(e) => { if (isValid) e.currentTarget.style.filter = 'brightness(0.93)' }}
+                onMouseEnter={(e) => { if (isValid && !saving) e.currentTarget.style.filter = 'brightness(0.93)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
               >
-                Save athlete profile
+                {saving ? 'Saving…' : 'Save athlete profile'}
               </button>
             </motion.div>
 

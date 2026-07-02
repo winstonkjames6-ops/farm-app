@@ -21,7 +21,34 @@ const T = {
   danger: '#EF4444',
 }
 
-// ── Mock data ──────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function calcAge(dob: string | null): number | null {
+  if (!dob) return null
+  const today = new Date()
+  const birth = new Date(dob)
+  let age = today.getFullYear() - birth.getFullYear()
+  const m = today.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+  return age >= 0 ? age : null
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+interface AthleteRow {
+  id: string
+  name: string
+  age: number | null
+  sport: string
+  initials: string
+}
+
+// ── Static data ────────────────────────────────────────────────────────────────
 
 const SPORTS = [
   'Soccer','Basketball','Tennis','Volleyball',
@@ -36,10 +63,6 @@ const PROFILE_ITEMS = [
   { key: 'athlete',   label: 'Athlete profile created',  boost: '+30%', completed: true  },
   { key: 'sport',     label: 'Athlete sport set',        boost: '+20%', completed: true  },
   { key: 'notifs',    label: 'Notifications configured', boost: '+10%', completed: false },
-]
-
-const MOCK_ATHLETES = [
-  { id: 1, initials: 'LC', name: 'Liam Chen', age: 13, sport: 'Soccer' },
 ]
 
 const NOTIF_ROWS = [
@@ -502,34 +525,34 @@ const PERM_KEYS = ATHLETE_PERMISSION_CATEGORIES.flatMap((c) => c.items.map((it) 
 
 // ── Section: Athletes ──────────────────────────────────────────────────────────
 
-function AthletesSection() {
-  const [athletes, setAthletes] = useState(MOCK_ATHLETES)
-  const [editingId, setEditingId] = useState<number | null>(null)
+function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] }) {
+  const [athletes, setAthletes] = useState<AthleteRow[]>(initialAthletes)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   // Per-athlete active tab — default 'details'
-  const [activeTab, setActiveTab] = useState<Record<number, 'details' | 'permissions'>>({})
+  const [activeTab, setActiveTab] = useState<Record<string, 'details' | 'permissions'>>({})
 
   // Per-athlete permission toggles — all false by default
-  const [athletePerms, setAthletePerms] = useState<Record<number, Record<string, boolean>>>(
+  const [athletePerms, setAthletePerms] = useState<Record<string, Record<string, boolean>>>(
     () => Object.fromEntries(
-      MOCK_ATHLETES.map((a) => [a.id, Object.fromEntries(PERM_KEYS.map((k) => [k, false]))])
+      initialAthletes.map((a) => [a.id, Object.fromEntries(PERM_KEYS.map((k) => [k, false]))])
     )
   )
 
-  function handleChange(id: number, field: string, value: string | number) {
+  function handleChange(id: string, field: string, value: string | number) {
     setAthletes((prev) =>
       prev.map((a) => a.id === id ? { ...a, [field]: value } : a)
     )
   }
 
-  function togglePerm(athleteId: number, key: string) {
+  function togglePerm(athleteId: string, key: string) {
     setAthletePerms((prev) => ({
       ...prev,
       [athleteId]: { ...prev[athleteId], [key]: !prev[athleteId][key] },
     }))
   }
 
-  function setTab(athleteId: number, tab: 'details' | 'permissions') {
+  function setTab(athleteId: string, tab: 'details' | 'permissions') {
     setActiveTab((prev) => ({ ...prev, [athleteId]: tab }))
   }
 
@@ -901,9 +924,9 @@ function DangerZoneSection() {
 // ── View mode (public-facing profile) ─────────────────────────────────────────
 
 function ViewMode({
-  onEdit, name, location, email,
+  onEdit, name, location, email, athletes,
 }: {
-  onEdit: () => void; name: string; location: string; email: string
+  onEdit: () => void; name: string; location: string; email: string; athletes: AthleteRow[]
 }) {
   const initials = name.split(' ').map((n) => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?'
 
@@ -1089,11 +1112,11 @@ function ViewMode({
           borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)',
           padding: '0 24px',
         }}>
-          {MOCK_ATHLETES.map((athlete, i) => (
+          {athletes.map((athlete, i) => (
             <div key={athlete.id} style={{
               display: 'flex', alignItems: 'center', gap: '14px',
               padding: '16px 0',
-              borderBottom: i < MOCK_ATHLETES.length - 1
+              borderBottom: i < athletes.length - 1
                 ? '1px solid rgba(0,0,0,0.07)' : 'none',
             }}>
               <div style={{
@@ -1142,7 +1165,7 @@ function ViewMode({
 // ── Edit mode ──────────────────────────────────────────────────────────────────
 
 function EditMode({
-  onBack, firstName, lastName, email, userId, onProfileUpdate,
+  onBack, firstName, lastName, email, userId, onProfileUpdate, athletes,
 }: {
   onBack: () => void
   firstName: string
@@ -1150,6 +1173,7 @@ function EditMode({
   email: string
   userId: string
   onProfileUpdate: (updates: { firstName: string; lastName: string }) => void
+  athletes: AthleteRow[]
 }) {
   const initials = [firstName?.[0], lastName?.[0]].filter(Boolean).join('').toUpperCase() || '?'
 
@@ -1192,7 +1216,7 @@ function EditMode({
           userId={userId}
           onSave={onProfileUpdate}
         />
-        <AthletesSection />
+        <AthletesSection initialAthletes={athletes} />
         <NotificationsSection />
         <DangerZoneSection />
       </div>
@@ -1213,6 +1237,7 @@ export default function ParentProfilePage() {
   const [profile, setProfile] = useState<ProfileState | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [profileLoading, setProfileLoading] = useState(true)
+  const [athletes, setAthletes] = useState<AthleteRow[]>([])
 
   useEffect(() => {
     async function loadProfile() {
@@ -1221,18 +1246,34 @@ export default function ParentProfilePage() {
       if (!user) { setProfileLoading(false); return }
       setUserId(user.id)
 
-      const { data } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('name')
         .eq('id', user.id)
         .single()
 
-      const fullName = data?.name ?? ''
+      const fullName = profileData?.name ?? ''
       const spaceIdx = fullName.indexOf(' ')
       const firstName = spaceIdx >= 0 ? fullName.slice(0, spaceIdx) : fullName
       const lastName  = spaceIdx >= 0 ? fullName.slice(spaceIdx + 1) : ''
 
       setProfile({ firstName, lastName, email: user.email ?? '' })
+
+      const { data: athleteData } = await supabase
+        .from('athletes')
+        .select('id, name, dob, sport')
+        .eq('parent_id', user.id)
+
+      setAthletes(
+        (athleteData ?? []).map((a) => ({
+          id: a.id as string,
+          name: a.name as string,
+          age: calcAge(a.dob as string | null),
+          sport: a.sport as string,
+          initials: getInitials(a.name as string),
+        }))
+      )
+
       setProfileLoading(false)
     }
     loadProfile()
@@ -1295,6 +1336,7 @@ export default function ParentProfilePage() {
               email={profile.email}
               userId={userId}
               onProfileUpdate={handleProfileUpdate}
+              athletes={athletes}
             />
           ) : (
             <ViewMode
@@ -1302,6 +1344,7 @@ export default function ParentProfilePage() {
               name={displayName}
               email={profile.email}
               location="Austin, TX"
+              athletes={athletes}
             />
           )}
         </motion.div>
