@@ -85,7 +85,7 @@ function DotProgress({ total, active }: { total: number; active: number }) {
   )
 }
 
-type Step = 'age' | 'account' | 'parent-invite' | 'role' | 'onboarding-parent' | 'onboarding-trainer' | 'done'
+type Step = 'age' | 'account' | 'parent-invite' | 'role' | 'onboarding-trainer' | 'done'
 
 export default function SignupPage() {
   const [step, setStep] = useState<Step>('age')
@@ -96,7 +96,6 @@ export default function SignupPage() {
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', password: '',
     role: '' as 'parent' | 'trainer' | '',
-    athleteFirstName: '', athleteSport: '', athleteAge: '',
     trainerSport: '', trainerRate: '', trainerLocation: '',
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -166,7 +165,7 @@ export default function SignupPage() {
   }
 
   function handleRoleContinue() {
-    if (form.role === 'parent') setStep('onboarding-parent')
+    if (form.role === 'parent') handleParentDone()
     else if (form.role === 'trainer') setStep('onboarding-trainer')
   }
 
@@ -204,7 +203,7 @@ export default function SignupPage() {
     if (step === 'account') setStep('age')
     else if (step === 'parent-invite') setStep('account')
     else if (step === 'role') setStep('account')
-    else if (step === 'onboarding-parent' || step === 'onboarding-trainer') setStep('role')
+    else if (step === 'onboarding-trainer') setStep('role')
   }
 
   const inputStyle = (field: string): React.CSSProperties => ({
@@ -622,86 +621,6 @@ export default function SignupPage() {
             style={{ ...cyanBtn, opacity: form.role ? 1 : 0.5, cursor: form.role ? 'pointer' : 'not-allowed' }}
           >
             Continue
-          </button>
-        </>
-      )
-    }
-
-    if (step === 'onboarding-parent') {
-      const valid = form.athleteFirstName.trim() && form.athleteSport
-      return (
-        <>
-          <button onClick={goBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: '14px', padding: '0 0 4px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
-            ← Back
-          </button>
-          <DotProgress total={3} active={1} />
-          <h1 style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: '26px', color: T.ink, margin: '0 0 8px' }}>
-            Tell us about your athlete
-          </h1>
-          <p style={{ fontSize: '14px', color: T.ink2, margin: '0 0 28px', lineHeight: 1.5 }}>
-            You can add more athletes later.
-          </p>
-
-          <div style={{ marginBottom: '18px' }}>
-            <label style={labelStyle}>Athlete&apos;s first name</label>
-            <input
-              type="text"
-              value={form.athleteFirstName}
-              onChange={e => update('athleteFirstName', e.target.value)}
-              onFocus={() => setFocused('athleteFirstName')}
-              onBlur={() => setFocused(null)}
-              placeholder="Jordan"
-              style={inputStyle('athleteFirstName')}
-            />
-          </div>
-
-          <div style={{ marginBottom: '18px' }}>
-            <label style={labelStyle}>Age (optional)</label>
-            <input
-              type="number"
-              min={4}
-              max={18}
-              value={form.athleteAge}
-              onChange={e => update('athleteAge', e.target.value)}
-              onFocus={() => setFocused('athleteAge')}
-              onBlur={() => setFocused(null)}
-              placeholder="12"
-              style={inputStyle('athleteAge')}
-            />
-          </div>
-
-          <div style={{ marginBottom: '28px' }}>
-            <label style={labelStyle}>Primary sport</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {SPORTS.map(sport => {
-                const selected = form.athleteSport === sport
-                return (
-                  <button
-                    key={sport}
-                    onClick={() => update('athleteSport', sport)}
-                    style={{
-                      padding: '8px 16px', borderRadius: '999px', fontSize: '14px', fontWeight: 600,
-                      cursor: 'pointer', minHeight: '44px', border: 'none',
-                      background: selected ? T.cyan : 'transparent',
-                      color: selected ? '#FFFFFF' : T.ink2,
-                      outline: selected ? 'none' : `1px solid rgba(0,0,0,0.12)`,
-                      fontFamily: "'Hanken Grotesk', sans-serif",
-                      transition: 'all .15s ease',
-                    }}
-                  >
-                    {sport}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <button
-            onClick={handleParentDone}
-            disabled={!valid}
-            style={{ ...cyanBtn, opacity: valid ? 1 : 0.5, cursor: valid ? 'pointer' : 'not-allowed' }}
-          >
-            Let&apos;s find a trainer →
           </button>
         </>
       )
