@@ -43,6 +43,7 @@ function getInitials(name: string): string {
 interface AthleteRow {
   id: string
   name: string
+  dob: string | null
   age: number | null
   sport: string
   initials: string
@@ -528,6 +529,8 @@ const PERM_KEYS = ATHLETE_PERMISSION_CATEGORIES.flatMap((c) => c.items.map((it) 
 function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] }) {
   const [athletes, setAthletes] = useState<AthleteRow[]>(initialAthletes)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [saving, setSaving] = useState<Record<string, boolean>>({})
+  const [saveError, setSaveError] = useState<Record<string, string | null>>({})
 
   // Per-athlete active tab — default 'details'
   const [activeTab, setActiveTab] = useState<Record<string, 'details' | 'permissions'>>({})
@@ -543,6 +546,26 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
     setAthletes((prev) =>
       prev.map((a) => a.id === id ? { ...a, [field]: value } : a)
     )
+  }
+
+  async function handleSave(athlete: AthleteRow) {
+    setSaving((prev) => ({ ...prev, [athlete.id]: true }))
+    setSaveError((prev) => ({ ...prev, [athlete.id]: null }))
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('athletes')
+      .update({ name: athlete.name, dob: athlete.dob, sport: athlete.sport })
+      .eq('id', athlete.id)
+    if (error) {
+      setSaveError((prev) => ({ ...prev, [athlete.id]: error.message }))
+      setSaving((prev) => ({ ...prev, [athlete.id]: false }))
+      return
+    }
+    setAthletes((prev) =>
+      prev.map((a) => a.id === athlete.id ? { ...a, age: calcAge(a.dob) } : a)
+    )
+    setSaving((prev) => ({ ...prev, [athlete.id]: false }))
+    setEditingId(null)
   }
 
   function togglePerm(athleteId: string, key: string) {
@@ -608,11 +631,7 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
 
                   {tab === 'details' ? (
                     <>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 80px',
-                        gap: '12px', marginBottom: '12px',
-                      }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '12px' }}>
                         <div>
                           <FieldLabel>Name</FieldLabel>
                           <input
@@ -621,10 +640,10 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
                           />
                         </div>
                         <div>
-                          <FieldLabel>Age</FieldLabel>
+                          <FieldLabel>Date of birth</FieldLabel>
                           <input
-                            style={inputBase} value={athlete.age ?? ''} type="number"
-                            onChange={(e) => handleChange(athlete.id, 'age', parseInt(e.target.value))}
+                            style={inputBase} type="date" value={athlete.dob ?? ''}
+                            onChange={(e) => handleChange(athlete.id, 'dob', e.target.value)}
                           />
                         </div>
                       </div>
@@ -638,19 +657,31 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
                           {SPORTS.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
                       </div>
+                      {saveError[athlete.id] && (
+                        <div style={{
+                          fontSize: '13px', color: T.danger, marginBottom: '10px',
+                          fontFamily: "'Hanken Grotesk', sans-serif",
+                        }}>
+                          {saveError[athlete.id]}
+                        </div>
+                      )}
                       <div style={{ display: 'flex', gap: '10px' }}>
                         <button
-                          onClick={() => setEditingId(null)}
+                          onClick={() => handleSave(athlete)}
+                          disabled={saving[athlete.id]}
                           style={{
                             flex: 1, height: '44px',
                             background: T.cyan, color: '#FFFFFF',
                             border: 'none', borderRadius: '8px', fontSize: '14px',
                             fontFamily: "'Hanken Grotesk', sans-serif",
-                            fontWeight: 600, cursor: 'pointer',
+                            fontWeight: 600,
+                            cursor: saving[athlete.id] ? 'not-allowed' : 'pointer',
+                            opacity: saving[athlete.id] ? 0.7 : 1,
                           }}
-                        >Save</button>
+                        >{saving[athlete.id] ? 'Saving…' : 'Save'}</button>
                         <button
                           onClick={() => setEditingId(null)}
+                          disabled={saving[athlete.id]}
                           style={{
                             height: '44px', padding: '0 16px',
                             background: 'transparent', color: T.ink2,
@@ -1268,6 +1299,7 @@ export default function ParentProfilePage() {
         (athleteData ?? []).map((a) => ({
           id: a.id as string,
           name: a.name as string,
+          dob: a.dob as string | null,
           age: calcAge(a.dob as string | null),
           sport: a.sport as string,
           initials: getInitials(a.name as string),
