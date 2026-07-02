@@ -341,7 +341,10 @@ function BasicInfoSection({
     }
 
     if (emailChanged) {
-      const { error } = await supabase.auth.updateUser({ email })
+      const { error } = await supabase.auth.updateUser(
+        { email },
+        { emailRedirectTo: `${window.location.origin}/auth/callback` }
+      )
       if (error) {
         setEmailError(error.message)
       } else {
