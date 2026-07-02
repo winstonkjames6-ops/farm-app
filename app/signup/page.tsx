@@ -194,7 +194,36 @@ export default function SignupPage() {
     router.push('/onboarding?role=parent')
   }
 
-  function handleTrainerDone() {
+  async function handleTrainerDone() {
+    const supabase = createClient()
+    const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password })
+    if (error) {
+      setAuthError(error.message)
+      setStep('account')
+      return
+    }
+    if (data.user) {
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: data.user.id,
+        role: 'trainer',
+        name: `${form.firstName} ${form.lastName}`,
+        email: form.email,
+      })
+      if (profileError) {
+        setAuthError('Account created but profile setup failed. Please contact support.')
+        setStep('account')
+        return
+      }
+      const { error: trainerError } = await supabase.from('trainers').insert({
+        profile_id: data.user.id,
+        specialty: form.trainerSport,
+      })
+      if (trainerError) {
+        setAuthError('Account created but profile setup failed. Please contact support.')
+        setStep('account')
+        return
+      }
+    }
     setStep('done')
     router.push('/onboarding?role=trainer')
   }

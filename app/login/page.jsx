@@ -78,12 +78,20 @@ export default function LoginPage() {
   async function handleSignIn() {
     setAuthError(null)
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setAuthError('Invalid email or password')
       return
     }
-    router.push('/dashboard')
+    const userId = data.user?.id
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single()
+    if (profile?.role === 'trainer') {
+      router.push('/dashboard/trainer')
+    } else if (profile?.role === 'athlete') {
+      router.push('/dashboard/athlete')
+    } else {
+      router.push('/dashboard')
+    }
   }
 
   return (
