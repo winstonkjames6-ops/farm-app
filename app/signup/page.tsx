@@ -217,6 +217,8 @@ export default function SignupPage() {
       const { error: trainerError } = await supabase.from('trainers').insert({
         profile_id: data.user.id,
         specialty: form.trainerSport,
+        rate: Number(form.trainerRate),
+        location: form.trainerLocation,
       })
       if (trainerError) {
         setAuthError('Account created but profile setup failed. Please contact support.')
