@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import {
   ChevronDown,
-  Eye,
   Camera,
   MapPin,
   Phone,
@@ -920,11 +919,6 @@ function TrainerViewMode({ onEdit }: { onEdit: () => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-      {/* Caption */}
-      <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>
-        This is what parents see when they find you.
-      </div>
-
       {/* Single unified profile card */}
       <div
         id="section-basic-info"
@@ -1103,51 +1097,11 @@ function TrainerViewMode({ onEdit }: { onEdit: () => void }) {
 
 export default function TrainerProfilePage() {
   const [paused, setPaused] = useState(false)
-  const [bannerDismissed, setBannerDismissed] = useState(false)
   const { primarySport, setPrimarySport } = useTrainerSport()
   const [isEditing, setIsEditing] = useState(false)
 
   return (
-    <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
-      {/* Status banner */}
-      {!bannerDismissed && (
-        <div
-          style={{
-            borderRadius: '10px', padding: '12px 16px', display: 'flex', alignItems: 'center',
-            justifyContent: 'space-between', gap: '12px', position: 'sticky', top: '60px', zIndex: 10, flexWrap: 'wrap',
-            ...(paused
-              ? { background: 'rgba(255,251,235,0.97)', border: '1px solid rgba(245,158,11,0.2)' }
-              : { background: 'rgba(240,253,244,0.97)', border: '1px solid rgba(16,185,129,0.2)' }),
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: paused ? '#F59E0B' : '#10B981', flexShrink: 0 }} />
-            <span style={{ fontSize: '14px', color: '#374151', fontFamily: "'Hanken Grotesk', sans-serif" }}>
-              {paused ? "Your profile is paused — you won't appear in search" : 'Your profile is live — parents can find and book you'}
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            {paused ? (
-              <button onClick={() => setPaused(false)} style={{ background: '#F59E0B', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', flexShrink: 0, minHeight: '44px' }}>
-                Resume profile
-              </button>
-            ) : (
-              <button style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(0,0,0,0.12)', color: '#374151', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", background: 'transparent', cursor: 'pointer', flexShrink: 0, minHeight: '44px' }}>
-                <Eye size={14} /> View public profile
-              </button>
-            )}
-            <button
-              onClick={() => setBannerDismissed(true)}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.06)' }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '4px', marginLeft: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <XIcon size={16} color="#6B7280" />
-            </button>
-          </div>
-        </div>
-      )}
+    <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '672px', margin: '0 auto' }}>
 
       <motion.div
         key={isEditing ? 'edit' : 'view'}
