@@ -914,76 +914,159 @@ function DangerZoneSection({ paused, setPaused }: { paused: boolean; setPaused: 
 // ── View mode ──────────────────────────────────────────────────────────────────
 
 function TrainerViewMode({ onEdit }: { onEdit: () => void }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+  const avgRating = (MOCK_REVIEWS.reduce((s, r) => s + r.rating, 0) / MOCK_REVIEWS.length).toFixed(1)
+  const reviewCount = MOCK_REVIEWS.length
 
-      {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-        <div>
-          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: T.ink }}>Your profile</div>
-          <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px' }}>This is what parents see when they find you.</div>
-        </div>
-        <button
-          onClick={onEdit}
-          style={{ height: '44px', padding: '0 20px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', flexShrink: 0 }}
-        >
-          Edit profile
-        </button>
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+      {/* Caption */}
+      <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+        This is what parents see when they find you.
       </div>
 
       {/* Single unified profile card */}
       <div
         id="section-basic-info"
         style={{
-          background: 'rgba(255,255,255,0.90)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          borderRadius: '14px',
+          background: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderRadius: '16px',
           border: '1px solid rgba(0,0,0,0.08)',
           overflow: 'hidden',
         }}
       >
-        {/* Header: avatar, name, sport tag, tagline */}
-        <div style={{ padding: '24px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap' }}>
-            <div style={{ width: 80, height: 80, borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: '#FFFFFF', flexShrink: 0 }}>MT</div>
+        {/* Header band */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(0,188,200,0.12) 0%, rgba(0,212,226,0.06) 100%)',
+          borderBottom: '1px solid rgba(0,188,200,0.12)',
+          padding: '28px 24px 20px',
+          display: 'flex', alignItems: 'flex-start',
+          justifyContent: 'space-between', gap: '16px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+            {/* Avatar */}
+            <div style={{
+              width: 72, height: 72, borderRadius: '999px', flexShrink: 0,
+              background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700, fontSize: '24px', color: '#FFFFFF',
+              boxShadow: '0 4px 12px rgba(0,188,200,0.3)',
+            }}>MT</div>
+
             <div>
-              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '26px', color: T.ink, lineHeight: 1.1 }}>Marcus Torres</div>
-              <div style={{ display: 'inline-block', background: 'rgba(0,188,200,0.1)', color: T.cyan, borderRadius: '6px', padding: '3px 10px', fontSize: '12px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginTop: '6px', marginBottom: '6px' }}>Soccer</div>
-              <div style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No tagline added</div>
+              {/* Name */}
+              <div style={{
+                fontFamily: "'Archivo Black', 'Archivo', sans-serif",
+                fontWeight: 900, fontSize: '22px', color: '#111827',
+                lineHeight: 1.1, marginBottom: '4px',
+              }}>Marcus Torres</div>
+
+              {/* Location row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                     stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: '#6B7280' }}>
+                  No location set
+                </span>
+              </div>
+
+              {/* Sport tag pill (trainer-appropriate, replaces verified badge position) */}
+              <div style={{
+                display: 'inline-block',
+                background: 'rgba(0,188,200,0.1)', color: T.cyan,
+                borderRadius: '6px', padding: '3px 10px',
+                fontSize: '12px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600,
+              }}>Soccer</div>
             </div>
           </div>
+
+          {/* Edit button */}
+          <button
+            onClick={onEdit}
+            style={{
+              flexShrink: 0,
+              border: '1.5px solid rgba(0,0,0,0.12)', color: '#6B7280',
+              background: 'rgba(255,255,255,0.80)', borderRadius: '10px',
+              padding: '7px 16px',
+              fontFamily: "'Archivo', sans-serif", fontWeight: 700,
+              fontSize: '13px', cursor: 'pointer',
+            }}
+          >Edit profile</button>
         </div>
 
-        {/* Basic Info */}
-        <div style={{ padding: '24px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <CardLabel>Basic Info</CardLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <MapPin size={16} color={T.ink3} style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No location set</span>
+        {/* Stat strip */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+          borderBottom: '1px solid rgba(0,0,0,0.07)',
+        }}>
+          {[
+            { value: avgRating, label: 'Rating' },
+            { value: String(reviewCount), label: reviewCount === 1 ? 'Review' : 'Reviews' },
+            { value: '—', label: 'Years' },
+          ].map((stat, i) => (
+            <div key={stat.label} style={{
+              padding: '14px 0', textAlign: 'center',
+              borderRight: i < 2 ? '1px solid rgba(0,0,0,0.07)' : 'none',
+            }}>
+              <div style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 800, fontSize: '22px', color: '#111827', lineHeight: 1,
+              }}>{stat.value}</div>
+              <div style={{
+                fontFamily: "'Hanken Grotesk', sans-serif",
+                fontSize: '11px', color: '#9CA3AF', marginTop: '3px',
+                textTransform: 'uppercase' as const, letterSpacing: '.08em', fontWeight: 600,
+              }}>{stat.label}</div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Phone size={16} color={T.ink3} style={{ flexShrink: 0 }} />
-              <span style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No phone number</span>
-            </div>
+          ))}
+        </div>
+
+        {/* Info rows: phone + bio */}
+        <div style={{ padding: '4px 0' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '12px',
+            padding: '12px 24px', borderBottom: '1px solid rgba(0,0,0,0.05)',
+          }}>
+            <span style={{ flexShrink: 0, display: 'flex' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                   stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 17z"/>
+              </svg>
+            </span>
+            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3, fontStyle: 'italic' }}>
+              No phone number
+            </span>
           </div>
-        </div>
-
-        {/* Bio */}
-        <div style={{ padding: '24px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <CardLabel>Bio</CardLabel>
-          <p style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>No bio added yet</p>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '12px',
+            padding: '12px 24px', borderBottom: '1px solid rgba(0,0,0,0.05)',
+          }}>
+            <span style={{ flexShrink: 0, display: 'flex' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                   stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </span>
+            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3, fontStyle: 'italic' }}>
+              No bio added yet
+            </span>
+          </div>
         </div>
 
         {/* Social & Media */}
-        <div id="section-social" style={{ padding: '24px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+        <div id="section-social" style={{ padding: '20px 24px', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
           <CardLabel>Social &amp; Media</CardLabel>
           <p style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic', margin: 0 }}>No social links added</p>
         </div>
 
         {/* Credentials */}
-        <div id="section-credentials" style={{ padding: '24px' }}>
+        <div id="section-credentials" style={{ padding: '20px 24px', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
           <CardLabel>Credentials</CardLabel>
           <div style={{ marginBottom: '24px' }}>
             <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Certifications</div>
