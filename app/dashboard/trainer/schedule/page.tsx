@@ -1,21 +1,43 @@
 'use client'
 
+import { useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+type SessionType = 'IN-PERSON' | 'REMOTE'
+type SessionStatus = 'confirmed' | 'pending'
+
+type Session = {
+  id: number
+  childName: string
+  parentName: string
+  parentInitials: string
+  sport: string
+  type: SessionType
+  day: string
+  time: string
+  location: string
+  isToday: boolean
+  status: SessionStatus
+}
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
-const MOCK_SESSIONS = [
+const INITIAL_SESSIONS: Session[] = [
   {
     id: 1,
     childName: 'Ethan Williams',
     parentName: 'Sarah Williams',
     parentInitials: 'SW',
     sport: 'Soccer',
-    type: 'IN-PERSON' as const,
+    type: 'IN-PERSON',
     day: 'Mon',
     time: '9:00 AM',
     location: 'Green Valley Park',
     isToday: true,
+    status: 'confirmed',
   },
   {
     id: 2,
@@ -23,11 +45,12 @@ const MOCK_SESSIONS = [
     parentName: 'David Chen',
     parentInitials: 'DC',
     sport: 'Tennis',
-    type: 'REMOTE' as const,
+    type: 'REMOTE',
     day: 'Mon',
     time: '11:30 AM',
     location: 'Zoom',
     isToday: true,
+    status: 'pending',
   },
   {
     id: 3,
@@ -35,20 +58,16 @@ const MOCK_SESSIONS = [
     parentName: 'Lisa Blake',
     parentInitials: 'LB',
     sport: 'Basketball',
-    type: 'IN-PERSON' as const,
+    type: 'IN-PERSON',
     day: 'Tue',
     time: '4:00 PM',
     location: 'Riverside Courts',
     isToday: false,
+    status: 'confirmed',
   },
 ]
 
 const FULL_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const ALL_SESSIONS_BY_DAY: Record<string, typeof MOCK_SESSIONS> = {
-  Mon: MOCK_SESSIONS.filter(s => s.day === 'Mon'),
-  Tue: MOCK_SESSIONS.filter(s => s.day === 'Tue'),
-  Wed: [], Thu: [], Fri: [], Sat: [], Sun: [],
-}
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -79,6 +98,21 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 // ── ScheduleView ───────────────────────────────────────────────────────────────
 
 function ScheduleView() {
+  const [sessions, setSessions] = useState<Session[]>(INITIAL_SESSIONS)
+
+  function confirmSession(id: number) {
+    setSessions((prev) => prev.map((s) => s.id === id ? { ...s, status: 'confirmed' } : s))
+  }
+
+  function declineSession(id: number) {
+    setSessions((prev) => prev.filter((s) => s.id !== id))
+  }
+
+  const sessionsByDay: Record<string, Session[]> = {}
+  FULL_WEEK.forEach((day) => {
+    sessionsByDay[day] = sessions.filter((s) => s.day === day)
+  })
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -91,33 +125,45 @@ function ScheduleView() {
             Jun 23 – Jun 29
           </div>
           <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink2, marginTop: '4px' }}>
-            7 sessions this week
+            {sessions.length} session{sessions.length !== 1 ? 's' : ''} this week
           </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {FULL_WEEK.map((day) => {
-            const sessions = ALL_SESSIONS_BY_DAY[day] || []
+            const daySessions = sessionsByDay[day] || []
             return (
               <div key={day} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: sessions.length > 0 ? '16px' : '0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: daySessions.length > 0 ? '16px' : '0' }}>
                   <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink }}>{day}</span>
                   <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3 }}>
-                    {sessions.length > 0 ? `${sessions.length} session${sessions.length > 1 ? 's' : ''}` : 'Available'}
+                    {daySessions.length > 0 ? `${daySessions.length} session${daySessions.length > 1 ? 's' : ''}` : 'Available'}
                   </span>
                 </div>
 
-                {sessions.length > 0 ? (
+                {daySessions.length > 0 ? (
                   <div>
-                    {sessions.map((session, i) => (
+                    {daySessions.map((session, i) => (
                       <div key={session.id}>
                         {i > 0 && <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', margin: '12px 0' }} />}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                          {/* Name + sport */}
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '14px', color: T.ink }}>{session.childName}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '14px', color: T.ink }}>{session.childName}</div>
+                              {session.status === 'pending' && (
+                                <span style={{ background: 'rgba(245,158,11,0.12)', color: '#D97706', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '0.06em', padding: '2px 6px', borderRadius: '4px', flexShrink: 0 }}>
+                                  PENDING
+                                </span>
+                              )}
+                            </div>
                             <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>{session.sport}</div>
                           </div>
+
+                          {/* Time */}
                           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', color: T.ink, flexShrink: 0 }}>{session.time}</div>
+
+                          {/* Type badge */}
                           <span style={{
                             padding: '3px 10px',
                             background: session.type === 'IN-PERSON' ? 'rgba(0,188,200,0.1)' : 'rgba(99,102,241,0.1)',
@@ -128,6 +174,47 @@ function ScheduleView() {
                           }}>
                             {session.type}
                           </span>
+
+                          {/* Actions */}
+                          {session.status === 'pending' ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
+                              <div style={{ display: 'flex', gap: '6px' }}>
+                                <button
+                                  onClick={() => confirmSession(session.id)}
+                                  style={{ background: T.cyan, color: '#FFFFFF', border: 'none', cursor: 'pointer', padding: '6px 14px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 700 }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.06)' }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => declineSession(session.id)}
+                                  style={{ background: 'none', border: '1px solid rgba(0,0,0,0.12)', color: T.ink2, cursor: 'pointer', padding: '6px 12px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px' }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.26)' }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)' }}
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                              <Link
+                                href="/dashboard/trainer/messages"
+                                style={{ color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', textDecoration: 'none' }}
+                                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = T.cyan }}
+                                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = T.ink3 }}
+                              >
+                                Message parent
+                              </Link>
+                            </div>
+                          ) : (
+                            <Link
+                              href="/dashboard/trainer/messages"
+                              style={{ background: 'none', border: '1px solid rgba(0,0,0,0.10)', color: T.ink2, padding: '6px 12px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', textDecoration: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}
+                              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(0,0,0,0.24)' }}
+                              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(0,0,0,0.10)' }}
+                            >
+                              Message parent
+                            </Link>
+                          )}
                         </div>
                       </div>
                     ))}

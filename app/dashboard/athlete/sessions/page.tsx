@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
 const T = {
@@ -13,9 +15,9 @@ const T = {
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
-const UPCOMING = [
-  { date: 'Mon Jun 30', trainer: 'Marcus Rivera', sport: 'Soccer', time: '9:00 AM',  format: 'In-Person' },
-  { date: 'Wed Jul 2',  trainer: 'Marcus Rivera', sport: 'Soccer', time: '4:00 PM',  format: 'In-Person' },
+const INITIAL_UPCOMING = [
+  { id: 1, date: 'Mon Jun 30', trainer: 'Marcus Rivera', sport: 'Soccer', time: '9:00 AM', format: 'In-Person' },
+  { id: 2, date: 'Wed Jul 2',  trainer: 'Marcus Rivera', sport: 'Soccer', time: '4:00 PM', format: 'In-Person' },
 ]
 
 const PAST = [
@@ -53,14 +55,6 @@ function SportBadge({ sport }: { sport: string }) {
   )
 }
 
-// ── Chevron ────────────────────────────────────────────────────────────────────
-
-const IconChevron = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={T.cyan} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 18 15 12 9 6" />
-  </svg>
-)
-
 // ── Shared card style ──────────────────────────────────────────────────────────
 
 const glassCard: React.CSSProperties = {
@@ -84,61 +78,84 @@ const sectionLabel: React.CSSProperties = {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SessionsPage() {
+  const [upcoming, setUpcoming] = useState(INITIAL_UPCOMING)
+
+  function cancelSession(id: number) {
+    setUpcoming((prev) => prev.filter((s) => s.id !== id))
+  }
+
   return (
     <div style={{ color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '32px 24px 80px' }}>
 
         {/* Section 1 — Upcoming sessions */}
         <div style={glassCard}>
-          {/* Header row */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
             <span style={sectionLabel}>UPCOMING SESSIONS</span>
             <span style={{ background: 'rgba(0,188,200,0.1)', color: '#00BCC8', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '999px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
-              2
+              {upcoming.length}
             </span>
           </div>
 
-          {UPCOMING.map((s, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '16px 0',
-                borderBottom: i < UPCOMING.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
-                minHeight: '44px',
-                cursor: 'pointer',
-              }}
-            >
-              {/* Date + trainer */}
-              <div style={{ flex: '0 0 130px', minWidth: 0 }}>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.ink, lineHeight: 1.2 }}>{s.date}</div>
-                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, marginTop: '2px' }}>{s.trainer}</div>
-              </div>
-
-              {/* Sport badge */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                <SportBadge sport={s.sport} />
-              </div>
-
-              {/* Time + format */}
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>{s.time}</div>
-                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3, marginTop: '2px' }}>{s.format}</div>
-              </div>
-
-              {/* Chevron */}
-              <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
-                <IconChevron />
-              </div>
+          {upcoming.length === 0 ? (
+            <div style={{ padding: '24px 0 8px', textAlign: 'center', color: T.ink3, fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
+              No upcoming sessions
             </div>
-          ))}
+          ) : (
+            upcoming.map((s, i) => (
+              <div
+                key={s.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '16px 0',
+                  borderBottom: i < upcoming.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
+                  minHeight: '44px',
+                }}
+              >
+                {/* Date + trainer */}
+                <div style={{ flex: '0 0 130px', minWidth: 0 }}>
+                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.ink, lineHeight: 1.2 }}>{s.date}</div>
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, marginTop: '2px' }}>{s.trainer}</div>
+                </div>
+
+                {/* Sport badge */}
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                  <SportBadge sport={s.sport} />
+                </div>
+
+                {/* Time + format */}
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>{s.time}</div>
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3, marginTop: '2px' }}>{s.format}</div>
+                </div>
+
+                {/* Actions */}
+                <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                  <button
+                    style={{ background: T.cyan, color: '#FFFFFF', border: 'none', cursor: 'pointer', padding: '6px 12px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 700, whiteSpace: 'nowrap' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.06)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
+                  >
+                    Join session
+                  </button>
+                  <button
+                    onClick={() => cancelSession(s.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', padding: '2px 0' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = T.cyan }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = T.ink3 }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Section 2 — Past sessions */}
         <div style={{ ...glassCard, marginTop: '16px' }}>
-          {/* Header row */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
             <span style={sectionLabel}>PAST SESSIONS</span>
             <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>12 total</span>
