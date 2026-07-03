@@ -86,6 +86,13 @@ const IconUser = ({ size = 22 }: { size?: number }) => (
   </svg>
 )
 
+const IconSettings = ({ size = 22 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+)
+
 const IconMenu = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="3" y1="12" x2="21" y2="12" />
@@ -109,6 +116,7 @@ const NAV_ITEMS = [
   { key: 'earnings', label: 'Earnings', Icon: IconDollarSign, badge: false },
   { key: 'messages', label: 'Messages', Icon: MessageSquare,  badge: true  },
   { key: 'profile',  label: 'Profile',  Icon: IconUser,       badge: false },
+  { key: 'settings', label: 'Settings', Icon: IconSettings,   badge: false },
 ]
 
 const NAV_HREFS: Record<string, string> = {
@@ -117,6 +125,7 @@ const NAV_HREFS: Record<string, string> = {
   earnings: '/dashboard/trainer/earnings',
   messages: '/dashboard/trainer/messages',
   profile:  '/dashboard/trainer/profile',
+  settings: '/dashboard/trainer/settings',
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
@@ -389,6 +398,10 @@ const PAGE_HELP: Record<string, { title: string; body: string }> = {
     title: 'Your Profile',
     body: 'Update your bio, credentials, hourly rate, and session formats. A complete profile gets significantly more bookings.',
   },
+  '/dashboard/trainer/settings': {
+    title: 'Settings',
+    body: 'Control your notification preferences and manage your account. Payout method setup via Stripe will be available here soon.',
+  },
 }
 
 function PageHelpButton({ pathname }: { pathname: string }) {
@@ -522,6 +535,7 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
     if (pathname.includes('/earnings')) return 'earnings'
     if (pathname.includes('/messages')) return 'messages'
     if (pathname.includes('/profile')) return 'profile'
+    if (pathname.includes('/settings')) return 'settings'
     return 'home'
   }
   const activeNav = getActiveNav()
