@@ -259,9 +259,9 @@ function DesktopHeader({ sidebarOpen }: { sidebarOpen: boolean }) {
           Athlete Dashboard
         </span>
       </div>
-      <button style={{ background: 'transparent', border: 'none', color: T.ink2, cursor: 'pointer', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Link href="/notifications" style={{ background: 'transparent', border: 'none', color: T.ink2, cursor: 'pointer', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
         <IconBell />
-      </button>
+      </Link>
     </motion.header>
   )
 }
