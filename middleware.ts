@@ -26,7 +26,11 @@ export async function middleware(request: NextRequest) {
   )
 
   // Refresh session — do not remove, required for Server Components to read auth state
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
 
   return supabaseResponse
 }
