@@ -917,7 +917,7 @@ function TrainerViewMode({ onEdit }: { onEdit: () => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-      {/* Header */}
+      {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: T.ink }}>Your profile</div>
@@ -931,68 +931,86 @@ function TrainerViewMode({ onEdit }: { onEdit: () => void }) {
         </button>
       </div>
 
-      {/* Profile card */}
-      <SectionCard id="section-basic-info">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', marginBottom: '20px', flexWrap: 'wrap' }}>
-          <div style={{ width: 80, height: 80, borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: '#FFFFFF', flexShrink: 0 }}>MT</div>
+      {/* Single unified profile card */}
+      <div
+        id="section-basic-info"
+        style={{
+          background: 'rgba(255,255,255,0.90)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          borderRadius: '14px',
+          border: '1px solid rgba(0,0,0,0.08)',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Header: avatar, name, sport tag, tagline */}
+        <div style={{ padding: '24px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap' }}>
+            <div style={{ width: 80, height: 80, borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: '#FFFFFF', flexShrink: 0 }}>MT</div>
+            <div>
+              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '26px', color: T.ink, lineHeight: 1.1 }}>Marcus Torres</div>
+              <div style={{ display: 'inline-block', background: 'rgba(0,188,200,0.1)', color: T.cyan, borderRadius: '6px', padding: '3px 10px', fontSize: '12px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginTop: '6px', marginBottom: '6px' }}>Soccer</div>
+              <div style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No tagline added</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Basic Info */}
+        <div style={{ padding: '24px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <CardLabel>Basic Info</CardLabel>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <MapPin size={16} color={T.ink3} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No location set</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Phone size={16} color={T.ink3} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No phone number</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bio */}
+        <div style={{ padding: '24px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <CardLabel>Bio</CardLabel>
+          <p style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>No bio added yet</p>
+        </div>
+
+        {/* Social & Media */}
+        <div id="section-social" style={{ padding: '24px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <CardLabel>Social &amp; Media</CardLabel>
+          <p style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic', margin: 0 }}>No social links added</p>
+        </div>
+
+        {/* Credentials */}
+        <div id="section-credentials" style={{ padding: '24px' }}>
+          <CardLabel>Credentials</CardLabel>
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Certifications</div>
+            {INITIAL_CERTS.map((cert, i) => (
+              <div key={cert.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < INITIAL_CERTS.length - 1 ? '1px solid #E5E7EB' : 'none' }}>
+                <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>{cert.name}</div>
+                  <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{cert.org} · {cert.year}</div>
+                </div>
+              </div>
+            ))}
+          </div>
           <div>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '26px', color: T.ink, lineHeight: 1.1 }}>Marcus Torres</div>
-            <div style={{ display: 'inline-block', background: 'rgba(0,188,200,0.1)', color: T.cyan, borderRadius: '6px', padding: '3px 10px', fontSize: '12px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginTop: '6px', marginBottom: '6px' }}>Soccer</div>
-            <div style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No tagline added</div>
-          </div>
-        </div>
-
-        <CardLabel>Basic Info</CardLabel>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <MapPin size={16} color={T.ink3} style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No location set</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Phone size={16} color={T.ink3} style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic' }}>No phone number</span>
-          </div>
-        </div>
-
-        <FieldLabel>Bio</FieldLabel>
-        <p style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>No bio added yet</p>
-      </SectionCard>
-
-      {/* Social links */}
-      <SectionCard id="section-social">
-        <CardLabel>Social &amp; Media</CardLabel>
-        <p style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic', margin: 0 }}>No social links added</p>
-      </SectionCard>
-
-      {/* Credentials */}
-      <SectionCard id="section-credentials">
-        <CardLabel>Credentials</CardLabel>
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Certifications</div>
-          {INITIAL_CERTS.map((cert, i) => (
-            <div key={cert.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < INITIAL_CERTS.length - 1 ? '1px solid #E5E7EB' : 'none' }}>
-              <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>{cert.name}</div>
-                <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{cert.org} · {cert.year}</div>
+            <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Affiliations</div>
+            {INITIAL_AFFS.map((aff, i) => (
+              <div key={aff.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < INITIAL_AFFS.length - 1 ? '1px solid #E5E7EB' : 'none' }}>
+                <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>{aff.name}</div>
+                  <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{aff.role} · {aff.years}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-        <div>
-          <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Affiliations</div>
-          {INITIAL_AFFS.map((aff, i) => (
-            <div key={aff.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < INITIAL_AFFS.length - 1 ? '1px solid #E5E7EB' : 'none' }}>
-              <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>{aff.name}</div>
-                <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{aff.role} · {aff.years}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </SectionCard>
+      </div>
 
     </div>
   )
@@ -1016,8 +1034,8 @@ export default function TrainerProfilePage() {
             borderRadius: '10px', padding: '12px 16px', display: 'flex', alignItems: 'center',
             justifyContent: 'space-between', gap: '12px', position: 'sticky', top: '60px', zIndex: 10, flexWrap: 'wrap',
             ...(paused
-              ? { background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }
-              : { background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }),
+              ? { background: 'rgba(255,251,235,0.97)', border: '1px solid rgba(245,158,11,0.2)' }
+              : { background: 'rgba(240,253,244,0.97)', border: '1px solid rgba(16,185,129,0.2)' }),
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
