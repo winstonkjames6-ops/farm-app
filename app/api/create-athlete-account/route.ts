@@ -6,6 +6,8 @@ const USERNAME_RE = /^[a-z0-9]+$/
 const PIN_RE = /^\d{4,6}$/
 
 export async function POST(request: NextRequest) {
+  console.log('SERVICE_ROLE_KEY present:', !!process.env.SUPABASE_SERVICE_ROLE_KEY, 'length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length ?? 0)
+
   // Step 1: verify the session belongs to an authenticated parent
   const supabase = await createClient()
   const { data: { user: parentUser } } = await supabase.auth.getUser()
