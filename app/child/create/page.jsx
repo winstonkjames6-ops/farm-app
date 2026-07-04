@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createClient } from '@/utils/supabase/client'
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
@@ -77,6 +76,7 @@ export default function CreateChildPage() {
     firstName: '', lastName: '', dob: '',
     sport: '', skillLevel: '', position: '',
     goals: '', sessionFormat: '',
+    username: '', pin: '',
   })
   const [focusedField, setFocusedField] = useState(null)
 
@@ -86,25 +86,31 @@ export default function CreateChildPage() {
     if (!isValid || saving) return
     setSaving(true)
     setSaveError(null)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setSaveError('You must be logged in to save an athlete profile.')
-      setSaving(false)
-      return
-    }
-    const { error } = await supabase.from('athletes').insert({
-      parent_id: user.id,
-      name: `${form.firstName} ${form.lastName}`.trim(),
-      dob: form.dob || null,
-      sport: form.sport,
-      skill_level: form.skillLevel,
-      position: form.position || null,
-      goals: form.goals || null,
-      session_format: form.sessionFormat || null,
-    })
-    if (error) {
-      setSaveError(error.message)
+    try {
+      const res = await fetch('/api/create-athlete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          dob: form.dob,
+          sport: form.sport,
+          skillLevel: form.skillLevel,
+          position: form.position,
+          goals: form.goals,
+          sessionFormat: form.sessionFormat,
+          username: form.username,
+          pin: form.pin,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setSaveError(json.error ?? 'Something went wrong.')
+        setSaving(false)
+        return
+      }
+    } catch {
+      setSaveError('Network error. Please try again.')
       setSaving(false)
       return
     }
@@ -115,6 +121,8 @@ export default function CreateChildPage() {
   const age = calcAge(form.dob)
   const initials = form.firstName || form.lastName ? getInitials(form.firstName || '?', form.lastName || '?') : null
   const isValid = form.firstName.trim() && form.lastName.trim() && form.sport && form.skillLevel
+    && /^[a-z0-9]+$/.test(form.username.trim().toLowerCase())
+    && /^\d{4,6}$/.test(form.pin)
 
   const focusStyle = (name) => focusedField === name
     ? { borderColor: '#00BCC8', boxShadow: '0 0 0 3px rgba(0,188,200,0.12)' }
@@ -321,6 +329,42 @@ export default function CreateChildPage() {
                     </button>
                   ))}
                 </div>
+              </Field>
+
+              {/* Username */}
+              <Field label="Athlete username">
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={e => update('username', e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                  onFocus={() => setFocusedField('username')}
+                  onBlur={() => setFocusedField(null)}
+                  placeholder="e.g. jordan23"
+                  autoComplete="off"
+                  style={{ ...inputStyle, ...focusStyle('username') }}
+                />
+                <p style={{ margin: '7px 0 0', fontSize: '12px', color: '#9CA3AF' }}>
+                  Lowercase letters and numbers only. Your athlete uses this to log in.
+                </p>
+              </Field>
+
+              {/* PIN */}
+              <Field label="Athlete PIN (4–6 digits)">
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  value={form.pin}
+                  onChange={e => update('pin', e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onFocus={() => setFocusedField('pin')}
+                  onBlur={() => setFocusedField(null)}
+                  placeholder="••••"
+                  maxLength={6}
+                  autoComplete="new-password"
+                  style={{ ...inputStyle, ...focusStyle('pin'), letterSpacing: '0.2em' }}
+                />
+                <p style={{ margin: '7px 0 0', fontSize: '12px', color: '#9CA3AF' }}>
+                  Your athlete enters this PIN to access their account.
+                </p>
               </Field>
 
               {/* Submit */}
