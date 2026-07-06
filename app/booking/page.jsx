@@ -4,14 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-
-// ── Date/time still hardcoded — booking creation is the next slice ──────────
-
-const SESSION = {
-  date: 'Monday, Jun 23',
-  time: '9:00 AM',
-  duration: '1 hour',
-}
+import { createClient } from '@/utils/supabase/client'
 
 // ── Shared token values ─────────────────────────────────────────────────────
 
@@ -35,6 +28,36 @@ function getInitials(name) {
   if (words.length === 0) return '?'
   if (words.length === 1) return words[0][0].toUpperCase()
   return (words[0][0] + words[words.length - 1][0]).toUpperCase()
+}
+
+function calcAge(dob) {
+  if (!dob) return null
+  const birth = new Date(dob)
+  const now = new Date()
+  let age = now.getFullYear() - birth.getFullYear()
+  const m = now.getMonth() - birth.getMonth()
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
+  return age
+}
+
+function formatDateDisplay(isoDate) {
+  if (!isoDate) return ''
+  const d = new Date(isoDate + 'T00:00:00')
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`
+}
+
+function buildSessionTime(dateStr, timeStr) {
+  const match = timeStr ? timeStr.match(/^(\d+):(\d+)\s*(AM|PM)$/i) : null
+  if (!match || !dateStr) return new Date().toISOString()
+  let h = parseInt(match[1])
+  const m = parseInt(match[2])
+  const period = match[3].toUpperCase()
+  if (period === 'PM' && h !== 12) h += 12
+  if (period === 'AM' && h === 12) h = 0
+  const [year, month, day] = dateStr.split('-').map(Number)
+  return new Date(year, month - 1, day, h, m, 0).toISOString()
 }
 
 // ── Trainer summary card ─────────────────────────────────────────────────────
@@ -125,9 +148,118 @@ function StepIndicator({ step }) {
   )
 }
 
-// ── Screen 0: Confirm details ────────────────────────────────────────────────
+// ── Screen 0: Athlete selection ──────────────────────────────────────────────
 
-function ConfirmScreen({ trainer, format, setFormat, onNext }) {
+function AthleteScreen({ athletes, loading, onSelect }) {
+  const [selected, setSelected] = useState(null)
+
+  if (loading || !athletes) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px 0', color: T.ink3, fontSize: '15px' }}>
+        Loading…
+      </div>
+    )
+  }
+
+  if (athletes.length === 0) {
+    return (
+      <div>
+        <h2 style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '24px', letterSpacing: '-.02em', color: T.ink, margin: '0 0 12px' }}>
+          Who&apos;s training?
+        </h2>
+        <p style={{ fontSize: '15px', color: T.ink2, margin: '0 0 28px' }}>
+          You haven&apos;t added any athletes yet. Add one first before booking a session.
+        </p>
+        <Link
+          href="/child/create"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '14px 24px', borderRadius: '12px',
+            background: T.accent, color: T.accentInk, textDecoration: 'none',
+            fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '15px',
+          }}
+        >
+          Add an athlete →
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <h2 style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '24px', letterSpacing: '-.02em', color: T.ink, margin: '0 0 8px' }}>
+        Who&apos;s training?
+      </h2>
+      <p style={{ fontSize: '14px', color: T.ink3, margin: '0 0 24px' }}>
+        Select the athlete for this session.
+      </p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
+        {athletes.map((a) => {
+          const age = calcAge(a.dob)
+          const isSelected = selected?.id === a.id
+          return (
+            <button
+              key={a.id}
+              onClick={() => setSelected(a)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '14px',
+                background: isSelected ? `color-mix(in srgb, ${T.accent} 8%, ${T.surface})` : T.surface,
+                border: `1.5px solid ${isSelected ? T.accent : T.line}`,
+                borderRadius: '12px', padding: '16px 18px', cursor: 'pointer',
+                textAlign: 'left', width: '100%',
+                transition: 'all .15s ease',
+                boxShadow: isSelected ? `0 0 0 3px rgba(0,188,200,0.12)` : 'none',
+              }}
+            >
+              <div style={{
+                width: '44px', height: '44px', borderRadius: '10px', flexShrink: 0,
+                background: `linear-gradient(140deg, ${T.accent} 0%, #00D4E2 100%)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '16px', color: '#fff',
+              }}>
+                {getInitials(a.name)}
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: '15px', color: T.ink }}>{a.name}</div>
+                {age !== null && (
+                  <div style={{ fontSize: '13px', color: T.ink3, marginTop: '2px' }}>Age {age}</div>
+                )}
+              </div>
+              {isSelected && (
+                <div style={{ marginLeft: 'auto', color: T.accent }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="4 13 9 18 20 6" />
+                  </svg>
+                </div>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      <button
+        onClick={() => selected && onSelect(selected)}
+        disabled={!selected}
+        style={{
+          display: 'block', width: '100%', padding: '16px', borderRadius: '12px',
+          background: selected ? T.accent : T.surface2,
+          color: selected ? T.accentInk : T.ink3,
+          border: 'none',
+          fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16px',
+          cursor: selected ? 'pointer' : 'not-allowed',
+          transition: 'all .15s ease',
+        }}
+      >
+        Continue →
+      </button>
+    </div>
+  )
+}
+
+// ── Screen 1: Confirm details ────────────────────────────────────────────────
+
+function ConfirmScreen({ trainer, format, setFormat, sessionDate, sessionTime, athlete, onNext }) {
   const rowStyle = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     gap: '12px', padding: '14px 0', borderBottom: `1px solid ${T.line}`,
@@ -143,19 +275,24 @@ function ConfirmScreen({ trainer, format, setFormat, onNext }) {
 
       <TrainerSummary trainer={trainer} />
 
-      {/* Session details */}
       <div style={{ marginBottom: '24px' }}>
+        {athlete && (
+          <div style={rowStyle}>
+            <span style={labelStyle}>Athlete</span>
+            <span style={valueStyle}>{athlete.name}</span>
+          </div>
+        )}
         <div style={rowStyle}>
           <span style={labelStyle}>Date</span>
-          <span style={valueStyle}>{SESSION.date}</span>
+          <span style={valueStyle}>{formatDateDisplay(sessionDate)}</span>
         </div>
         <div style={rowStyle}>
           <span style={labelStyle}>Time</span>
-          <span style={valueStyle}>{SESSION.time}</span>
+          <span style={valueStyle}>{sessionTime}</span>
         </div>
         <div style={rowStyle}>
           <span style={labelStyle}>Duration</span>
-          <span style={valueStyle}>{SESSION.duration}</span>
+          <span style={valueStyle}>1 hour</span>
         </div>
         <div style={{ ...rowStyle, borderBottom: 'none', alignItems: 'flex-start', paddingTop: '16px' }}>
           <span style={labelStyle}>Format</span>
@@ -183,7 +320,6 @@ function ConfirmScreen({ trainer, format, setFormat, onNext }) {
         </div>
       </div>
 
-      {/* Price breakdown */}
       <div style={{
         background: T.surface2, borderRadius: '12px', padding: '18px 20px',
         display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px',
@@ -209,7 +345,7 @@ function ConfirmScreen({ trainer, format, setFormat, onNext }) {
           display: 'block', width: '100%', padding: '16px', borderRadius: '12px', minHeight: '44px',
           background: T.accent, color: T.accentInk, border: 'none',
           fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16px',
-          cursor: 'pointer', transition: 'filter .15s ease, transform .15s ease',
+          cursor: 'pointer', transition: 'filter .15s ease',
         }}
         onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)' }}
         onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
@@ -250,13 +386,15 @@ function CardInput({ label, placeholder, value, onChange, maxLength }) {
   )
 }
 
-// ── Screen 1: Payment ────────────────────────────────────────────────────────
+// ── Screen 2: Payment ────────────────────────────────────────────────────────
 
-function PaymentScreen({ trainer, format, onNext, onBack }) {
+function PaymentScreen({ trainer, format, sessionDate, sessionTime, onPay, onNext, onBack }) {
   const [cardNum, setCardNum] = useState('')
   const [expiry, setExpiry] = useState('')
   const [cvc, setCvc] = useState('')
-  const [name, setName] = useState('')
+  const [cardName, setCardName] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [payError, setPayError] = useState(null)
 
   const formatCardNum = (v) => {
     const digits = v.replace(/\D/g, '').slice(0, 16)
@@ -265,6 +403,18 @@ function PaymentScreen({ trainer, format, onNext, onBack }) {
   const formatExpiry = (v) => {
     const digits = v.replace(/\D/g, '').slice(0, 4)
     return digits.length > 2 ? digits.slice(0, 2) + ' / ' + digits.slice(2) : digits
+  }
+
+  async function handleSubmit() {
+    setSubmitting(true)
+    setPayError(null)
+    try {
+      await onPay()
+      onNext()
+    } catch (err) {
+      setPayError(err.message || 'Booking failed. Please try again.')
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -319,24 +469,38 @@ function PaymentScreen({ trainer, format, onNext, onBack }) {
             <CardInput
               label="Name on card"
               placeholder="Jane Smith"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={cardName}
+              onChange={(e) => setCardName(e.target.value)}
             />
           </div>
 
+          {payError && (
+            <div style={{
+              background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)',
+              borderRadius: '10px', padding: '12px 16px', marginBottom: '16px',
+              fontSize: '14px', color: '#DC2626', fontWeight: 500,
+            }}>
+              {payError}
+            </div>
+          )}
+
           <button
-            onClick={onNext}
+            onClick={handleSubmit}
+            disabled={submitting}
             style={{
               display: 'block', width: '100%', padding: '17px', borderRadius: '12px', minHeight: '44px',
-              background: '#00BCC8', color: '#FFFFFF', border: 'none',
+              background: submitting ? T.surface2 : '#00BCC8',
+              color: submitting ? T.ink3 : '#FFFFFF',
+              border: 'none',
               fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16.5px',
-              cursor: 'pointer', transition: 'filter .15s ease, transform .15s ease',
+              cursor: submitting ? 'not-allowed' : 'pointer',
+              transition: 'filter .15s ease',
               marginBottom: '12px',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.06)' }}
+            onMouseEnter={(e) => { if (!submitting) e.currentTarget.style.filter = 'brightness(1.06)' }}
             onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
           >
-            Pay ${trainer.rate}
+            {submitting ? 'Booking…' : `Pay $${trainer.rate}`}
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', color: T.ink3, fontSize: '13px' }}>
@@ -361,10 +525,10 @@ function PaymentScreen({ trainer, format, onNext, onBack }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {[
               { label: 'Trainer', value: trainer.name },
-              { label: 'Date', value: SESSION.date },
-              { label: 'Time', value: SESSION.time },
+              { label: 'Date', value: formatDateDisplay(sessionDate) },
+              { label: 'Time', value: sessionTime },
               { label: 'Format', value: format },
-              { label: 'Duration', value: SESSION.duration },
+              { label: 'Duration', value: '1 hour' },
             ].map(({ label, value }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '13.5px' }}>
                 <span style={{ color: T.ink3, fontWeight: 500, flexShrink: 0 }}>{label}</span>
@@ -385,9 +549,9 @@ function PaymentScreen({ trainer, format, onNext, onBack }) {
   )
 }
 
-// ── Screen 2: Confirmation ───────────────────────────────────────────────────
+// ── Screen 3: Confirmation ───────────────────────────────────────────────────
 
-function ConfirmationScreen({ trainer, format }) {
+function ConfirmationScreen({ trainer, format, sessionDate, sessionTime }) {
   return (
     <div style={{ textAlign: 'center' }}>
       <motion.div
@@ -448,7 +612,6 @@ function ConfirmationScreen({ trainer, format }) {
           textAlign: 'left', marginBottom: '24px',
         }}
       >
-        {/* Mini trainer card */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', paddingBottom: '16px', borderBottom: `1px solid ${T.line}` }}>
           <div style={{
             width: '44px', height: '44px', borderRadius: '10px', flexShrink: 0,
@@ -468,10 +631,10 @@ function ConfirmationScreen({ trainer, format }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '11px' }}>
           {[
-            { label: 'Date', value: SESSION.date },
-            { label: 'Time', value: SESSION.time },
+            { label: 'Date', value: formatDateDisplay(sessionDate) },
+            { label: 'Time', value: sessionTime },
             { label: 'Format', value: format },
-            { label: 'Duration', value: SESSION.duration },
+            { label: 'Duration', value: '1 hour' },
             { label: 'Total paid', value: `$${trainer.rate}` },
           ].map(({ label, value }) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
@@ -541,6 +704,9 @@ function BookingPageInner() {
   const name = searchParams.get('name') ?? ''
   const specialty = searchParams.get('specialty') ?? ''
   const rate = searchParams.get('rate') ?? ''
+  const dateParam = searchParams.get('date') ?? ''
+  const timeParam = searchParams.get('time') ?? ''
+  const formatParam = searchParams.get('format') ?? 'In-Person'
 
   const trainer = {
     id: trainerId,
@@ -552,15 +718,66 @@ function BookingPageInner() {
 
   const [step, setStep] = useState(0)
   const [dir, setDir] = useState(1)
-  const [format, setFormat] = useState('In-Person')
+  const [format, setFormat] = useState(formatParam)
+  const [selectedAthlete, setSelectedAthlete] = useState(null)
+  const [athletes, setAthletes] = useState(null)
+  const [athletesLoading, setAthletesLoading] = useState(true)
 
   useEffect(() => {
     if (!trainerId) router.push('/search')
   }, [trainerId, router])
 
+  useEffect(() => {
+    if (!trainerId) return
+    async function loadAthletes() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setAthletes([])
+        setAthletesLoading(false)
+        return
+      }
+      const { data } = await supabase
+        .from('athletes')
+        .select('id, name, dob')
+        .eq('parent_id', user.id)
+      const list = data || []
+      setAthletes(list)
+      setAthletesLoading(false)
+      if (list.length === 1) {
+        setSelectedAthlete(list[0])
+        setStep(1)
+      }
+    }
+    loadAthletes()
+  }, [trainerId])
+
   const goTo = (next) => {
     setDir(next > step ? 1 : -1)
     setStep(next)
+  }
+
+  const handleAthleteSelect = (athlete) => {
+    setSelectedAthlete(athlete)
+    setDir(1)
+    setStep(1)
+  }
+
+  const handlePay = async () => {
+    const supabase = createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('You must be logged in to book a session.')
+    const sessionTime = buildSessionTime(dateParam, timeParam)
+    const { error } = await supabase.from('bookings').insert({
+      parent_id: user.id,
+      athlete_id: selectedAthlete?.id ?? null,
+      trainer_id: trainerId,
+      format,
+      rate: Number(rate),
+      session_time: sessionTime,
+      status: 'pending',
+    })
+    if (error) throw new Error(error.message)
   }
 
   if (!trainerId) return null
@@ -589,7 +806,7 @@ function BookingPageInner() {
             }}>F</span>
             <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '20px', letterSpacing: '.02em', color: T.ink }}>FARM</span>
           </Link>
-          {step < 2 && (
+          {step < 3 && (
             <Link href={`/trainer/${trainerId}`} style={{
               textDecoration: 'none', color: T.ink2, fontWeight: 600, fontSize: '14px',
               padding: '9px 16px', border: `1.5px solid ${T.line}`, borderRadius: '999px',
@@ -602,7 +819,7 @@ function BookingPageInner() {
 
       {/* Content */}
       <div style={{ maxWidth: '640px', margin: '0 auto', padding: '40px 24px 80px' }}>
-        {step < 2 && <StepIndicator step={step} />}
+        {step >= 1 && step < 3 && <StepIndicator step={step - 1} />}
 
         <div className="overflow-visible">
           <AnimatePresence mode="wait" custom={dir}>
@@ -616,23 +833,41 @@ function BookingPageInner() {
               transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1] }}
             >
               {step === 0 && (
+                <AthleteScreen
+                  athletes={athletes}
+                  loading={athletesLoading}
+                  onSelect={handleAthleteSelect}
+                />
+              )}
+              {step === 1 && (
                 <ConfirmScreen
                   trainer={trainer}
                   format={format}
                   setFormat={setFormat}
-                  onNext={() => goTo(1)}
-                />
-              )}
-              {step === 1 && (
-                <PaymentScreen
-                  trainer={trainer}
-                  format={format}
+                  sessionDate={dateParam}
+                  sessionTime={timeParam}
+                  athlete={selectedAthlete}
                   onNext={() => goTo(2)}
-                  onBack={() => goTo(0)}
                 />
               )}
               {step === 2 && (
-                <ConfirmationScreen trainer={trainer} format={format} />
+                <PaymentScreen
+                  trainer={trainer}
+                  format={format}
+                  sessionDate={dateParam}
+                  sessionTime={timeParam}
+                  onPay={handlePay}
+                  onNext={() => goTo(3)}
+                  onBack={() => goTo(1)}
+                />
+              )}
+              {step === 3 && (
+                <ConfirmationScreen
+                  trainer={trainer}
+                  format={format}
+                  sessionDate={dateParam}
+                  sessionTime={timeParam}
+                />
               )}
             </motion.div>
           </AnimatePresence>

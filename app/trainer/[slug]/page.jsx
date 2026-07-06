@@ -1,19 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 
 // ── Constants ──────────────────────────────────────────────────────────────
-
-const DATES = [
-  { day: 'Mon', num: '23' },
-  { day: 'Tue', num: '24' },
-  { day: 'Wed', num: '25' },
-  { day: 'Thu', num: '26' },
-  { day: 'Fri', num: '27' },
-]
 
 const TIMES = ['9:00 AM', '11:00 AM', '2:00 PM', '4:00 PM']
 
@@ -36,6 +28,23 @@ export default function TrainerProfile({ params: { slug } }) {
   const [selectedDate, setSelectedDate] = useState(0)
   const [selectedTime, setSelectedTime] = useState(0)
   const [selectedFormat, setSelectedFormat] = useState('In-Person')
+
+  const DATES = useMemo(() => {
+    const result = []
+    const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    while (result.length < 5) {
+      result.push({
+        day: DAYS[d.getDay()],
+        num: String(d.getDate()),
+        isoDate: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+      })
+      d.setDate(d.getDate() + 1)
+    }
+    return result
+  }, [])
+
   useEffect(() => {
     async function load() {
       const supabase = createClient()
@@ -84,7 +93,7 @@ export default function TrainerProfile({ params: { slug } }) {
   const { profile_id, specialty, bio, rate, location } = trainer ?? {}
 
   const bookingHref = trainer
-    ? `/booking?trainerId=${profile_id}&name=${encodeURIComponent(name)}&specialty=${encodeURIComponent(specialty ?? '')}&rate=${rate ?? ''}`
+    ? `/booking?trainerId=${profile_id}&name=${encodeURIComponent(name)}&specialty=${encodeURIComponent(specialty ?? '')}&rate=${rate ?? ''}&date=${encodeURIComponent(DATES[selectedDate]?.isoDate ?? '')}&time=${encodeURIComponent(TIMES[selectedTime])}&format=${encodeURIComponent(selectedFormat)}`
     : '/booking'
 
   if (loading) {
