@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { createClient } from '@/utils/supabase/client'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -10,7 +11,7 @@ type SessionType = 'IN-PERSON' | 'REMOTE'
 type SessionStatus = 'confirmed' | 'pending'
 
 type Session = {
-  id: number
+  id: string
   childName: string
   parentName: string
   parentInitials: string
@@ -22,50 +23,6 @@ type Session = {
   isToday: boolean
   status: SessionStatus
 }
-
-// ── Mock data ──────────────────────────────────────────────────────────────────
-
-const INITIAL_SESSIONS: Session[] = [
-  {
-    id: 1,
-    childName: 'Ethan Williams',
-    parentName: 'Sarah Williams',
-    parentInitials: 'SW',
-    sport: 'Soccer',
-    type: 'IN-PERSON',
-    day: 'Mon',
-    time: '9:00 AM',
-    location: 'Green Valley Park',
-    isToday: true,
-    status: 'confirmed',
-  },
-  {
-    id: 2,
-    childName: 'Maya Chen',
-    parentName: 'David Chen',
-    parentInitials: 'DC',
-    sport: 'Tennis',
-    type: 'REMOTE',
-    day: 'Mon',
-    time: '11:30 AM',
-    location: 'Zoom',
-    isToday: true,
-    status: 'pending',
-  },
-  {
-    id: 3,
-    childName: 'Jordan Blake',
-    parentName: 'Lisa Blake',
-    parentInitials: 'LB',
-    sport: 'Basketball',
-    type: 'IN-PERSON',
-    day: 'Tue',
-    time: '4:00 PM',
-    location: 'Riverside Courts',
-    isToday: false,
-    status: 'confirmed',
-  },
-]
 
 const FULL_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -98,13 +55,60 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 // ── ScheduleView ───────────────────────────────────────────────────────────────
 
 function ScheduleView() {
-  const [sessions, setSessions] = useState<Session[]>(INITIAL_SESSIONS)
+  const [sessions, setSessions] = useState<Session[]>([])
 
-  function confirmSession(id: number) {
+  useEffect(() => {
+    async function fetchSessions() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: trainerRow } = await supabase
+        .from('trainers')
+        .select('id')
+        .eq('profile_id', user.id)
+        .single()
+      if (!trainerRow) return
+
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('id, format, session_time, status, athletes!athlete_id(name, sport), profiles!parent_id(name)')
+        .eq('trainer_id', trainerRow.id)
+      if (!bookings) return
+
+      const JS_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      const today = new Date()
+
+      const mapped: Session[] = (bookings as any[]).map((b) => {
+        const dt = new Date(b.session_time)
+        const type: SessionType = b.format === 'Remote Video' ? 'REMOTE' : 'IN-PERSON'
+        const parentName: string = b.profiles?.name ?? 'Unknown'
+        const parentInitials = parentName.split(' ').map((n: string) => n[0] ?? '').join('').slice(0, 2).toUpperCase()
+        return {
+          id: b.id,
+          childName: b.athletes?.name ?? 'Unknown',
+          parentName,
+          parentInitials,
+          sport: b.athletes?.sport ?? '',
+          type,
+          day: JS_DAYS[dt.getDay()],
+          time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+          location: type === 'REMOTE' ? 'Video Call' : 'In Person',
+          isToday: dt.toDateString() === today.toDateString(),
+          status: (b.status === 'confirmed' ? 'confirmed' : 'pending') as SessionStatus,
+        }
+      })
+
+      setSessions(mapped)
+    }
+    fetchSessions()
+  }, [])
+
+  function confirmSession(id: string) {
     setSessions((prev) => prev.map((s) => s.id === id ? { ...s, status: 'confirmed' } : s))
   }
 
-  function declineSession(id: number) {
+  function declineSession(id: string) {
     setSessions((prev) => prev.filter((s) => s.id !== id))
   }
 

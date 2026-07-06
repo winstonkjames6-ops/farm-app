@@ -1,7 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { createClient } from '@/utils/supabase/client'
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+type SessionType = 'IN-PERSON' | 'REMOTE'
+
+type Session = {
+  id: string
+  childName: string
+  parentName: string
+  parentInitials: string
+  sport: string
+  type: SessionType
+  day: string
+  time: string
+  location: string
+  isToday: boolean
+}
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
@@ -11,47 +29,7 @@ const MOCK_TRAINER = {
   sport: 'soccer',
 }
 
-const MOCK_SESSIONS = [
-  {
-    id: 1,
-    childName: 'Ethan Williams',
-    parentName: 'Sarah Williams',
-    parentInitials: 'SW',
-    sport: 'Soccer',
-    type: 'IN-PERSON' as const,
-    day: 'Mon',
-    time: '9:00 AM',
-    location: 'Green Valley Park',
-    isToday: true,
-  },
-  {
-    id: 2,
-    childName: 'Maya Chen',
-    parentName: 'David Chen',
-    parentInitials: 'DC',
-    sport: 'Tennis',
-    type: 'REMOTE' as const,
-    day: 'Mon',
-    time: '11:30 AM',
-    location: 'Zoom',
-    isToday: true,
-  },
-  {
-    id: 3,
-    childName: 'Jordan Blake',
-    parentName: 'Lisa Blake',
-    parentInitials: 'LB',
-    sport: 'Basketball',
-    type: 'IN-PERSON' as const,
-    day: 'Tue',
-    time: '4:00 PM',
-    location: 'Riverside Courts',
-    isToday: false,
-  },
-]
-
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const DAYS_WITH_SESSIONS = new Set(['Mon', 'Tue'])
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -164,7 +142,7 @@ function StatTile({
 
 // ── Next session hero card ─────────────────────────────────────────────────────
 
-function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | null }) {
+function NextSessionCard({ session }: { session: Session | null }) {
   if (!session) {
     return (
       <motion.div
@@ -218,12 +196,12 @@ function NextSessionCard({ session }: { session: (typeof MOCK_SESSIONS)[0] | nul
 
 // ── Weekly schedule strip ──────────────────────────────────────────────────────
 
-function WeeklyStrip({ activeDay, onDaySelect }: { activeDay: string; onDaySelect: (d: string) => void }) {
+function WeeklyStrip({ activeDay, onDaySelect, daysWithSessions }: { activeDay: string; onDaySelect: (d: string) => void; daysWithSessions: Set<string> }) {
   return (
     <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' as const }}>
       {DAYS.map((day) => {
         const isActive = day === activeDay
-        const hasSessions = DAYS_WITH_SESSIONS.has(day)
+        const hasSessions = daysWithSessions.has(day)
         return (
           <button
             key={day}
@@ -245,7 +223,7 @@ function WeeklyStrip({ activeDay, onDaySelect }: { activeDay: string; onDaySelec
 
 // ── Session list card ──────────────────────────────────────────────────────────
 
-function SessionCard({ session, index }: { session: (typeof MOCK_SESSIONS)[0]; index: number }) {
+function SessionCard({ session, index }: { session: Session; index: number }) {
   const badgeStyles: Record<string, { bg: string; color: string; border: string }> = {
     'IN-PERSON': { bg: 'rgba(0,188,200,0.1)', color: T.cyan, border: '1px solid rgba(0,188,200,0.2)' },
     REMOTE:      { bg: 'rgba(99,102,241,0.1)', color: '#6366F1', border: '1px solid rgba(99,102,241,0.2)' },
@@ -354,11 +332,13 @@ function HomeView({
   onDaySelect,
   nextSession,
   filteredSessions,
+  daysWithSessions,
 }: {
   activeDay: string
   onDaySelect: (d: string) => void
-  nextSession: typeof MOCK_SESSIONS[0] | null
-  filteredSessions: typeof MOCK_SESSIONS
+  nextSession: Session | null
+  filteredSessions: Session[]
+  daysWithSessions: Set<string>
 }) {
   return (
     <motion.div
@@ -388,7 +368,7 @@ function HomeView({
           <NextSessionCard session={nextSession} />
 
           <SectionLabel>Schedule</SectionLabel>
-          <WeeklyStrip activeDay={activeDay} onDaySelect={onDaySelect} />
+          <WeeklyStrip activeDay={activeDay} onDaySelect={onDaySelect} daysWithSessions={daysWithSessions} />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {filteredSessions.length === 0 ? (
@@ -413,9 +393,61 @@ function HomeView({
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function TrainerHomePage() {
-  const [activeDay, setActiveDay] = useState('Mon')
-  const nextSession = MOCK_SESSIONS.find((s) => s.isToday) ?? null
-  const filteredSessions = MOCK_SESSIONS.filter((s) => s.day === activeDay)
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [activeDay, setActiveDay] = useState(() => {
+    const JS_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    return JS_DAYS[new Date().getDay()]
+  })
+
+  useEffect(() => {
+    async function fetchSessions() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: trainerRow } = await supabase
+        .from('trainers')
+        .select('id')
+        .eq('profile_id', user.id)
+        .single()
+      if (!trainerRow) return
+
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('id, format, session_time, athletes!athlete_id(name, sport), profiles!parent_id(name)')
+        .eq('trainer_id', trainerRow.id)
+      if (!bookings) return
+
+      const JS_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      const today = new Date()
+
+      const mapped: Session[] = (bookings as any[]).map((b) => {
+        const dt = new Date(b.session_time)
+        const type: SessionType = b.format === 'Remote Video' ? 'REMOTE' : 'IN-PERSON'
+        const parentName: string = b.profiles?.name ?? 'Unknown'
+        const parentInitials = parentName.split(' ').map((n: string) => n[0] ?? '').join('').slice(0, 2).toUpperCase()
+        return {
+          id: b.id,
+          childName: b.athletes?.name ?? 'Unknown',
+          parentName,
+          parentInitials,
+          sport: b.athletes?.sport ?? '',
+          type,
+          day: JS_DAYS[dt.getDay()],
+          time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+          location: type === 'REMOTE' ? 'Video Call' : 'In Person',
+          isToday: dt.toDateString() === today.toDateString(),
+        }
+      })
+
+      setSessions(mapped)
+    }
+    fetchSessions()
+  }, [])
+
+  const daysWithSessions = new Set(sessions.map((s) => s.day))
+  const nextSession = sessions.find((s) => s.isToday) ?? null
+  const filteredSessions = sessions.filter((s) => s.day === activeDay)
 
   return (
     <HomeView
@@ -423,6 +455,7 @@ export default function TrainerHomePage() {
       onDaySelect={setActiveDay}
       nextSession={nextSession}
       filteredSessions={filteredSessions}
+      daysWithSessions={daysWithSessions}
     />
   )
 }
