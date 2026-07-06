@@ -36,9 +36,6 @@ export default function TrainerProfile({ params: { slug } }) {
   const [selectedDate, setSelectedDate] = useState(0)
   const [selectedTime, setSelectedTime] = useState(0)
   const [selectedFormat, setSelectedFormat] = useState('In-Person')
-  const [videoPlaying, setVideoPlaying] = useState(false)
-  const [playingCard, setPlayingCard] = useState(null)
-
   useEffect(() => {
     async function load() {
       const supabase = createClient()
@@ -82,69 +79,12 @@ export default function TrainerProfile({ params: { slug } }) {
     marginBottom: '10px',
   }
 
-  const shell = (
-    <div
-      style={{
-        '--bg': '#F8F8F6', '--surface': '#FFFFFF', '--surface-2': '#F0EFEB',
-        '--ink': '#1A1A1A', '--ink-2': '#4A4A4A', '--ink-3': '#9A9A9A',
-        '--line': 'rgba(0,0,0,0.08)', '--accent': '#00BCC8', '--accent-ink': '#FFFFFF',
-        '--radius': '14px',
-        background: 'var(--bg)', color: 'var(--ink)',
-        fontFamily: "'Hanken Grotesk', sans-serif",
-        minHeight: '100vh', WebkitFontSmoothing: 'antialiased',
-      }}
-    >
-      <style>{`
-        .tp-grid {
-          display: grid;
-          grid-template-columns: 1fr 364px;
-          gap: 32px;
-          align-items: start;
-        }
-        @media (max-width: 860px) {
-          .tp-grid { grid-template-columns: 1fr; }
-          .tp-sticky { position: static !important; top: auto !important; }
-        }
-      `}</style>
-
-      {/* Nav */}
-      <nav style={{
-        position: 'sticky', top: 0, zIndex: 50,
-        background: 'color-mix(in srgb, #F8F8F6 84%, transparent)',
-        backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
-        borderBottom: '1px solid var(--line)',
-      }}>
-        <div style={{
-          maxWidth: '1160px', margin: '0 auto', padding: '0 32px', height: '72px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '11px', textDecoration: 'none' }}>
-            <span style={{
-              width: '32px', height: '32px', borderRadius: '9px', background: 'var(--accent)',
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--accent-ink)', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: '17px',
-            }}>F</span>
-            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', letterSpacing: '.02em', color: 'var(--ink)' }}>FARM</span>
-          </Link>
-          <Link href="/search" style={{
-            display: 'inline-flex', alignItems: 'center', textDecoration: 'none',
-            color: 'var(--ink-2)', fontWeight: 600, fontSize: '14px',
-            padding: '10px 16px', border: '1.5px solid var(--line)', borderRadius: '999px',
-          }}>← Back to search</Link>
-        </div>
-      </nav>
-
-      {/* placeholder children */}
-      <main style={{ maxWidth: '1160px', margin: '0 auto', padding: '36px 32px 96px' }} />
-    </div>
-  )
-
   // Derive name safely
   const name = trainer?.profiles?.name ?? ''
   const { profile_id, specialty, bio, rate, location } = trainer ?? {}
 
   const bookingHref = trainer
-    ? `/booking?trainerId=${profile_id}&name=${encodeURIComponent(name)}&specialty=${encodeURIComponent(specialty ?? '')}&rate=${rate}`
+    ? `/booking?trainerId=${profile_id}&name=${encodeURIComponent(name)}&specialty=${encodeURIComponent(specialty ?? '')}&rate=${rate ?? ''}`
     : '/booking'
 
   if (loading) {
@@ -358,116 +298,6 @@ export default function TrainerProfile({ params: { slug } }) {
               </div>
             )}
 
-            {/* Intro Video */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1], delay: 0.15 }}
-              style={card}
-            >
-              <h2 style={{
-                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
-                fontSize: '13px', letterSpacing: '.14em', textTransform: 'uppercase',
-                color: 'var(--ink-3)', margin: '0 0 14px',
-              }}>Intro Video</h2>
-
-              <div
-                style={{ position: 'relative', paddingTop: '56.25%', background: '#0D0D0F', borderRadius: '8px', overflow: 'hidden', cursor: 'pointer' }}
-                onClick={() => setVideoPlaying((v) => !v)}
-              >
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, rgba(18,18,20,0.55) 0%, rgba(5,5,6,0.88) 100%)' }} />
-                <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,0.018) 28px, rgba(255,255,255,0.018) 29px)' }} />
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{
-                    width: 56, height: 56, borderRadius: '50%', background: '#00BCC8',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 8px 32px rgba(0,188,200,0.32)',
-                  }}>
-                    {videoPlaying ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <rect x="6" y="4" width="4" height="16" rx="1" fill="#000" />
-                        <rect x="14" y="4" width="4" height="16" rx="1" fill="#000" />
-                      </svg>
-                    ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M8 5.14v14l11-7-11-7z" fill="#000" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <div style={{ position: 'absolute', bottom: 12, right: 12, background: 'rgba(0,0,0,0.72)', color: '#fff', fontSize: '11.5px', fontWeight: 600, padding: '3px 8px', borderRadius: '4px' }}>0:32</div>
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'rgba(255,255,255,0.1)' }}>
-                  <motion.div
-                    animate={{ width: videoPlaying ? '100%' : '0%' }}
-                    transition={{ duration: videoPlaying ? 32 : 0.2, ease: 'linear' }}
-                    style={{ height: '100%', background: '#00BCC8' }}
-                  />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Athlete Progress */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1], delay: 0.2 }}
-              style={card}
-            >
-              <h2 style={{
-                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
-                fontSize: '13px', letterSpacing: '.14em', textTransform: 'uppercase',
-                color: 'var(--ink-3)', margin: '0 0 16px',
-              }}>Athlete Progress</h2>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                {[
-                  {
-                    id: 'before', label: 'BEFORE', age: 'Age 10 · Soccer',
-                    quote: 'Started with no footwork fundamentals. Struggled to control a moving ball.',
-                    labelBg: 'rgba(239,68,68,0.82)',
-                    bg: 'linear-gradient(160deg, #1e0a0a 0%, #0d0404 100%)',
-                  },
-                  {
-                    id: 'after', label: 'AFTER', age: 'Age 11 · Soccer',
-                    quote: 'Competing at varsity level 6 months later. First touch transformed completely.',
-                    labelBg: 'rgba(34,197,94,0.82)',
-                    bg: 'linear-gradient(160deg, #0a1e0d 0%, #040d05 100%)',
-                  },
-                ].map((item, i) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: 0.28 + i * 0.1 }}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => setPlayingCard(playingCard === item.id ? null : item.id)}
-                  >
-                    <div style={{ position: 'relative', paddingTop: '75%', background: '#0D0D0F', borderRadius: '8px', overflow: 'hidden', marginBottom: '11px' }}>
-                      <div style={{ position: 'absolute', inset: 0, background: item.bg }} />
-                      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(255,255,255,0.016) 20px, rgba(255,255,255,0.016) 21px)' }} />
-                      <div style={{ position: 'absolute', top: 8, left: 8, background: item.labelBg, color: '#fff', fontSize: '10px', fontWeight: 800, padding: '3px 8px', borderRadius: '4px', fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.1em' }}>{item.label}</div>
-                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: playingCard === item.id ? 'rgba(255,255,255,0.18)' : 'rgba(0,188,200,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .15s ease' }}>
-                          {playingCard === item.id ? (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="4" height="16" rx="1" fill="#fff" /><rect x="14" y="4" width="4" height="16" rx="1" fill="#fff" /></svg>
-                          ) : (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M8 5.14v14l11-7-11-7z" fill="#000" /></svg>
-                          )}
-                        </div>
-                      </div>
-                      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'rgba(255,255,255,0.08)' }}>
-                        {playingCard === item.id && (
-                          <motion.div initial={{ width: '0%' }} animate={{ width: '100%' }} transition={{ duration: 45, ease: 'linear' }} style={{ height: '100%', background: '#00BCC8' }} />
-                        )}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink-3)', marginBottom: '6px', letterSpacing: '.09em', textTransform: 'uppercase' }}>{item.age}</div>
-                    <p style={{ fontSize: '13.5px', color: 'var(--ink-2)', margin: 0, lineHeight: 1.5 }}>&ldquo;{item.quote}&rdquo;</p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
             {/* Rate */}
             <div style={{ ...card, display: 'inline-block' }}>
               <h2 style={sectionHeading}>Rate</h2>
@@ -584,7 +414,7 @@ export default function TrainerProfile({ params: { slug } }) {
                 paddingBottom: '18px', marginBottom: '18px', borderBottom: '1px solid var(--line)',
               }}>
                 <span style={{ color: 'var(--ink-2)', fontSize: '15px' }}>Total</span>
-                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: 'var(--ink)' }}>${rate}.00</span>
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: 'var(--ink)' }}>${rate}</span>
               </div>
 
               {/* CTA */}
