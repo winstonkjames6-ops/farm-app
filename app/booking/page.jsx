@@ -395,6 +395,12 @@ function PaymentScreen({ trainer, format, sessionDate, sessionTime, onPay, onNex
   const [cardName, setCardName] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [payError, setPayError] = useState(null)
+  const [showCardError, setShowCardError] = useState(false)
+
+  const cardValid =
+    cardNum.replace(/\D/g, '').length >= 12 &&
+    /^\d{2} \/ \d{2}$/.test(expiry) &&
+    /^\d{3,4}$/.test(cvc)
 
   const formatCardNum = (v) => {
     const digits = v.replace(/\D/g, '').slice(0, 16)
@@ -406,6 +412,11 @@ function PaymentScreen({ trainer, format, sessionDate, sessionTime, onPay, onNex
   }
 
   async function handleSubmit() {
+    if (!cardValid) {
+      setShowCardError(true)
+      return
+    }
+    setShowCardError(false)
     setSubmitting(true)
     setPayError(null)
     try {
@@ -474,6 +485,16 @@ function PaymentScreen({ trainer, format, sessionDate, sessionTime, onPay, onNex
             />
           </div>
 
+          {showCardError && !payError && (
+            <div style={{
+              background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)',
+              borderRadius: '10px', padding: '12px 16px', marginBottom: '16px',
+              fontSize: '14px', color: '#DC2626', fontWeight: 500,
+            }}>
+              Please fill in your card details to continue.
+            </div>
+          )}
+
           {payError && (
             <div style={{
               background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)',
@@ -489,15 +510,15 @@ function PaymentScreen({ trainer, format, sessionDate, sessionTime, onPay, onNex
             disabled={submitting}
             style={{
               display: 'block', width: '100%', padding: '17px', borderRadius: '12px', minHeight: '44px',
-              background: submitting ? T.surface2 : '#00BCC8',
-              color: submitting ? T.ink3 : '#FFFFFF',
+              background: submitting || !cardValid ? T.surface2 : '#00BCC8',
+              color: submitting || !cardValid ? T.ink3 : '#FFFFFF',
               border: 'none',
               fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16.5px',
               cursor: submitting ? 'not-allowed' : 'pointer',
               transition: 'filter .15s ease',
               marginBottom: '12px',
             }}
-            onMouseEnter={(e) => { if (!submitting) e.currentTarget.style.filter = 'brightness(1.06)' }}
+            onMouseEnter={(e) => { if (!submitting && cardValid) e.currentTarget.style.filter = 'brightness(1.06)' }}
             onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
           >
             {submitting ? 'Booking…' : `Pay $${trainer.rate}`}
