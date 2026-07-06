@@ -767,11 +767,13 @@ function BookingPageInner() {
     const supabase = createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) throw new Error('You must be logged in to book a session.')
+    const { data: trainerRow } = await supabase.from('trainers').select('id').eq('profile_id', trainerId).single()
+    if (!trainerRow) throw new Error('Trainer not found. Please go back and try again.')
     const sessionTime = buildSessionTime(dateParam, timeParam)
     const { error } = await supabase.from('bookings').insert({
       parent_id: user.id,
       athlete_id: selectedAthlete?.id ?? null,
-      trainer_id: trainerId,
+      trainer_id: trainerRow.id,
       format,
       rate: Number(rate),
       session_time: sessionTime,
