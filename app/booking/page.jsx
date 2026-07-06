@@ -1,21 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 
-// ── Mock booking context ────────────────────────────────────────────────────
+// ── Date/time still hardcoded — booking creation is the next slice ──────────
 
-const BOOKING = {
-  trainerName: 'Marcus Rivera',
-  trainerInitials: 'MR',
-  sport: 'Soccer',
-  rating: 4.9,
-  reviewCount: 48,
+const SESSION = {
   date: 'Monday, Jun 23',
   time: '9:00 AM',
   duration: '1 hour',
-  rate: 65,
 }
 
 // ── Shared token values ─────────────────────────────────────────────────────
@@ -30,30 +25,21 @@ const T = {
   line: 'rgba(0,0,0,0.08)',
   accent: '#00BCC8',
   accentInk: '#FFFFFF',
-  green: '#00BCC8',
   radius: '14px',
 }
 
-// ── Stars ───────────────────────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
-function Stars({ rating }) {
-  return (
-    <span style={{ display: 'inline-flex', gap: '2px' }}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <svg key={i} width="13" height="13" viewBox="0 0 24 24">
-          <polygon
-            points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1"
-            fill={i <= Math.round(rating) ? T.accent : 'rgba(0,0,0,0.10)'}
-          />
-        </svg>
-      ))}
-    </span>
-  )
+function getInitials(name) {
+  const words = (name || '').trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return '?'
+  if (words.length === 1) return words[0][0].toUpperCase()
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase()
 }
 
 // ── Trainer summary card ─────────────────────────────────────────────────────
 
-function TrainerSummary() {
+function TrainerSummary({ trainer }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: '14px',
@@ -66,30 +52,27 @@ function TrainerSummary() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '19px', color: '#fff',
       }}>
-        {BOOKING.trainerInitials}
+        {trainer.initials}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink }}>
-            {BOOKING.trainerName}
+            {trainer.name}
           </span>
-          <span style={{
-            fontSize: '11px', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase',
-            background: `color-mix(in srgb, ${T.accent} 13%, ${T.surface2})`,
-            color: T.accent, padding: '3px 8px', borderRadius: '999px',
-          }}>
-            {BOOKING.sport}
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '5px' }}>
-          <Stars rating={BOOKING.rating} />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: T.ink }}>{BOOKING.rating}</span>
-          <span style={{ fontSize: '12.5px', color: T.ink3 }}>· {BOOKING.reviewCount} reviews</span>
+          {trainer.specialty && (
+            <span style={{
+              fontSize: '11px', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase',
+              background: `color-mix(in srgb, ${T.accent} 13%, ${T.surface2})`,
+              color: T.accent, padding: '3px 8px', borderRadius: '999px',
+            }}>
+              {trainer.specialty}
+            </span>
+          )}
         </div>
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
         <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '22px', color: T.ink, lineHeight: 1 }}>
-          ${BOOKING.rate}
+          ${trainer.rate}
         </div>
         <div style={{ fontSize: '12px', color: T.ink3 }}>/hr</div>
       </div>
@@ -144,7 +127,7 @@ function StepIndicator({ step }) {
 
 // ── Screen 0: Confirm details ────────────────────────────────────────────────
 
-function ConfirmScreen({ format, setFormat, onNext }) {
+function ConfirmScreen({ trainer, format, setFormat, onNext }) {
   const rowStyle = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     gap: '12px', padding: '14px 0', borderBottom: `1px solid ${T.line}`,
@@ -158,21 +141,21 @@ function ConfirmScreen({ format, setFormat, onNext }) {
         Confirm your session
       </h2>
 
-      <TrainerSummary />
+      <TrainerSummary trainer={trainer} />
 
       {/* Session details */}
       <div style={{ marginBottom: '24px' }}>
         <div style={rowStyle}>
           <span style={labelStyle}>Date</span>
-          <span style={valueStyle}>{BOOKING.date}</span>
+          <span style={valueStyle}>{SESSION.date}</span>
         </div>
         <div style={rowStyle}>
           <span style={labelStyle}>Time</span>
-          <span style={valueStyle}>{BOOKING.time}</span>
+          <span style={valueStyle}>{SESSION.time}</span>
         </div>
         <div style={rowStyle}>
           <span style={labelStyle}>Duration</span>
-          <span style={valueStyle}>{BOOKING.duration}</span>
+          <span style={valueStyle}>{SESSION.duration}</span>
         </div>
         <div style={{ ...rowStyle, borderBottom: 'none', alignItems: 'flex-start', paddingTop: '16px' }}>
           <span style={labelStyle}>Format</span>
@@ -207,7 +190,7 @@ function ConfirmScreen({ format, setFormat, onNext }) {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: T.ink2 }}>
           <span>Session (1 hr)</span>
-          <span>${BOOKING.rate}.00</span>
+          <span>${trainer.rate}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: T.ink2 }}>
           <span>Platform fee</span>
@@ -216,7 +199,7 @@ function ConfirmScreen({ format, setFormat, onNext }) {
         <div style={{ height: '1px', background: T.line }} />
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink }}>Total</span>
-          <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '18px', color: T.ink }}>${BOOKING.rate}.00</span>
+          <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '18px', color: T.ink }}>${trainer.rate}</span>
         </div>
       </div>
 
@@ -239,7 +222,7 @@ function ConfirmScreen({ format, setFormat, onNext }) {
 
 // ── Input field component ────────────────────────────────────────────────────
 
-function CardInput({ label, placeholder, value, onChange, maxLength, pattern }) {
+function CardInput({ label, placeholder, value, onChange, maxLength }) {
   const [focused, setFocused] = useState(false)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -269,7 +252,7 @@ function CardInput({ label, placeholder, value, onChange, maxLength, pattern }) 
 
 // ── Screen 1: Payment ────────────────────────────────────────────────────────
 
-function PaymentScreen({ format, onNext, onBack }) {
+function PaymentScreen({ trainer, format, onNext, onBack }) {
   const [cardNum, setCardNum] = useState('')
   const [expiry, setExpiry] = useState('')
   const [cvc, setCvc] = useState('')
@@ -307,7 +290,7 @@ function PaymentScreen({ format, onNext, onBack }) {
       <div className="booking-payment-grid">
         {/* Form */}
         <div>
-          <TrainerSummary />
+          <TrainerSummary trainer={trainer} />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
             <CardInput
@@ -353,7 +336,7 @@ function PaymentScreen({ format, onNext, onBack }) {
             onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.06)' }}
             onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
           >
-            Pay ${BOOKING.rate}.00
+            Pay ${trainer.rate}
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', color: T.ink3, fontSize: '13px' }}>
@@ -377,11 +360,11 @@ function PaymentScreen({ format, onNext, onBack }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {[
-              { label: 'Trainer', value: BOOKING.trainerName },
-              { label: 'Date', value: BOOKING.date },
-              { label: 'Time', value: BOOKING.time },
+              { label: 'Trainer', value: trainer.name },
+              { label: 'Date', value: SESSION.date },
+              { label: 'Time', value: SESSION.time },
               { label: 'Format', value: format },
-              { label: 'Duration', value: BOOKING.duration },
+              { label: 'Duration', value: SESSION.duration },
             ].map(({ label, value }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '13.5px' }}>
                 <span style={{ color: T.ink3, fontWeight: 500, flexShrink: 0 }}>{label}</span>
@@ -392,7 +375,7 @@ function PaymentScreen({ format, onNext, onBack }) {
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, color: T.ink }}>Total</span>
               <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '18px', color: T.ink }}>
-                ${BOOKING.rate}.00
+                ${trainer.rate}
               </span>
             </div>
           </div>
@@ -404,10 +387,9 @@ function PaymentScreen({ format, onNext, onBack }) {
 
 // ── Screen 2: Confirmation ───────────────────────────────────────────────────
 
-function ConfirmationScreen({ format }) {
+function ConfirmationScreen({ trainer, format }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      {/* Animated checkmark */}
       <motion.div
         style={{
           width: '88px', height: '88px', borderRadius: '50%',
@@ -444,7 +426,7 @@ function ConfirmationScreen({ format }) {
           letterSpacing: '-.025em', color: T.ink, margin: '0 0 8px',
         }}
       >
-        You're booked.
+        You&apos;re booked.
       </motion.h2>
 
       <motion.p
@@ -456,7 +438,6 @@ function ConfirmationScreen({ format }) {
         A confirmation has been sent to your email.
       </motion.p>
 
-      {/* Booking details */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -475,21 +456,23 @@ function ConfirmationScreen({ format }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '16px', color: '#fff',
           }}>
-            {BOOKING.trainerInitials}
+            {trainer.initials}
           </div>
           <div>
-            <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: '15px', color: T.ink }}>{BOOKING.trainerName}</div>
-            <div style={{ fontSize: '12.5px', color: T.ink3, marginTop: '2px' }}>{BOOKING.sport} · USSF D License</div>
+            <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: '15px', color: T.ink }}>{trainer.name}</div>
+            {trainer.specialty && (
+              <div style={{ fontSize: '12.5px', color: T.ink3, marginTop: '2px' }}>{trainer.specialty}</div>
+            )}
           </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '11px' }}>
           {[
-            { icon: '📅', label: 'Date', value: BOOKING.date },
-            { icon: '🕘', label: 'Time', value: BOOKING.time },
-            { icon: '📍', label: 'Format', value: format },
-            { icon: '⏱', label: 'Duration', value: BOOKING.duration },
-            { icon: '💳', label: 'Total paid', value: `$${BOOKING.rate}.00` },
+            { label: 'Date', value: SESSION.date },
+            { label: 'Time', value: SESSION.time },
+            { label: 'Format', value: format },
+            { label: 'Duration', value: SESSION.duration },
+            { label: 'Total paid', value: `$${trainer.rate}` },
           ].map(({ label, value }) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
               <span style={{ color: T.ink3, fontWeight: 500 }}>{label}</span>
@@ -548,17 +531,39 @@ const slideVariants = {
   exit: (dir) => ({ opacity: 0, x: dir > 0 ? -40 : 40 }),
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// ── Inner page (needs Suspense boundary for useSearchParams) ─────────────────
 
-export default function BookingPage() {
+function BookingPageInner() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const trainerId = searchParams.get('trainerId')
+  const name = searchParams.get('name') ?? ''
+  const specialty = searchParams.get('specialty') ?? ''
+  const rate = searchParams.get('rate') ?? ''
+
+  const trainer = {
+    id: trainerId,
+    name,
+    initials: getInitials(name),
+    specialty,
+    rate,
+  }
+
   const [step, setStep] = useState(0)
   const [dir, setDir] = useState(1)
   const [format, setFormat] = useState('In-Person')
+
+  useEffect(() => {
+    if (!trainerId) router.push('/search')
+  }, [trainerId, router])
 
   const goTo = (next) => {
     setDir(next > step ? 1 : -1)
     setStep(next)
   }
+
+  if (!trainerId) return null
 
   return (
     <div style={{
@@ -585,7 +590,7 @@ export default function BookingPage() {
             <span style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '20px', letterSpacing: '.02em', color: T.ink }}>FARM</span>
           </Link>
           {step < 2 && (
-            <Link href="/trainer/marcus-rivera" style={{
+            <Link href={`/trainer/${trainerId}`} style={{
               textDecoration: 'none', color: T.ink2, fontWeight: 600, fontSize: '14px',
               padding: '9px 16px', border: `1.5px solid ${T.line}`, borderRadius: '999px',
             }}>
@@ -612,6 +617,7 @@ export default function BookingPage() {
             >
               {step === 0 && (
                 <ConfirmScreen
+                  trainer={trainer}
                   format={format}
                   setFormat={setFormat}
                   onNext={() => goTo(1)}
@@ -619,13 +625,14 @@ export default function BookingPage() {
               )}
               {step === 1 && (
                 <PaymentScreen
+                  trainer={trainer}
                   format={format}
                   onNext={() => goTo(2)}
                   onBack={() => goTo(0)}
                 />
               )}
               {step === 2 && (
-                <ConfirmationScreen format={format} />
+                <ConfirmationScreen trainer={trainer} format={format} />
               )}
             </motion.div>
           </AnimatePresence>
@@ -647,5 +654,15 @@ export default function BookingPage() {
         }
       `}</style>
     </div>
+  )
+}
+
+// ── Page export — Suspense required by Next.js for useSearchParams ────────────
+
+export default function BookingPage() {
+  return (
+    <Suspense>
+      <BookingPageInner />
+    </Suspense>
   )
 }
