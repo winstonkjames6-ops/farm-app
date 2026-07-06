@@ -1,90 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-
-// ── Data ──────────────────────────────────────────────────────────────────────
-
-const TRAINERS = [
-  {
-    id: 1, slug: 'marcus-rivera', name: 'Marcus Rivera', sport: 'Soccer',
-    specialty: 'Youth Development & Shooting Technique', location: 'Austin, TX',
-    rate: 65, rating: 4.9, reviewCount: 84, formats: ['In-Person', 'Remote Video'],
-    credentials: 'USSF B License · 6 yrs coaching', initials: 'MR',
-    positions: ['Midfielder', 'Striker'],
-    ageGroups: ['U8', 'U10', 'U12', 'U14', 'U16'],
-    availability: 'This Weekend',
-  },
-  {
-    id: 2, slug: 'priya-nair', name: 'Priya Nair', sport: 'Tennis',
-    specialty: 'Fundamentals & Match Strategy', location: 'Austin, TX',
-    rate: 75, rating: 4.8, reviewCount: 61, formats: ['In-Person'],
-    credentials: 'USPTA Certified · Former D1 player', initials: 'PN',
-    positions: ['All Positions'],
-    ageGroups: ['U12', 'U14', 'U16', 'U18', 'Adult'],
-    availability: 'This Week',
-  },
-  {
-    id: 3, slug: 'jamal-brooks', name: 'Jamal Brooks', sport: 'Basketball',
-    specialty: 'Ball Handling & Guard Skills', location: 'Austin, TX',
-    rate: 55, rating: 5.0, reviewCount: 37, formats: ['In-Person', 'Remote Video'],
-    credentials: 'AAU Coach · Former college starter', initials: 'JB',
-    positions: ['Point Guard', 'Shooting Guard'],
-    ageGroups: ['U10', 'U12', 'U14', 'U16'],
-    availability: 'This Weekend',
-  },
-  {
-    id: 4, slug: 'elena-kowalski', name: 'Elena Kowalski', sport: 'Volleyball',
-    specialty: 'Serving & Defensive Positioning', location: 'Austin, TX',
-    rate: 60, rating: 4.7, reviewCount: 29, formats: ['In-Person'],
-    credentials: 'AVP Certified · Club coach 4 yrs', initials: 'EK',
-    positions: ['Libero', 'Outside Hitter'],
-    ageGroups: ['U12', 'U14', 'U16', 'U18'],
-    availability: 'Next Week',
-  },
-  {
-    id: 5, slug: 'devin-hayes', name: 'Devin Hayes', sport: 'Lacrosse',
-    specialty: 'Attack & Ground Balls', location: 'Austin, TX',
-    rate: 70, rating: 4.9, reviewCount: 52, formats: ['In-Person', 'Remote Video'],
-    credentials: 'USA Lacrosse Level 2 · 5 yrs exp', initials: 'DH',
-    positions: ['Attack', 'Midfield'],
-    ageGroups: ['U10', 'U12', 'U14', 'U16', 'U18'],
-    availability: 'This Weekend',
-  },
-  {
-    id: 6, slug: 'sofia-morales', name: 'Sofia Morales', sport: 'Soccer',
-    specialty: 'Goalkeeping & Distribution', location: 'Austin, TX',
-    rate: 58, rating: 4.6, reviewCount: 18, formats: ['Remote Video'],
-    credentials: 'USSF GK Specialist · 3 yrs coaching', initials: 'SM',
-    positions: ['Goalkeeper'],
-    ageGroups: ['U8', 'U10', 'U12', 'U14'],
-    availability: 'This Week',
-  },
-  {
-    id: 7, slug: 'ryan-oconnell', name: "Ryan O'Connell", sport: 'Baseball',
-    specialty: 'Pitching Mechanics & Hitting', location: 'Austin, TX',
-    rate: 80, rating: 4.8, reviewCount: 45, formats: ['In-Person'],
-    credentials: 'ABCA Member · Former minor leaguer', initials: 'RO',
-    positions: ['Pitcher', 'Outfielder'],
-    ageGroups: ['U12', 'U14', 'U16', 'U18', 'Adult'],
-    availability: 'Next Week',
-  },
-  {
-    id: 8, slug: 'amara-diallo', name: 'Amara Diallo', sport: 'Basketball',
-    specialty: 'Post Play & Rebounding', location: 'Austin, TX',
-    rate: 50, rating: 4.7, reviewCount: 22, formats: ['In-Person', 'Remote Video'],
-    credentials: 'IBCA Certified · Youth league head coach', initials: 'AD',
-    positions: ['Forward', 'Center'],
-    ageGroups: ['U8', 'U10', 'U12', 'U14'],
-    availability: 'This Week',
-  },
-]
+import { createClient } from '@/utils/supabase/client'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const SPORTS = ['Soccer', 'Basketball', 'Tennis', 'Volleyball', 'Lacrosse', 'Baseball']
-const FORMATS = ['In-Person', 'Remote Video']
 const RATE_OPTIONS = [
   { label: 'Any price', max: Infinity },
   { label: 'Up to $40/hr', max: 40 },
@@ -93,20 +16,19 @@ const RATE_OPTIONS = [
   { label: '$100+/hr', max: Infinity, min: 100 },
 ]
 const SORT_OPTIONS = [
-  { value: 'reviewed', label: 'Most reviewed' },
   { value: 'price_asc', label: 'Lowest price' },
-  { value: 'rated', label: 'Highest rated' },
+  { value: 'price_desc', label: 'Highest price' },
+  { value: 'name', label: 'Name (A–Z)' },
 ]
-const POSITIONS_BY_SPORT = {
-  Soccer: ['Goalkeeper', 'Defender', 'Midfielder', 'Striker'],
-  Basketball: ['Point Guard', 'Shooting Guard', 'Forward', 'Center'],
-  Tennis: ['All Positions'],
-  Volleyball: ['Setter', 'Libero', 'Outside Hitter', 'Middle Blocker'],
-  Lacrosse: ['Attack', 'Midfield', 'Defense', 'Goalkeeper'],
-  Baseball: ['Pitcher', 'Catcher', 'Infielder', 'Outfielder'],
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function getInitials(name) {
+  const words = (name || '').trim().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return '?'
+  if (words.length === 1) return words[0][0].toUpperCase()
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase()
 }
-const AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Adult']
-const AVAILABILITY_OPTIONS = ['This Weekend', 'This Week', 'Next Week']
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -132,22 +54,6 @@ const labelStyle = {
 
 const divider = { height: '1px', background: 'rgba(0,0,0,0.08)' }
 
-// ── StarRating ────────────────────────────────────────────────────────────────
-
-function StarRating({ rating }) {
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-      {[1, 2, 3, 4, 5].map((s) => (
-        <svg key={s} width="12" height="12" viewBox="0 0 24 24"
-          fill={s <= Math.round(rating) ? '#00BCC8' : 'none'}
-          stroke="#00BCC8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1" />
-        </svg>
-      ))}
-    </span>
-  )
-}
-
 // ── TrainerCard ───────────────────────────────────────────────────────────────
 
 function TrainerCard({ trainer, index }) {
@@ -158,7 +64,7 @@ function TrainerCard({ trainer, index }) {
       transition={{ duration: 0.38, ease: [0.2, 0.7, 0.2, 1], delay: index * 0.07 }}
       style={{ height: '100%' }}
     >
-      <Link href={`/trainer/${trainer.slug}`} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+      <Link href={`/trainer/${trainer.id}`} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
         <div
           className="glass"
           style={{
@@ -189,12 +95,14 @@ function TrainerCard({ trainer, index }) {
                 <span style={{ fontFamily: barlow, fontWeight: 700, fontSize: '18px', color: '#1A1A1A', lineHeight: 1.2 }}>
                   {trainer.name}
                 </span>
-                <span style={{
-                  fontFamily: barlow, fontSize: '11px', fontWeight: 700,
-                  letterSpacing: '.1em', textTransform: 'uppercase',
-                  background: 'rgba(0,188,200,0.10)', color: '#00BCC8',
-                  border: '1px solid rgba(0,188,200,0.20)', padding: '2px 8px',
-                }}>{trainer.sport}</span>
+                {trainer.sport && (
+                  <span style={{
+                    fontFamily: barlow, fontSize: '11px', fontWeight: 700,
+                    letterSpacing: '.1em', textTransform: 'uppercase',
+                    background: 'rgba(0,188,200,0.10)', color: '#00BCC8',
+                    border: '1px solid rgba(0,188,200,0.20)', padding: '2px 8px',
+                  }}>{trainer.sport}</span>
+                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.40)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -210,37 +118,35 @@ function TrainerCard({ trainer, index }) {
             </div>
           </div>
 
-          {/* Rating */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <StarRating rating={trainer.rating} />
-            <span style={{ fontFamily: barlow, fontWeight: 700, fontSize: '14px', color: '#1A1A1A' }}>{trainer.rating.toFixed(1)}</span>
-            <span style={{ fontFamily: hanken, fontSize: '13px', color: '#9A9A9A' }}>({trainer.reviewCount} reviews)</span>
+          {/* New trainer badge */}
+          <div>
+            <span style={{
+              fontFamily: hanken, fontSize: '12px', fontWeight: 600,
+              padding: '4px 10px',
+              background: 'rgba(0,188,200,0.08)',
+              border: '1px solid rgba(0,188,200,0.20)',
+              color: '#00838C',
+            }}>New trainer</span>
           </div>
 
-          {/* Formats + availability */}
+          {/* Availability placeholder */}
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {trainer.formats.map((f) => (
-              <span key={f} style={{
-                fontFamily: hanken, fontSize: '12px', fontWeight: 600, padding: '4px 10px',
-                border: '1px solid rgba(0,0,0,0.10)', color: '#4A4A4A',
-              }}>{f}</span>
-            ))}
             <span style={{
               fontFamily: hanken, fontSize: '12px', fontWeight: 600, padding: '4px 10px',
-              background: 'rgba(0,188,200,0.10)',
-              border: '1px solid rgba(0,188,200,0.25)',
-              color: '#00838C',
-            }}>{trainer.availability}</span>
+              border: '1px solid rgba(0,0,0,0.10)', color: '#4A4A4A',
+            }}>Contact for availability</span>
           </div>
 
-          {/* Credentials */}
-          <p style={{
-            fontFamily: hanken, fontSize: '13px', color: '#9A9A9A',
-            margin: 0, lineHeight: 1.45,
-            paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.08)',
-          }}>
-            {trainer.credentials}
-          </p>
+          {/* Bio */}
+          {trainer.bio && (
+            <p style={{
+              fontFamily: hanken, fontSize: '13px', color: '#9A9A9A',
+              margin: 0, lineHeight: 1.45,
+              paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.08)',
+            }}>
+              {trainer.bio}
+            </p>
+          )}
 
           {/* CTA */}
           <div style={{ marginTop: 'auto' }}>
@@ -264,67 +170,67 @@ function TrainerCard({ trainer, index }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SearchPage() {
+  const [trainers, setTrainers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSports, setSelectedSports] = useState([])
-  const [selectedFormats, setSelectedFormats] = useState([])
   const [maxRateIdx, setMaxRateIdx] = useState(0)
-  const [sort, setSort] = useState('reviewed')
+  const [sort, setSort] = useState('price_asc')
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const [selectedPosition, setSelectedPosition] = useState('')
-  const [selectedAgeGroup, setSelectedAgeGroup] = useState('')
-  const [selectedAvailability, setSelectedAvailability] = useState('')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('trainers')
+      .select('profile_id, specialty, bio, rate, location, profiles(name)')
+      .then(({ data }) => {
+        if (data) {
+          setTrainers(data.map((row) => ({
+            id: row.profile_id,
+            name: row.profiles?.name ?? 'Unknown',
+            sport: row.specialty ?? '',
+            specialty: row.specialty ?? '',
+            location: row.location ?? '',
+            rate: row.rate ?? 0,
+            bio: row.bio ?? null,
+            initials: getInitials(row.profiles?.name ?? ''),
+          })))
+        }
+        setLoading(false)
+      })
+  }, [])
 
   const toggleSport = (s) => {
-    setSelectedSports((prev) => {
-      const next = prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-      if (next.length !== 1) setSelectedPosition('')
-      return next
-    })
+    setSelectedSports((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s])
   }
-  const toggleFormat = (f) => setSelectedFormats((prev) =>
-    prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]
-  )
+
   const clearFilters = () => {
     setSearchQuery('')
     setSelectedSports([])
-    setSelectedFormats([])
     setMaxRateIdx(0)
-    setSelectedPosition('')
-    setSelectedAgeGroup('')
-    setSelectedAvailability('')
   }
 
   const rateOpt = RATE_OPTIONS[maxRateIdx]
 
   const filtered = useMemo(() => {
-    let list = TRAINERS.filter((t) => {
+    let list = trainers.filter((t) => {
       if (searchQuery) {
         const q = searchQuery.toLowerCase()
         if (!t.name.toLowerCase().includes(q) && !t.specialty.toLowerCase().includes(q)) return false
       }
       if (selectedSports.length && !selectedSports.includes(t.sport)) return false
-      if (selectedFormats.length && !selectedFormats.some((f) => t.formats.includes(f))) return false
       if (rateOpt.min && t.rate < rateOpt.min) return false
       if (rateOpt.max !== Infinity && t.rate > rateOpt.max) return false
-      if (selectedPosition && !t.positions.includes(selectedPosition)) return false
-      if (selectedAgeGroup && !t.ageGroups.includes(selectedAgeGroup)) return false
-      if (selectedAvailability && t.availability !== selectedAvailability) return false
       return true
     })
-    if (sort === 'reviewed') list = [...list].sort((a, b) => b.reviewCount - a.reviewCount)
     if (sort === 'price_asc') list = [...list].sort((a, b) => a.rate - b.rate)
-    if (sort === 'rated') list = [...list].sort((a, b) => b.rating - a.rating)
+    if (sort === 'price_desc') list = [...list].sort((a, b) => b.rate - a.rate)
+    if (sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name))
     return list
-  }, [searchQuery, selectedSports, selectedFormats, maxRateIdx, sort, rateOpt, selectedPosition, selectedAgeGroup, selectedAvailability])
+  }, [trainers, searchQuery, selectedSports, maxRateIdx, sort, rateOpt])
 
-  const hasFilters = !!searchQuery || selectedSports.length > 0 || selectedFormats.length > 0 || maxRateIdx !== 0
-    || !!selectedPosition || !!selectedAgeGroup || !!selectedAvailability
-
-  const activeFilterCount = (searchQuery ? 1 : 0) + selectedSports.length + selectedFormats.length
-    + (maxRateIdx > 0 ? 1 : 0) + (selectedPosition ? 1 : 0)
-    + (selectedAgeGroup ? 1 : 0) + (selectedAvailability ? 1 : 0)
-
-  const positionOptions = selectedSports.length === 1 ? (POSITIONS_BY_SPORT[selectedSports[0]] || []) : []
+  const hasFilters = !!searchQuery || selectedSports.length > 0 || maxRateIdx !== 0
+  const activeFilterCount = (searchQuery ? 1 : 0) + selectedSports.length + (maxRateIdx > 0 ? 1 : 0)
 
   const sidebar = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -351,69 +257,11 @@ export default function SearchPage() {
 
       <div style={divider} />
 
-      {/* Position — only when exactly one sport is selected */}
-      {selectedSports.length === 1 && (
-        <>
-          <div>
-            <div style={labelStyle}>Position</div>
-            <select value={selectedPosition} onChange={(e) => setSelectedPosition(e.target.value)} style={selectStyle}>
-              <option value="">Any position</option>
-              {positionOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-          <div style={divider} />
-        </>
-      )}
-
-      {/* Session Format */}
-      <div>
-        <div style={labelStyle}>Session Format</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {FORMATS.map((f) => (
-            <label key={f} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-              <input
-                type="checkbox" checked={selectedFormats.includes(f)} onChange={() => toggleFormat(f)}
-                style={{ accentColor: '#00BCC8', width: '15px', height: '15px', cursor: 'pointer' }}
-              />
-              <span style={{
-                fontFamily: hanken, fontSize: '14px',
-                color: selectedFormats.includes(f) ? '#1A1A1A' : '#4A4A4A',
-                fontWeight: selectedFormats.includes(f) ? 600 : 400,
-              }}>{f}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div style={divider} />
-
       {/* Max Rate */}
       <div>
         <div style={labelStyle}>Max Rate</div>
         <select value={maxRateIdx} onChange={(e) => setMaxRateIdx(Number(e.target.value))} style={selectStyle}>
           {RATE_OPTIONS.map((opt, i) => <option key={i} value={i}>{opt.label}</option>)}
-        </select>
-      </div>
-
-      <div style={divider} />
-
-      {/* Age Group */}
-      <div>
-        <div style={labelStyle}>Age Group</div>
-        <select value={selectedAgeGroup} onChange={(e) => setSelectedAgeGroup(e.target.value)} style={selectStyle}>
-          <option value="">Any age</option>
-          {AGE_GROUPS.map((a) => <option key={a} value={a}>{a}</option>)}
-        </select>
-      </div>
-
-      <div style={divider} />
-
-      {/* Availability */}
-      <div>
-        <div style={labelStyle}>Availability</div>
-        <select value={selectedAvailability} onChange={(e) => setSelectedAvailability(e.target.value)} style={selectStyle}>
-          <option value="">Any time</option>
-          {AVAILABILITY_OPTIONS.map((a) => <option key={a} value={a}>{a}</option>)}
         </select>
       </div>
 
@@ -561,9 +409,13 @@ export default function SearchPage() {
             gap: '16px', marginBottom: '20px', flexWrap: 'wrap',
           }}>
             <span style={{ fontFamily: hanken, fontSize: '14px', color: '#9A9A9A' }}>
-              <strong style={{ fontFamily: barlow, fontWeight: 700, fontSize: '16px', color: '#1A1A1A', letterSpacing: '.02em' }}>
-                {filtered.length}
-              </strong>{' '}trainer{filtered.length !== 1 ? 's' : ''} near you
+              {loading ? 'Loading trainers…' : (
+                <>
+                  <strong style={{ fontFamily: barlow, fontWeight: 700, fontSize: '16px', color: '#1A1A1A', letterSpacing: '.02em' }}>
+                    {filtered.length}
+                  </strong>{' '}trainer{filtered.length !== 1 ? 's' : ''} near you
+                </>
+              )}
             </span>
             <select
               value={sort} onChange={(e) => setSort(e.target.value)}
@@ -573,7 +425,13 @@ export default function SearchPage() {
             </select>
           </div>
 
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+              <p style={{ fontFamily: hanken, fontSize: '14px', color: '#9A9A9A', margin: 0 }}>
+                Loading trainers&hellip;
+              </p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div style={{
               textAlign: 'center', padding: '80px 24px',
               border: '1px solid rgba(0,0,0,0.08)',
