@@ -19,6 +19,7 @@ type Session = {
   time: string
   location: string
   isToday: boolean
+  status: string
 }
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
@@ -223,7 +224,24 @@ function WeeklyStrip({ activeDay, onDaySelect, daysWithSessions }: { activeDay: 
 
 // ── Session list card ──────────────────────────────────────────────────────────
 
-function SessionCard({ session, index }: { session: Session; index: number }) {
+function SessionCard({ session, index, onMarkComplete }: { session: Session; index: number; onMarkComplete: (id: string) => Promise<void> }) {
+  const [completing, setCompleting] = useState(false)
+  const [completeError, setCompleteError] = useState<string | null>(null)
+
+  const isCompleted = session.status === 'completed'
+
+  async function handleComplete() {
+    setCompleting(true)
+    setCompleteError(null)
+    try {
+      await onMarkComplete(session.id)
+    } catch {
+      setCompleteError('Failed to save. Try again.')
+    } finally {
+      setCompleting(false)
+    }
+  }
+
   const badgeStyles: Record<string, { bg: string; color: string; border: string }> = {
     'IN-PERSON': { bg: 'rgba(0,188,200,0.1)', color: T.cyan, border: '1px solid rgba(0,188,200,0.2)' },
     REMOTE:      { bg: 'rgba(99,102,241,0.1)', color: '#6366F1', border: '1px solid rgba(99,102,241,0.2)' },
@@ -258,14 +276,25 @@ function SessionCard({ session, index }: { session: Session; index: number }) {
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: '8px', borderTop: `1px solid ${T.border}`, paddingTop: '12px' }}>
-        <button style={{ flex: 1, height: '44px', background: T.cyan, border: 'none', color: '#FFFFFF', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-          <IconCheckCircle />
-          MARK COMPLETE
-        </button>
-        <button style={{ flex: 1, height: '44px', background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#374151', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', borderRadius: '8px', cursor: 'pointer' }}>
-          MESSAGE PARENT
-        </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: `1px solid ${T.border}`, paddingTop: '12px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={handleComplete}
+            disabled={completing || isCompleted}
+            style={{ flex: 1, height: '44px', background: isCompleted ? '#E5E7EB' : T.cyan, border: 'none', color: isCompleted ? T.ink3 : '#FFFFFF', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', borderRadius: '8px', cursor: (completing || isCompleted) ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: completing ? 0.7 : 1 }}
+          >
+            <IconCheckCircle />
+            {isCompleted ? 'COMPLETED' : completing ? 'SAVING...' : 'MARK COMPLETE'}
+          </button>
+          <button style={{ flex: 1, height: '44px', background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#374151', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', borderRadius: '8px', cursor: 'pointer' }}>
+            MESSAGE PARENT
+          </button>
+        </div>
+        {completeError && (
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: '#EF4444' }}>
+            {completeError}
+          </div>
+        )}
       </div>
     </motion.div>
   )
@@ -333,12 +362,14 @@ function HomeView({
   nextSession,
   filteredSessions,
   daysWithSessions,
+  onMarkComplete,
 }: {
   activeDay: string
   onDaySelect: (d: string) => void
   nextSession: Session | null
   filteredSessions: Session[]
   daysWithSessions: Set<string>
+  onMarkComplete: (id: string) => Promise<void>
 }) {
   return (
     <motion.div
@@ -377,7 +408,7 @@ function HomeView({
               </div>
             ) : (
               filteredSessions.map((session, i) => (
-                <SessionCard key={session.id} session={session} index={i} />
+                <SessionCard key={session.id} session={session} index={i} onMarkComplete={onMarkComplete} />
               ))
             )}
           </div>
@@ -414,7 +445,7 @@ export default function TrainerHomePage() {
 
       const { data: bookings } = await supabase
         .from('bookings')
-        .select('id, format, session_time, athletes!athlete_id(name, sport), profiles!parent_id(name)')
+        .select('id, format, session_time, status, athletes!athlete_id(name, sport), profiles!parent_id(name)')
         .eq('trainer_id', trainerRow.id)
       if (!bookings) return
 
@@ -437,6 +468,7 @@ export default function TrainerHomePage() {
           time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
           location: type === 'REMOTE' ? 'Video Call' : 'In Person',
           isToday: dt.toDateString() === today.toDateString(),
+          status: b.status ?? 'pending',
         }
       })
 
@@ -444,6 +476,16 @@ export default function TrainerHomePage() {
     }
     fetchSessions()
   }, [])
+
+  async function handleMarkComplete(sessionId: string) {
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status: 'completed' })
+      .eq('id', sessionId)
+    if (error) throw error
+    setSessions((prev) => prev.map((s) => s.id === sessionId ? { ...s, status: 'completed' } : s))
+  }
 
   const daysWithSessions = new Set(sessions.map((s) => s.day))
   const nextSession = sessions.find((s) => s.isToday) ?? null
@@ -456,6 +498,7 @@ export default function TrainerHomePage() {
       nextSession={nextSession}
       filteredSessions={filteredSessions}
       daysWithSessions={daysWithSessions}
+      onMarkComplete={handleMarkComplete}
     />
   )
 }

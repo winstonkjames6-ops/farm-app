@@ -8,7 +8,7 @@ import { createClient } from '@/utils/supabase/client'
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 type SessionType = 'IN-PERSON' | 'REMOTE'
-type SessionStatus = 'confirmed' | 'pending'
+type SessionStatus = 'confirmed' | 'pending' | 'declined'
 
 type Session = {
   id: string
@@ -79,7 +79,7 @@ function ScheduleView() {
       const JS_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
       const today = new Date()
 
-      const mapped: Session[] = (bookings as any[]).map((b) => {
+      const mapped: Session[] = (bookings as any[]).filter((b) => b.status !== 'declined' && b.status !== 'completed').map((b) => {
         const dt = new Date(b.session_time)
         const type: SessionType = b.format === 'Remote Video' ? 'REMOTE' : 'IN-PERSON'
         const parentName: string = b.profiles?.name ?? 'Unknown'
@@ -95,7 +95,7 @@ function ScheduleView() {
           time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
           location: type === 'REMOTE' ? 'Video Call' : 'In Person',
           isToday: dt.toDateString() === today.toDateString(),
-          status: (b.status === 'confirmed' ? 'confirmed' : 'pending') as SessionStatus,
+          status: (b.status === 'confirmed' ? 'confirmed' : b.status === 'declined' ? 'declined' : 'pending') as SessionStatus,
         }
       })
 
@@ -104,11 +104,33 @@ function ScheduleView() {
     fetchSessions()
   }, [])
 
-  function confirmSession(id: string) {
+  const [actionErrors, setActionErrors] = useState<Record<string, string>>({})
+
+  async function confirmSession(id: string) {
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status: 'confirmed' })
+      .eq('id', id)
+    if (error) {
+      setActionErrors((prev) => ({ ...prev, [id]: 'Failed to confirm. Try again.' }))
+      return
+    }
+    setActionErrors((prev) => { const next = { ...prev }; delete next[id]; return next })
     setSessions((prev) => prev.map((s) => s.id === id ? { ...s, status: 'confirmed' } : s))
   }
 
-  function declineSession(id: string) {
+  async function declineSession(id: string) {
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status: 'declined' })
+      .eq('id', id)
+    if (error) {
+      setActionErrors((prev) => ({ ...prev, [id]: 'Failed to decline. Try again.' }))
+      return
+    }
+    setActionErrors((prev) => { const next = { ...prev }; delete next[id]; return next })
     setSessions((prev) => prev.filter((s) => s.id !== id))
   }
 
@@ -200,6 +222,11 @@ function ScheduleView() {
                                   Decline
                                 </button>
                               </div>
+                              {actionErrors[session.id] && (
+                                <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
+                                  {actionErrors[session.id]}
+                                </span>
+                              )}
                               <Link
                                 href="/dashboard/trainer/messages"
                                 style={{ color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', textDecoration: 'none' }}
