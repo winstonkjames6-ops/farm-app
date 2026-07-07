@@ -9,12 +9,6 @@ import { TourProvider, useTour } from './tour-context'
 import TourOverlay from './tour-overlay'
 import { createClient } from '@/utils/supabase/client'
 
-// ── Mock data ──────────────────────────────────────────────────────────────────
-
-const MOCK_ATHLETES = [
-  { name: 'Liam Chen', age: 13, sport: 'soccer' },
-]
-
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
 const T = {
@@ -546,6 +540,7 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobile, setIsMobile] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [parentName, setParentName] = useState('')
+  const [athletes, setAthletes] = useState<Array<{ name: string; sport: string }>>([])
   const pathname = usePathname()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
 
@@ -567,6 +562,13 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
         .single()
         .then(({ data }) => {
           if (data?.name) setParentName(data.name)
+        })
+      supabase
+        .from('athletes')
+        .select('name, sport')
+        .eq('parent_id', user.id)
+        .then(({ data }) => {
+          if (data) setAthletes(data)
         })
     })
   }, [])

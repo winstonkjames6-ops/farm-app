@@ -5,46 +5,40 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 
-// ── Mock data ────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-const BOOKINGS = [
-  {
-    id: 1,
-    trainerName: 'Marcus Rivera',
-    trainerInitials: 'MR',
-    sport: 'Soccer',
-    date: 'Monday, Jun 23',
-    time: '9:00 AM',
-    format: 'In-Person',
-    status: 'upcoming',
-    totalPaid: 65,
-    rating: null,
-  },
-  {
-    id: 2,
-    trainerName: 'Priya Nair',
-    trainerInitials: 'PN',
-    sport: 'Tennis',
-    date: 'Saturday, Jun 14',
-    time: '11:00 AM',
-    format: 'In-Person',
-    status: 'completed',
-    totalPaid: 75,
-    rating: 5,
-  },
-  {
-    id: 3,
-    trainerName: 'Jamal Brooks',
-    trainerInitials: 'JB',
-    sport: 'Basketball',
-    date: 'Wednesday, Jun 4',
-    time: '4:00 PM',
-    format: 'Remote Video',
-    status: 'completed',
-    totalPaid: 55,
-    rating: 4,
-  },
-]
+function computeInitials(name) {
+  if (!name) return ''
+  const words = name.trim().split(/\s+/)
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase()
+}
+
+const FORMAT_MAP = {
+  in_person: 'In-Person',
+  'in-person': 'In-Person',
+  online: 'Remote Video',
+  remote: 'Remote Video',
+  remote_video: 'Remote Video',
+  video: 'Remote Video',
+}
+
+function formatBookingDate(sessionTime) {
+  const dt = new Date(sessionTime)
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return `${dayNames[dt.getDay()]}, ${monthNames[dt.getMonth()]} ${dt.getDate()}`
+}
+
+function formatBookingTime(sessionTime) {
+  const dt = new Date(sessionTime)
+  let hours = dt.getHours()
+  const minutes = dt.getMinutes()
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  hours = hours % 12 || 12
+  const minuteStr = minutes === 0 ? '' : `:${String(minutes).padStart(2, '0')}`
+  return `${hours}${minuteStr} ${ampm}`
+}
 
 // ── Design tokens ────────────────────────────────────────────────────────────
 
@@ -309,11 +303,13 @@ function SectionHeading({ children }) {
 export default function DashboardPage() {
   const [showReviewNudge, setShowReviewNudge] = useState(true)
   const [parentName, setParentName] = useState('')
+  const [bookings, setBookings] = useState([])
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
+
       supabase
         .from('profiles')
         .select('name')
@@ -322,14 +318,42 @@ export default function DashboardPage() {
         .then(({ data }) => {
           if (data?.name) setParentName(data.name)
         })
+
+      supabase
+        .from('bookings')
+        .select('id, format, session_time, status, rate, trainers!trainer_id(specialty, profiles(name))')
+        .eq('parent_id', user.id)
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('bookings fetch error:', error)
+            return
+          }
+          if (!data) return
+          const mapped = data.map((b) => {
+            const trainerName = b.trainers?.profiles?.name ?? ''
+            return {
+              id: b.id,
+              trainerName,
+              trainerInitials: computeInitials(trainerName),
+              sport: b.trainers?.specialty ?? '',
+              date: formatBookingDate(b.session_time),
+              time: formatBookingTime(b.session_time),
+              format: FORMAT_MAP[b.format] ?? b.format,
+              status: b.status === 'completed' ? 'completed' : 'upcoming',
+              totalPaid: b.rate,
+              rating: null,
+            }
+          })
+          setBookings(mapped)
+        })
     })
   }, [])
 
-  const upcoming = BOOKINGS.filter((b) => b.status === 'upcoming')
-  const past = BOOKINGS.filter((b) => b.status === 'completed')
-  const isEmpty = BOOKINGS.length === 0
+  const upcoming = bookings.filter((b) => b.status === 'upcoming')
+  const past = bookings.filter((b) => b.status === 'completed')
+  const isEmpty = bookings.length === 0
 
-  const sportsSet = new Set(BOOKINGS.map((b) => b.sport))
+  const sportsSet = new Set(bookings.map((b) => b.sport))
 
   return (
     <div
@@ -426,7 +450,7 @@ export default function DashboardPage() {
           {/* Stat pills */}
           <div className="flex flex-wrap gap-3">
             {[
-              { label: `${BOOKINGS.length} sessions booked` },
+              { label: `${bookings.length} sessions booked` },
               { label: `${sportsSet.size} sport${sportsSet.size !== 1 ? 's' : ''}` },
             ].map(({ label }) => (
               <span

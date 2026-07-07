@@ -6,13 +6,15 @@ import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { TrainerSportProvider, useTrainerSport } from './sport-context'
+import { createClient } from '@/utils/supabase/client'
 
-// ── Mock data ──────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
-const MOCK_TRAINER = {
-  name: 'Marcus Torres',
-  initials: 'MT',
-  sport: 'soccer',
+function computeInitials(name: string): string {
+  if (!name) return ''
+  const words = name.trim().split(/\s+/)
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase()
 }
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
@@ -30,8 +32,6 @@ const T = {
   ink2: '#6B7280',
   ink3: '#9CA3AF',
 }
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -134,10 +134,14 @@ function Sidebar({
   active,
   sidebarOpen,
   onToggle,
+  trainerName,
+  trainerInitials,
 }: {
   active: string
   sidebarOpen: boolean
   onToggle: () => void
+  trainerName: string
+  trainerInitials: string
 }) {
   const todaySessions = 2
   const weeklyDone = 7
@@ -256,11 +260,11 @@ function Sidebar({
         {/* Trainer info */}
         <div style={{ padding: '16px 12px 24px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: sidebarOpen ? 'flex-start' : 'center', flexShrink: 0 }}>
           <div style={{ width: 40, height: 40, borderRadius: '999px', background: T.cyanLight, border: `2px solid ${T.cyanBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', color: T.cyan, flexShrink: 0 }}>
-            {MOCK_TRAINER.initials}
+            {trainerInitials}
           </div>
           {sidebarOpen && (
             <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: T.ink, lineHeight: 1.3, whiteSpace: 'nowrap' }}>{MOCK_TRAINER.name}</div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: T.ink, lineHeight: 1.3, whiteSpace: 'nowrap' }}>{trainerName}</div>
               <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, whiteSpace: 'nowrap' }}>Trainer</div>
             </div>
           )}
@@ -312,7 +316,7 @@ function DesktopHeader({ sidebarOpen }: { sidebarOpen: boolean }) {
 
 // ── Mobile header with dropdown ────────────────────────────────────────────────
 
-function MobileHeader({ activeNav }: { activeNav: string }) {
+function MobileHeader({ activeNav, trainerInitials }: { activeNav: string; trainerInitials: string }) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -320,7 +324,7 @@ function MobileHeader({ activeNav }: { activeNav: string }) {
       <header style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '52px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', zIndex: 50 }}>
         <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: T.cyan, letterSpacing: '0.12em', textTransform: 'uppercase' }}>FARM</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '13px', color: '#FFFFFF', letterSpacing: '0.04em' }}>MT</div>
+          <div style={{ width: '36px', height: '36px', borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '13px', color: '#FFFFFF', letterSpacing: '0.04em' }}>{trainerInitials}</div>
           <button onClick={() => setIsOpen((o) => !o)} style={{ background: 'transparent', border: 'none', color: '#374151', cursor: 'pointer', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isOpen ? <IconX /> : <IconMenu />}
           </button>
@@ -519,6 +523,8 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
   const { primarySport } = useTrainerSport()
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [trainerName, setTrainerName] = useState('')
+  const [trainerInitials, setTrainerInitials] = useState('')
   const pathname = usePathname()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
 
@@ -527,6 +533,24 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.name) {
+            setTrainerName(data.name)
+            setTrainerInitials(computeInitials(data.name))
+          }
+        })
+    })
   }, [])
 
   const getActiveNav = () => {
@@ -558,13 +582,15 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
 
       {/* Nav */}
       {isMobile ? (
-        <MobileHeader activeNav={activeNav} />
+        <MobileHeader activeNav={activeNav} trainerInitials={trainerInitials} />
       ) : (
         <>
           <Sidebar
             active={activeNav}
             sidebarOpen={sidebarOpen}
             onToggle={() => setSidebarOpen((o) => !o)}
+            trainerName={trainerName}
+            trainerInitials={trainerInitials}
           />
           <DesktopHeader sidebarOpen={sidebarOpen} />
         </>
