@@ -32,24 +32,6 @@ type PastSession = {
   sport: string
   time: string
   format: string
-  rating: number
-}
-
-// ── Stars ──────────────────────────────────────────────────────────────────────
-
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span style={{ display: 'inline-flex', gap: '2px', alignItems: 'center', flexShrink: 0 }}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <svg key={i} width="12" height="12" viewBox="0 0 24 24">
-          <polygon
-            points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1"
-            fill={i <= rating ? T.cyan : 'rgba(0,0,0,0.10)'}
-          />
-        </svg>
-      ))}
-    </span>
-  )
 }
 
 // ── Sport badge ────────────────────────────────────────────────────────────────
@@ -113,7 +95,7 @@ export default function SessionsPage() {
 
       const { data: bookings, error: bookingErr } = await supabase
         .from('bookings')
-        .select('id, format, session_time, status, rating, trainers!trainer_id(profiles(name))')
+        .select('id, format, session_time, status, trainers!trainer_id(profiles(name))')
         .eq('athlete_id', athleteId)
         .order('session_time', { ascending: false })
 
@@ -156,7 +138,6 @@ export default function SessionsPage() {
           sport,
           time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
           format: b.format === 'Remote Video' ? 'Remote' : (b.format ?? 'In-Person'),
-          rating: b.rating ?? 0,
         }
       }))
     }
@@ -293,10 +274,6 @@ export default function SessionsPage() {
                   <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3, marginTop: '2px' }}>{s.format}</div>
                 </div>
 
-                {/* Star rating */}
-                <div style={{ flexShrink: 0 }}>
-                  <Stars rating={s.rating} />
-                </div>
               </div>
             ))
           )}

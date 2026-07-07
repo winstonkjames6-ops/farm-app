@@ -31,7 +31,6 @@ type RecentSession = {
   dateLabel: string
   trainerName: string
   sport: string
-  rating: number
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -57,23 +56,6 @@ const IconCalendar = ({ size = 14 }: { size?: number }) => (
     <line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 )
-
-// ── Stars ──────────────────────────────────────────────────────────────────────
-
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span style={{ display: 'inline-flex', gap: '2px', alignItems: 'center' }}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <svg key={i} width="13" height="13" viewBox="0 0 24 24">
-          <polygon
-            points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1"
-            fill={i <= rating ? T.cyan : 'rgba(0,0,0,0.10)'}
-          />
-        </svg>
-      ))}
-    </span>
-  )
-}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -110,7 +92,7 @@ export default function AthletePage() {
 
       const { data: bookings, error: bookingErr } = await supabase
         .from('bookings')
-        .select('id, format, session_time, status, rating, trainers!trainer_id(profiles(name))')
+        .select('id, format, session_time, status, trainers!trainer_id(profiles(name))')
         .eq('athlete_id', athleteId)
         .order('session_time', { ascending: false })
 
@@ -157,7 +139,6 @@ export default function AthletePage() {
         dateLabel: new Date(b.session_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         trainerName: b.trainers?.profiles?.name ?? 'Trainer',
         sport: athleteSport,
-        rating: b.rating ?? 0,
       })))
     }
     load()
@@ -260,9 +241,9 @@ export default function AthletePage() {
         {/* Section 3 — Stats strip */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
           {[
-            { value: '12',   label: 'Sessions'    },
-            { value: '4.9★', label: 'Avg Rating'  },
-            { value: '3',    label: 'Weeks active' },
+            { value: '12', label: 'Sessions'    },
+            { value: '—',  label: 'Avg Rating'  },
+            { value: '3',  label: 'Weeks active' },
           ].map(({ value, label }) => (
             <div
               key={label}
@@ -309,7 +290,6 @@ export default function AthletePage() {
                     <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>{session.sport}</div>
                   </div>
                 </div>
-                <Stars rating={session.rating} />
               </div>
             ))
           )}
