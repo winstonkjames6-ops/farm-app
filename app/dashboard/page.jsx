@@ -221,9 +221,9 @@ function PastCard({ booking, index }) {
           </div>
         </div>
 
-        <div className="flex-none pt-1">
+        <div className="flex-none pt-1 flex flex-col items-end gap-2">
           <Link
-            href="/trainer/marcus-rivera"
+            href={booking.trainerProfileId ? `/trainer/${booking.trainerProfileId}` : '/dashboard/search'}
             className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-[border-color] duration-150"
             style={{
               border: `1.5px solid ${T.line}`,
@@ -235,6 +235,21 @@ function PastCard({ booking, index }) {
           >
             Book again
           </Link>
+          {booking.rating === null && (
+            <Link
+              href={`/review?bookingId=${booking.id}`}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-[border-color] duration-150"
+              style={{
+                border: `1.5px solid ${T.line}`,
+                color: T.ink2,
+                textDecoration: 'none',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.26)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
+            >
+              Leave a review
+            </Link>
+          )}
         </div>
       </div>
     </motion.div>
@@ -301,7 +316,6 @@ function SectionHeading({ children }) {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [showReviewNudge, setShowReviewNudge] = useState(true)
   const [parentName, setParentName] = useState('')
   const [bookings, setBookings] = useState([])
 
@@ -321,7 +335,7 @@ export default function DashboardPage() {
 
       supabase
         .from('bookings')
-        .select('id, format, session_time, status, rate, trainers!trainer_id(specialty, profiles(name))')
+        .select('id, format, session_time, status, rate, trainers!trainer_id(specialty, profile_id, profiles(name)), reviews(rating)')
         .eq('parent_id', user.id)
         .then(({ data, error }) => {
           if (error) {
@@ -335,13 +349,14 @@ export default function DashboardPage() {
               id: b.id,
               trainerName,
               trainerInitials: computeInitials(trainerName),
+              trainerProfileId: b.trainers?.profile_id ?? null,
               sport: b.trainers?.specialty ?? '',
               date: formatBookingDate(b.session_time),
               time: formatBookingTime(b.session_time),
               format: FORMAT_MAP[b.format] ?? b.format,
               status: b.status === 'completed' ? 'completed' : 'upcoming',
               totalPaid: b.rate,
-              rating: null,
+              rating: b.reviews?.[0]?.rating ?? null,
             }
           })
           setBookings(mapped)
@@ -362,54 +377,6 @@ export default function DashboardPage() {
     >
       {/* Main */}
       <div className="max-w-2xl mx-auto px-6 py-10 pb-24">
-
-        {/* Review nudge banner */}
-        {showReviewNudge && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: [0.2, 0.7, 0.2, 1] }}
-            style={{
-              background: '#F8F8F6',
-              border: '1px solid rgba(0,0,0,0.08)',
-              borderLeft: '3px solid #00BCC8',
-              padding: '16px 20px',
-              marginBottom: '24px',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              gap: '16px', flexWrap: 'wrap',
-            }}
-          >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{
-                fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: '14px',
-                color: '#1A1A1A', margin: '0 0 4px',
-              }}>
-                How was your session with Marcus Rivera on Tuesday?
-              </p>
-              <p style={{ fontSize: '13px', color: '#9A9A9A', margin: 0 }}>
-                Your feedback helps other parents find great trainers.
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0 }}>
-              <Link
-                href="/review"
-                style={{
-                  background: '#00BCC8', color: '#FFFFFF', textDecoration: 'none',
-                  padding: '9px 16px', fontSize: '12px', fontWeight: 800,
-                  fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: '.1em',
-                  textTransform: 'uppercase',
-                }}
-              >LEAVE REVIEW</Link>
-              <button
-                onClick={() => setShowReviewNudge(false)}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: '#9A9A9A', fontSize: '13px', fontWeight: 600, padding: '4px 8px',
-                }}
-              >Dismiss</button>
-            </div>
-          </motion.div>
-        )}
 
         {/* Header */}
         <motion.div
