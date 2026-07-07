@@ -62,8 +62,32 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const supabase = createClient()
+    let resolvedParentId: string | null = null
+    let resolvedTrainerProfileId: string | null = null
+
+    const channel = supabase
+      .channel('athlete-thread')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          const row = payload.new as Message & { recipient_id: string }
+          if (!resolvedParentId || !resolvedTrainerProfileId) return
+          const match =
+            (row.sender_id === resolvedParentId && row.recipient_id === resolvedTrainerProfileId) ||
+            (row.sender_id === resolvedTrainerProfileId && row.recipient_id === resolvedParentId)
+          if (match) {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === row.id)) return prev
+              return [...prev, row]
+            })
+          }
+        }
+      )
+      .subscribe()
+
     async function load() {
-      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
 
@@ -78,6 +102,7 @@ export default function MessagesPage() {
 
       const row = athlete as any
       const athleteParentId: string | null = row.parent_id ?? null
+      resolvedParentId = athleteParentId
       setParentId(athleteParentId)
 
       // Most recent booking's trainer (same pattern as profile page)
@@ -94,6 +119,7 @@ export default function MessagesPage() {
       const trainerProfileId: string | null = booking.trainers?.profile_id ?? null
       const trainerNameVal: string = booking.trainers?.profiles?.name ?? 'Trainer'
 
+      resolvedTrainerProfileId = trainerProfileId
       setTrainerName(trainerNameVal)
       setHasTrainer(true)
 
@@ -112,7 +138,12 @@ export default function MessagesPage() {
       if (msgs) setMessages(msgs as Message[])
       setLoading(false)
     }
+
     load()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const trainerInitials = trainerName ? getInitials(trainerName) : '?'
