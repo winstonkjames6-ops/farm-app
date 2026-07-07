@@ -356,7 +356,7 @@ export default function DashboardPage() {
               format: FORMAT_MAP[b.format] ?? b.format,
               status: b.status === 'completed' ? 'completed' : 'upcoming',
               totalPaid: b.rate,
-              rating: b.reviews?.[0]?.rating ?? null,
+              rating: (Array.isArray(b.reviews) ? b.reviews[0]?.rating : b.reviews?.rating) ?? null,
             }
           })
           setBookings(mapped)
