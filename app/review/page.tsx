@@ -223,10 +223,13 @@ function ReviewPageInner() {
                 fontWeight: 700,
                 fontSize: '12px',
                 letterSpacing: '0.1em',
-                color: T.ink3,
+                color: T.ink2,
                 textDecoration: 'none',
                 textTransform: 'uppercase',
                 marginBottom: '32px',
+                background: 'rgba(255,255,255,0.85)',
+                padding: '6px 12px',
+                borderRadius: '999px',
               }}
             >
               ← Dashboard
@@ -292,10 +295,13 @@ function ReviewPageInner() {
                 fontWeight: 700,
                 fontSize: '12px',
                 letterSpacing: '0.1em',
-                color: T.ink3,
+                color: T.ink2,
                 textDecoration: 'none',
                 textTransform: 'uppercase',
                 marginBottom: '32px',
+                background: 'rgba(255,255,255,0.85)',
+                padding: '6px 12px',
+                borderRadius: '999px',
               }}
             >
               ← Dashboard
@@ -401,10 +407,13 @@ function ReviewPageInner() {
                 fontWeight: 700,
                 fontSize: '12px',
                 letterSpacing: '0.1em',
-                color: T.ink3,
+                color: T.ink2,
                 textDecoration: 'none',
                 textTransform: 'uppercase',
                 marginBottom: '32px',
+                background: 'rgba(255,255,255,0.85)',
+                padding: '6px 12px',
+                borderRadius: '999px',
               }}
             >
               ← Dashboard
@@ -587,6 +596,10 @@ function ReviewPageInner() {
                       color: T.ink2,
                       textTransform: 'uppercase',
                       marginBottom: '14px',
+                      display: 'inline-block',
+                      background: 'rgba(255,255,255,0.85)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
                     }}
                   >
                     Your Rating
@@ -646,6 +659,10 @@ function ReviewPageInner() {
                       color: T.ink2,
                       textTransform: 'uppercase',
                       marginBottom: '12px',
+                      display: 'inline-block',
+                      background: 'rgba(255,255,255,0.85)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
                     }}
                   >
                     Quick Tags
@@ -739,7 +756,7 @@ function ReviewPageInner() {
                   style={{
                     width: '100%',
                     padding: '16px',
-                    background: rating === 0 ? 'rgba(0,188,200,0.35)' : T.yellow,
+                    background: rating === 0 ? '#BFE8EA' : T.yellow,
                     border: 'none',
                     borderRadius: '12px',
                     color: rating === 0 ? T.ink2 : T.surface,
