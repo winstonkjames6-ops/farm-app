@@ -1,17 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-
-// ── Mock session context ──────────────────────────────────────────────────────
-
-const SESSION = {
-  trainerName: 'Jamal Brooks',
-  initials: 'JB',
-  sport: 'Basketball',
-  date: 'Wed, Jun 11, 2025 · 4:00 PM',
-}
+import { createClient } from '@/utils/supabase/client'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -34,14 +27,110 @@ const TAGS = [
   'Would book again',
 ]
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-export default function ReviewPage() {
+type SessionCtx = {
+  trainerName: string
+  initials: string
+  sport: string
+  date: string
+  trainerId: string
+}
+
+// ── Inner page (needs Suspense for useSearchParams) ───────────────────────────
+
+function ReviewPageInner() {
+  const searchParams = useSearchParams()
+  const bookingId = searchParams.get('bookingId')
+
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false)
+  const [ctx, setCtx] = useState<SessionCtx | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+
   const [rating, setRating] = useState(0)
   const [hovered, setHovered] = useState(0)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [text, setText] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function load() {
+      if (!bookingId) {
+        setLoadError('No booking specified.')
+        setLoading(false)
+        return
+      }
+
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setLoadError('Please sign in to leave a review.')
+        setLoading(false)
+        return
+      }
+      setUserId(user.id)
+
+      const { data: booking, error: bookingErr } = await supabase
+        .from('bookings')
+        .select('id, session_time, status, parent_id, trainer_id, trainers!trainer_id(specialty, profiles(name)), athletes!athlete_id(name)')
+        .eq('id', bookingId)
+        .single()
+
+      if (bookingErr || !booking) {
+        setLoadError('Session not found.')
+        setLoading(false)
+        return
+      }
+
+      const b = booking as any
+
+      if (b.parent_id !== user.id) {
+        setLoadError("You don't have permission to review this session.")
+        setLoading(false)
+        return
+      }
+
+      if (b.status !== 'completed') {
+        setLoadError("This session hasn't been completed yet.")
+        setLoading(false)
+        return
+      }
+
+      const { data: existingReview } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('booking_id', bookingId)
+        .maybeSingle()
+
+      if (existingReview) {
+        setAlreadyReviewed(true)
+        setLoading(false)
+        return
+      }
+
+      const trainerName: string = b.trainers?.profiles?.name ?? 'Trainer'
+      const initials = trainerName
+        .split(' ')
+        .map((w: string) => w[0] ?? '')
+        .join('')
+        .slice(0, 2)
+        .toUpperCase()
+      const sport: string = b.trainers?.specialty ?? ''
+      const dt = new Date(b.session_time)
+      const date =
+        dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) +
+        ' · ' +
+        dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+
+      setCtx({ trainerName, initials, sport, date, trainerId: b.trainer_id })
+      setLoading(false)
+    }
+    load()
+  }, [bookingId])
 
   function toggleTag(tag: string) {
     setSelectedTags((prev) =>
@@ -49,12 +138,238 @@ export default function ReviewPage() {
     )
   }
 
-  function handleSubmit() {
-    if (rating === 0) return
+  async function handleSubmit() {
+    if (rating === 0 || !ctx || !userId || !bookingId) return
+    setSubmitting(true)
+    setSubmitError(null)
+
+    const supabase = createClient()
+    const { error } = await supabase.from('reviews').insert({
+      booking_id: bookingId,
+      parent_id: userId,
+      trainer_id: ctx.trainerId,
+      rating,
+      tags: selectedTags,
+      body: text,
+    })
+
+    setSubmitting(false)
+
+    if (error) {
+      setSubmitError(
+        error.code === '23505'
+          ? "You've already submitted a review for this session."
+          : 'Failed to submit review. Please try again.'
+      )
+      return
+    }
+
     setSubmitted(true)
   }
 
   const displayRating = hovered || rating
+
+  // ── Loading ───────────────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: T.bg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Hanken Grotesk', sans-serif",
+            fontSize: '14px',
+            color: T.ink3,
+          }}
+        >
+          Loading…
+        </div>
+      </div>
+    )
+  }
+
+  // ── Error / not authorized / not completed ────────────────────────────────
+
+  if (loadError) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: T.bg,
+          padding: '48px 20px 80px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+        }}
+      >
+        <div style={{ width: '100%', maxWidth: 520 }}>
+          <Link
+            href="/sessions"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              fontSize: '12px',
+              letterSpacing: '0.1em',
+              color: T.ink3,
+              textDecoration: 'none',
+              textTransform: 'uppercase',
+              marginBottom: '32px',
+            }}
+          >
+            ← Sessions
+          </Link>
+          <div
+            style={{
+              padding: '24px',
+              background: T.surface,
+              border: `1px solid ${T.border}`,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                fontSize: '18px',
+                color: T.ink,
+                textTransform: 'uppercase',
+                letterSpacing: '0.03em',
+                marginBottom: '8px',
+              }}
+            >
+              Unable to Load Review
+            </div>
+            <div
+              style={{
+                fontFamily: "'Hanken Grotesk', sans-serif",
+                fontSize: '14px',
+                color: T.ink2,
+              }}
+            >
+              {loadError}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Already reviewed ──────────────────────────────────────────────────────
+
+  if (alreadyReviewed) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: T.bg,
+          padding: '48px 20px 80px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+        }}
+      >
+        <div style={{ width: '100%', maxWidth: 520 }}>
+          <Link
+            href="/sessions"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              fontSize: '12px',
+              letterSpacing: '0.1em',
+              color: T.ink3,
+              textDecoration: 'none',
+              textTransform: 'uppercase',
+              marginBottom: '32px',
+            }}
+          >
+            ← Sessions
+          </Link>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              paddingTop: '60px',
+              gap: '20px',
+            }}
+          >
+            <div
+              style={{
+                width: 72,
+                height: 72,
+                background: 'rgba(0,188,200,0.10)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={T.yellow} strokeWidth="2.5" strokeLinecap="square">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <div>
+              <div
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 800,
+                  fontSize: '32px',
+                  color: T.ink,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.1,
+                  marginBottom: '10px',
+                }}
+              >
+                Already Reviewed.
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontSize: '15px',
+                  color: T.ink2,
+                  lineHeight: 1.55,
+                }}
+              >
+                You've already submitted a review for this session.
+              </div>
+            </div>
+            <Link
+              href="/sessions"
+              style={{
+                marginTop: '8px',
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                fontSize: '13px',
+                letterSpacing: '0.08em',
+                color: T.yellow,
+                textDecoration: 'none',
+                textTransform: 'uppercase',
+                borderBottom: `1px solid ${T.yellow}`,
+                paddingBottom: '2px',
+              }}
+            >
+              Back to Sessions →
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Form ──────────────────────────────────────────────────────────────────
 
   return (
     <div
@@ -92,7 +407,7 @@ export default function ReviewPage() {
 
         <AnimatePresence mode="wait">
           {submitted ? (
-            // ── Success state ─────────────────────────────────────────────────
+            // ── Success state ─────────────────────────────────────────────
             <motion.div
               key="success"
               initial={{ opacity: 0, scale: 0.96 }}
@@ -169,7 +484,7 @@ export default function ReviewPage() {
               </Link>
             </motion.div>
           ) : (
-            // ── Form ──────────────────────────────────────────────────────────
+            // ── Form ──────────────────────────────────────────────────────
             <motion.div
               key="form"
               initial={{ opacity: 0, y: 16 }}
@@ -223,7 +538,7 @@ export default function ReviewPage() {
                     flexShrink: 0,
                   }}
                 >
-                  {SESSION.initials}
+                  {ctx?.initials}
                 </div>
                 <div>
                   <div
@@ -236,7 +551,7 @@ export default function ReviewPage() {
                       letterSpacing: '0.03em',
                     }}
                   >
-                    {SESSION.trainerName}
+                    {ctx?.trainerName}
                   </div>
                   <div
                     style={{
@@ -246,7 +561,7 @@ export default function ReviewPage() {
                       marginTop: '2px',
                     }}
                   >
-                    {SESSION.sport} · {SESSION.date}
+                    {ctx?.sport} · {ctx?.date}
                   </div>
                 </div>
               </div>
@@ -387,10 +702,27 @@ export default function ReviewPage() {
                 />
               </div>
 
+              {/* Submit error */}
+              {submitError && (
+                <div
+                  style={{
+                    marginBottom: '12px',
+                    padding: '12px 16px',
+                    background: 'rgba(239,68,68,0.08)',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    fontFamily: "'Hanken Grotesk', sans-serif",
+                    fontSize: '13px',
+                    color: '#F87171',
+                  }}
+                >
+                  {submitError}
+                </div>
+              )}
+
               {/* Submit */}
               <button
                 onClick={handleSubmit}
-                disabled={rating === 0}
+                disabled={rating === 0 || submitting}
                 style={{
                   width: '100%',
                   padding: '16px',
@@ -402,11 +734,12 @@ export default function ReviewPage() {
                   fontSize: '15px',
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
-                  cursor: rating === 0 ? 'not-allowed' : 'pointer',
+                  cursor: rating === 0 || submitting ? 'not-allowed' : 'pointer',
                   transition: 'background 0.15s',
+                  opacity: submitting ? 0.7 : 1,
                 }}
               >
-                Submit Review
+                {submitting ? 'Submitting…' : 'Submit Review'}
               </button>
 
               {rating === 0 && (
@@ -427,5 +760,15 @@ export default function ReviewPage() {
         </AnimatePresence>
       </div>
     </div>
+  )
+}
+
+// ── Page export — Suspense required by Next.js for useSearchParams ─────────────
+
+export default function ReviewPage() {
+  return (
+    <Suspense>
+      <ReviewPageInner />
+    </Suspense>
   )
 }
