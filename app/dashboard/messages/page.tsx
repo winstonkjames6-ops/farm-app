@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
@@ -104,6 +104,11 @@ function MessagesPageInner() {
   const [ready, setReady] = useState(false)
   const [threads, setThreads] = useState<ConversationThread[]>([])
   const [inboxLoading, setInboxLoading] = useState(false)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   // Heartbeat: keep own last_active fresh while thread is open
   useEffect(() => {
@@ -368,6 +373,7 @@ function MessagesPageInner() {
               })
               return items
             })()}
+            <div ref={bottomRef} />
           </motion.div>
 
           <div id="tour-messages-input" style={{ padding: '14px 20px', borderTop: `1px solid ${T.line}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6, background: 'rgba(255,255,255,0.60)' }}>

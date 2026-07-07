@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 
@@ -77,6 +77,11 @@ export default function MessagesPage() {
   const [parentId, setParentId] = useState<string | null>(null)
   const [hasTrainer, setHasTrainer] = useState(false)
   const [loading, setLoading] = useState(true)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   useEffect(() => {
     const supabase = createClient()
@@ -264,6 +269,7 @@ export default function MessagesPage() {
                 return items
               })()
             )}
+            <div ref={bottomRef} />
           </motion.div>
 
           {/* Read-only notice */}
