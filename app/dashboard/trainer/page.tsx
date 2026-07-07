@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 
@@ -13,6 +14,7 @@ type Session = {
   childName: string
   parentName: string
   parentInitials: string
+  parentProfileId: string
   sport: string
   type: SessionType
   day: string
@@ -286,9 +288,12 @@ function SessionCard({ session, index, onMarkComplete }: { session: Session; ind
             <IconCheckCircle />
             {isCompleted ? 'COMPLETED' : completing ? 'SAVING...' : 'MARK COMPLETE'}
           </button>
-          <button style={{ flex: 1, height: '44px', background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#374151', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', borderRadius: '8px', cursor: 'pointer' }}>
+          <Link
+            href={`/dashboard/trainer/messages?withId=${session.parentProfileId}`}
+            style={{ flex: 1, height: '44px', background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#374151', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+          >
             MESSAGE PARENT
-          </button>
+          </Link>
         </div>
         {completeError && (
           <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: '#EF4444' }}>
@@ -445,7 +450,7 @@ export default function TrainerHomePage() {
 
       const { data: bookings } = await supabase
         .from('bookings')
-        .select('id, format, session_time, status, athletes!athlete_id(name, sport), profiles!parent_id(name)')
+        .select('id, format, session_time, status, parent_id, athletes!athlete_id(name, sport), profiles!parent_id(name)')
         .eq('trainer_id', trainerRow.id)
       if (!bookings) return
 
@@ -462,6 +467,7 @@ export default function TrainerHomePage() {
           childName: b.athletes?.name ?? 'Unknown',
           parentName,
           parentInitials,
+          parentProfileId: b.parent_id ?? '',
           sport: b.athletes?.sport ?? '',
           type,
           day: JS_DAYS[dt.getDay()],

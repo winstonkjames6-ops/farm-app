@@ -432,9 +432,20 @@ export default function TrainerProfile({ params: { slug } }) {
                 width: '100%', padding: '15px', borderRadius: '12px',
                 background: '#00BCC8', color: '#FFFFFF',
                 fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16px',
-                cursor: 'pointer', marginBottom: '12px',
+                cursor: 'pointer', marginBottom: '10px',
               }}>
                 Request session
+              </Link>
+
+              <Link href={`/dashboard/messages?withId=${profile_id}`} style={{
+                display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box',
+                width: '100%', padding: '15px', borderRadius: '12px',
+                background: 'transparent', color: '#00BCC8',
+                border: '1px solid rgba(0,188,200,0.4)',
+                fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16px',
+                cursor: 'pointer', marginBottom: '12px',
+              }}>
+                Message trainer
               </Link>
 
               {/* Response time badge */}
