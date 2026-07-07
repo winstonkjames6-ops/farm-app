@@ -24,14 +24,6 @@ type Session = {
   status: string
 }
 
-// ── Mock data ──────────────────────────────────────────────────────────────────
-
-const MOCK_TRAINER = {
-  name: 'Marcus Torres',
-  initials: 'MT',
-  sport: 'soccer',
-}
-
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
@@ -368,6 +360,7 @@ function HomeView({
   filteredSessions,
   daysWithSessions,
   onMarkComplete,
+  trainerFirstName,
 }: {
   activeDay: string
   onDaySelect: (d: string) => void
@@ -375,6 +368,7 @@ function HomeView({
   filteredSessions: Session[]
   daysWithSessions: Set<string>
   onMarkComplete: (id: string) => Promise<void>
+  trainerFirstName: string
 }) {
   return (
     <motion.div
@@ -385,7 +379,7 @@ function HomeView({
       <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div>
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '28px', color: '#111827' }}>
-            {getGreeting()}, Marcus.
+            {getGreeting()}{trainerFirstName ? `, ${trainerFirstName}` : ''}.
           </div>
           <div style={{ fontSize: '14px', color: '#374151', marginTop: '4px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
             Here&apos;s your day at a glance.
@@ -430,16 +424,26 @@ function HomeView({
 
 export default function TrainerHomePage() {
   const [sessions, setSessions] = useState<Session[]>([])
+  const [trainerFirstName, setTrainerFirstName] = useState('')
   const [activeDay, setActiveDay] = useState(() => {
     const JS_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     return JS_DAYS[new Date().getDay()]
   })
 
   useEffect(() => {
-    async function fetchSessions() {
+    async function fetchData() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.name) setTrainerFirstName(data.name.split(' ')[0])
+        })
 
       const { data: trainerRow } = await supabase
         .from('trainers')
@@ -480,7 +484,7 @@ export default function TrainerHomePage() {
 
       setSessions(mapped)
     }
-    fetchSessions()
+    fetchData()
   }, [])
 
   async function handleMarkComplete(sessionId: string) {
@@ -505,6 +509,7 @@ export default function TrainerHomePage() {
       filteredSessions={filteredSessions}
       daysWithSessions={daysWithSessions}
       onMarkComplete={handleMarkComplete}
+      trainerFirstName={trainerFirstName}
     />
   )
 }

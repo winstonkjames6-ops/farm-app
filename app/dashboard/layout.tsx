@@ -41,6 +41,18 @@ function formatTodayDate() {
   return `${dayNames[now.getDay()]}, ${monthNames[now.getMonth()]} ${now.getDate()}`
 }
 
+function formatNextSessionDisplay(sessionTime: string): string {
+  const dt = new Date(sessionTime)
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  let hours = dt.getHours()
+  const minutes = dt.getMinutes()
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  hours = hours % 12 || 12
+  const minuteStr = minutes === 0 ? '' : `:${String(minutes).padStart(2, '0')}`
+  return `${dayNames[dt.getDay()]}, ${monthNames[dt.getMonth()]} ${dt.getDate()} · ${hours}${minuteStr} ${ampm}`
+}
+
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
 const IconBell = () => (
@@ -281,12 +293,16 @@ function Sidebar({
   onToggle,
   parentName,
   parentInitials,
+  nextSessionText,
+  nextSessionTrainer,
 }: {
   active: string
   sidebarOpen: boolean
   onToggle: () => void
   parentName: string
   parentInitials: string
+  nextSessionText: string | null
+  nextSessionTrainer: string | null
 }) {
   return (
     <motion.div
@@ -372,15 +388,23 @@ function Sidebar({
               <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 500, fontSize: '11px', letterSpacing: '0.08em', color: T.ink3, textTransform: 'uppercase', padding: '0 24px', marginBottom: '12px' }}>
                 Next Session
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 24px', color: T.cyan }}>
-                <IconCalendar size={16} />
-                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: '#374151' }}>
-                  Mon, Jun 23 · 9:00 AM
-                </span>
-              </div>
-              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, padding: '0 24px' }}>
-                with Marcus Rivera
-              </div>
+              {nextSessionText ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 24px', color: T.cyan }}>
+                    <IconCalendar size={16} />
+                    <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: '#374151' }}>
+                      {nextSessionText}
+                    </span>
+                  </div>
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, padding: '0 24px' }}>
+                    with {nextSessionTrainer}
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, padding: '0 24px' }}>
+                  No upcoming sessions
+                </div>
+              )}
             </div>
           ) : (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0', color: T.cyan }}>
@@ -541,6 +565,8 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [parentName, setParentName] = useState('')
   const [athletes, setAthletes] = useState<Array<{ name: string; sport: string }>>([])
+  const [nextSessionText, setNextSessionText] = useState<string | null>(null)
+  const [nextSessionTrainer, setNextSessionTrainer] = useState<string | null>(null)
   const pathname = usePathname()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
 
@@ -569,6 +595,22 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
         .eq('parent_id', user.id)
         .then(({ data }) => {
           if (data) setAthletes(data)
+        })
+      supabase
+        .from('bookings')
+        .select('session_time, trainers!trainer_id(profiles(name))')
+        .eq('parent_id', user.id)
+        .neq('status', 'completed')
+        .gte('session_time', new Date().toISOString())
+        .order('session_time', { ascending: true })
+        .limit(1)
+        .single()
+        .then(({ data }) => {
+          if (data?.session_time) {
+            setNextSessionText(formatNextSessionDisplay(data.session_time))
+            const trainerData = data.trainers as any
+            setNextSessionTrainer(trainerData?.profiles?.name ?? null)
+          }
         })
     })
   }, [])
@@ -608,6 +650,8 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
               onToggle={() => setSidebarOpen((o) => !o)}
               parentName={parentName}
               parentInitials={parentInitials}
+              nextSessionText={nextSessionText}
+              nextSessionTrainer={nextSessionTrainer}
             />
             <DesktopHeader sidebarOpen={sidebarOpen} />
           </>
