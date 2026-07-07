@@ -37,12 +37,8 @@ type SessionCtx = {
   trainerId: string
 }
 
-// shared bg + scrim helpers
-const turfBg = `url('/backgrounds/turf-bg.jpg') center/cover no-repeat, ${T.bg}`
-const scrimBase = {
-  minHeight: '100vh',
-  background: 'rgba(248,248,246,0.92)',
-} as const
+// 55% cream scrim baked into the CSS background shorthand — cards stay solid white on top
+const turfBg = `linear-gradient(rgba(248,248,246,0.55), rgba(248,248,246,0.55)), url('/backgrounds/turf-bg.jpg') center/cover no-repeat`
 
 // ── Inner page (needs Suspense for useSearchParams) ───────────────────────────
 
@@ -180,24 +176,23 @@ function ReviewPageInner() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', background: turfBg }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          background: turfBg,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <div
           style={{
-            ...scrimBase,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            fontFamily: "'Hanken Grotesk', sans-serif",
+            fontSize: '14px',
+            color: T.ink3,
           }}
         >
-          <div
-            style={{
-              fontFamily: "'Hanken Grotesk', sans-serif",
-              fontSize: '14px',
-              color: T.ink3,
-            }}
-          >
-            Loading…
-          </div>
+          Loading…
         </div>
       </div>
     )
@@ -207,16 +202,16 @@ function ReviewPageInner() {
 
   if (loadError) {
     return (
-      <div style={{ minHeight: '100vh', background: turfBg }}>
-        <div
-          style={{
-            ...scrimBase,
-            padding: '48px 20px 80px',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-          }}
-        >
+      <div
+        style={{
+          minHeight: '100vh',
+          background: turfBg,
+          padding: '48px 20px 80px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+        }}
+      >
           <div style={{ width: '100%', maxWidth: 520 }}>
             <Link
               href="/dashboard"
@@ -268,7 +263,6 @@ function ReviewPageInner() {
               </div>
             </div>
           </div>
-        </div>
       </div>
     )
   }
@@ -277,16 +271,16 @@ function ReviewPageInner() {
 
   if (alreadyReviewed) {
     return (
-      <div style={{ minHeight: '100vh', background: turfBg }}>
-        <div
-          style={{
-            ...scrimBase,
-            padding: '48px 20px 80px',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-          }}
-        >
+      <div
+        style={{
+          minHeight: '100vh',
+          background: turfBg,
+          padding: '48px 20px 80px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+        }}
+      >
           <div style={{ width: '100%', maxWidth: 520 }}>
             <Link
               href="/dashboard"
@@ -377,7 +371,6 @@ function ReviewPageInner() {
               </Link>
             </div>
           </div>
-        </div>
       </div>
     )
   }
@@ -385,16 +378,16 @@ function ReviewPageInner() {
   // ── Form ──────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ minHeight: '100vh', background: turfBg }}>
-      <div
-        style={{
-          ...scrimBase,
-          padding: '48px 20px 80px',
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'center',
-        }}
-      >
+    <div
+      style={{
+        minHeight: '100vh',
+        background: turfBg,
+        padding: '48px 20px 80px',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+      }}
+    >
         <div style={{ width: '100%', maxWidth: 520 }}>
           {/* Back */}
           {!submitted && (
@@ -591,7 +584,7 @@ function ReviewPageInner() {
                       fontWeight: 700,
                       fontSize: '11px',
                       letterSpacing: '0.12em',
-                      color: T.ink3,
+                      color: T.ink2,
                       textTransform: 'uppercase',
                       marginBottom: '14px',
                     }}
@@ -618,9 +611,9 @@ function ReviewPageInner() {
                         <svg width="36" height="36" viewBox="0 0 24 24">
                           <polygon
                             points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1"
-                            fill={displayRating >= star ? T.yellow : T.surface2}
-                            stroke={displayRating >= star ? T.yellow : T.border}
-                            strokeWidth="1"
+                            fill={displayRating >= star ? T.yellow : 'none'}
+                            stroke={displayRating >= star ? T.yellow : T.ink3}
+                            strokeWidth={displayRating >= star ? '1' : '1.5'}
                           />
                         </svg>
                       </button>
@@ -650,7 +643,7 @@ function ReviewPageInner() {
                       fontWeight: 700,
                       fontSize: '11px',
                       letterSpacing: '0.12em',
-                      color: T.ink3,
+                      color: T.ink2,
                       textTransform: 'uppercase',
                       marginBottom: '12px',
                     }}
@@ -667,7 +660,7 @@ function ReviewPageInner() {
                           style={{
                             padding: '8px 14px',
                             background: sel ? T.yellow : T.surface2,
-                            border: `1px solid ${sel ? T.yellow : T.border}`,
+                            border: `1px solid ${sel ? T.yellow : 'rgba(0,0,0,0.18)'}`,
                             borderRadius: '8px',
                             color: sel ? T.surface : T.ink2,
                             fontFamily: "'Hanken Grotesk', sans-serif",
@@ -692,7 +685,7 @@ function ReviewPageInner() {
                       fontWeight: 700,
                       fontSize: '11px',
                       letterSpacing: '0.12em',
-                      color: T.ink3,
+                      color: T.ink2,
                       textTransform: 'uppercase',
                       marginBottom: '10px',
                     }}
@@ -746,7 +739,7 @@ function ReviewPageInner() {
                   style={{
                     width: '100%',
                     padding: '16px',
-                    background: rating === 0 ? 'rgba(0,188,200,0.25)' : T.yellow,
+                    background: rating === 0 ? 'rgba(0,188,200,0.35)' : T.yellow,
                     border: 'none',
                     borderRadius: '12px',
                     color: rating === 0 ? T.ink2 : T.surface,
@@ -768,7 +761,7 @@ function ReviewPageInner() {
                     style={{
                       fontFamily: "'Hanken Grotesk', sans-serif",
                       fontSize: '12px',
-                      color: T.ink3,
+                      color: T.ink2,
                       marginTop: '8px',
                       textAlign: 'center',
                     }}
@@ -780,7 +773,6 @@ function ReviewPageInner() {
             )}
           </AnimatePresence>
         </div>
-      </div>
     </div>
   )
 }
