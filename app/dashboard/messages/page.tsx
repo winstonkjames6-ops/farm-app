@@ -31,6 +31,7 @@ type Message = {
   sender_id: string
   body: string
   sent_at: string
+  read_at: string | null
 }
 
 type ConversationThread = {
@@ -46,6 +47,33 @@ function relativeTime(iso: string): string {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
   return `${Math.floor(diff / 86400)}d ago`
+}
+
+function dayKey(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+}
+
+function dateSeparatorLabel(iso: string): string {
+  const msgKey = dayKey(iso)
+  const now = new Date()
+  const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
+  if (msgKey === todayKey) return 'Today'
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  const yestKey = `${yesterday.getFullYear()}-${yesterday.getMonth()}-${yesterday.getDate()}`
+  if (msgKey === yestKey) return 'Yesterday'
+  return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+}
+
+function onlineStatus(lastActive: string | null): string {
+  if (!lastActive) return ''
+  const diff = Math.floor((Date.now() - new Date(lastActive).getTime()) / 1000)
+  if (diff < 120) return 'Online'
+  if (diff < 3600) return `Last seen ${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `Last seen ${Math.floor(diff / 3600)}h ago`
+  if (diff < 172800) return 'Last seen yesterday'
+  return `Last seen ${Math.floor(diff / 86400)}d ago`
 }
 
 function Avatar({ initials, size }: { initials: string; size: number }) {
@@ -69,12 +97,27 @@ function MessagesPageInner() {
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [otherName, setOtherName] = useState('')
+  const [otherLastActive, setOtherLastActive] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputVal, setInputVal] = useState('')
   const [sendError, setSendError] = useState('')
   const [ready, setReady] = useState(false)
   const [threads, setThreads] = useState<ConversationThread[]>([])
   const [inboxLoading, setInboxLoading] = useState(false)
+
+  // Heartbeat: keep own last_active fresh while thread is open
+  useEffect(() => {
+    if (!withId) return
+    const supabase = createClient()
+    async function beat() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await supabase.from('profiles').update({ last_active: new Date().toISOString() }).eq('id', user.id)
+    }
+    beat()
+    const id = setInterval(beat, 60000)
+    return () => clearInterval(id)
+  }, [withId])
 
   useEffect(() => {
     if (!withId) return
@@ -90,10 +133,12 @@ function MessagesPageInner() {
           const row = payload.new as Message & { recipient_id: string }
           if (!resolvedUserId) return
           if (row.sender_id === withId && row.recipient_id === resolvedUserId) {
+            const readAt = new Date().toISOString()
             setMessages((prev) => {
               if (prev.some((m) => m.id === row.id)) return prev
-              return [...prev, row]
+              return [...prev, { ...row, read_at: readAt }]
             })
+            supabase.from('messages').update({ read_at: readAt }).eq('id', row.id)
           }
         }
       )
@@ -106,15 +151,27 @@ function MessagesPageInner() {
       setCurrentUserId(user.id)
 
       const [{ data: profile }, { data: msgs }] = await Promise.all([
-        supabase.from('profiles').select('name').eq('id', withId).single(),
+        supabase.from('profiles').select('name, last_active').eq('id', withId).single(),
         supabase
           .from('messages')
-          .select('id, sender_id, body, sent_at')
+          .select('id, sender_id, body, sent_at, read_at')
           .or(`and(sender_id.eq.${user.id},recipient_id.eq.${withId}),and(sender_id.eq.${withId},recipient_id.eq.${user.id})`)
           .order('sent_at', { ascending: true }),
       ])
-      if (profile) setOtherName(profile.name)
-      if (msgs) setMessages(msgs)
+      if (profile) {
+        setOtherName(profile.name)
+        setOtherLastActive((profile as any).last_active ?? null)
+      }
+      if (msgs) {
+        const readNow = new Date().toISOString()
+        const unreadIds = (msgs as Message[])
+          .filter((m) => m.sender_id === withId && m.read_at === null)
+          .map((m) => m.id)
+        if (unreadIds.length > 0) {
+          supabase.from('messages').update({ read_at: readNow }).in('id', unreadIds)
+        }
+        setMessages((msgs as Message[]).map((m) => unreadIds.includes(m.id) ? { ...m, read_at: readNow } : m))
+      }
       setReady(true)
     }
     load()
@@ -165,17 +222,18 @@ function MessagesPageInner() {
     const { data, error } = await supabase
       .from('messages')
       .insert({ sender_id: currentUserId, recipient_id: withId, body: inputVal.trim() })
-      .select('id, sender_id, body, sent_at')
+      .select('id, sender_id, body, sent_at, read_at')
       .single()
     if (error) {
       setSendError('Failed to send. Try again.')
       return
     }
-    setMessages((prev) => [...prev, data])
+    setMessages((prev) => [...prev, data as Message])
     setInputVal('')
   }
 
   const otherInitials = otherName.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase()
+  const statusText = onlineStatus(otherLastActive)
 
   if (!withId) {
     return (
@@ -241,6 +299,11 @@ function MessagesPageInner() {
             <Avatar initials={otherInitials || '?'} size={38} />
             <div>
               <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>{otherName || '…'}</div>
+              {statusText && (
+                <div style={{ fontSize: 11, color: statusText === 'Online' ? T.accent : T.ink3, marginTop: 1 }}>
+                  {statusText}
+                </div>
+              )}
             </div>
           </div>
 
@@ -250,31 +313,61 @@ function MessagesPageInner() {
             transition={{ duration: 0.25 }}
             style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 10 }}
           >
-            {messages.map((msg, i) => {
-              const isMine = msg.sender_id === currentUserId
-              const time = new Date(msg.sent_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-              return (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: i * 0.03 }}
-                  style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start' }}
-                >
-                  <div style={{
-                    maxWidth: '66%', padding: '11px 16px',
-                    background: isMine ? T.accent : T.surface2,
-                    color: isMine ? '#FFFFFF' : T.ink,
-                    borderRadius: isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                    fontSize: 14, lineHeight: 1.55,
-                    fontWeight: isMine ? 500 : 400,
-                  }}>
-                    <div style={{ minHeight: '1em' }}>{msg.body}</div>
-                    <div style={{ fontSize: 11, marginTop: 4, color: isMine ? 'rgba(255,255,255,0.65)' : T.ink3, textAlign: 'right' }}>{time}</div>
-                  </div>
-                </motion.div>
-              )
-            })}
+            {(() => {
+              const items: React.ReactNode[] = []
+              let lastKey = ''
+              messages.forEach((msg, i) => {
+                const key = dayKey(msg.sent_at)
+                if (key !== lastKey) {
+                  lastKey = key
+                  items.push(
+                    <div key={`sep-${key}`} style={{ textAlign: 'center', margin: '2px 0' }}>
+                      <span style={{ fontSize: 11, color: T.ink3, background: 'rgba(0,0,0,0.05)', borderRadius: '99px', padding: '3px 10px' }}>
+                        {dateSeparatorLabel(msg.sent_at)}
+                      </span>
+                    </div>
+                  )
+                }
+                const isMine = msg.sender_id === currentUserId
+                const time = new Date(msg.sent_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                items.push(
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: i * 0.03 }}
+                    style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start' }}
+                  >
+                    <div style={{
+                      maxWidth: '66%', padding: '11px 16px',
+                      background: isMine ? T.accent : T.surface2,
+                      color: isMine ? '#FFFFFF' : T.ink,
+                      borderRadius: isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                      fontSize: 14, lineHeight: 1.55,
+                      fontWeight: isMine ? 500 : 400,
+                    }}>
+                      <div style={{ minHeight: '1em' }}>{msg.body}</div>
+                      <div style={{ fontSize: 11, marginTop: 4, color: isMine ? 'rgba(255,255,255,0.65)' : T.ink3, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 3 }}>
+                        <span>{time}</span>
+                        {isMine && (
+                          msg.read_at ? (
+                            <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
+                              <path d="M1 5 L4 8 L9 1" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M5 5 L8 8 L13 1" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          ) : (
+                            <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                              <path d="M1 5 L4 8 L11 1" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )
+              })
+              return items
+            })()}
           </motion.div>
 
           <div id="tour-messages-input" style={{ padding: '14px 20px', borderTop: `1px solid ${T.line}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6, background: 'rgba(255,255,255,0.60)' }}>

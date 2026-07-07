@@ -40,6 +40,23 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
 }
 
+function dayKey(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+}
+
+function dateSeparatorLabel(iso: string): string {
+  const msgKey = dayKey(iso)
+  const now = new Date()
+  const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
+  if (msgKey === todayKey) return 'Today'
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  const yestKey = `${yesterday.getFullYear()}-${yesterday.getMonth()}-${yesterday.getDate()}`
+  if (msgKey === yestKey) return 'Yesterday'
+  return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+}
+
 function Avatar({ initials, size }: { initials: string; size: number }) {
   return (
     <div style={{
@@ -204,32 +221,48 @@ export default function MessagesPage() {
                 No messages yet
               </div>
             ) : (
-              messages.map((msg, i) => {
-                const isParent = msg.sender_id === parentId
-                return (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2, delay: i * 0.03 }}
-                    style={{ display: 'flex', justifyContent: isParent ? 'flex-end' : 'flex-start' }}
-                  >
-                    <div style={{
-                      maxWidth: '66%', padding: '11px 16px',
-                      background: isParent ? T.accent : T.surface2,
-                      color: isParent ? '#FFFFFF' : T.ink,
-                      borderRadius: isParent ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                      fontSize: 14, lineHeight: 1.55,
-                      fontWeight: isParent ? 500 : 400,
-                    }}>
-                      <div style={{ minHeight: '1em' }}>{msg.body}</div>
-                      <div style={{ fontSize: 11, marginTop: 4, color: isParent ? 'rgba(255,255,255,0.65)' : T.ink3, textAlign: 'right' }}>
-                        {formatTime(msg.sent_at)}
+              (() => {
+                const items: React.ReactNode[] = []
+                let lastKey = ''
+                messages.forEach((msg, i) => {
+                  const key = dayKey(msg.sent_at)
+                  if (key !== lastKey) {
+                    lastKey = key
+                    items.push(
+                      <div key={`sep-${key}`} style={{ textAlign: 'center', margin: '2px 0' }}>
+                        <span style={{ fontSize: 11, color: T.ink3, background: 'rgba(0,0,0,0.05)', borderRadius: '99px', padding: '3px 10px' }}>
+                          {dateSeparatorLabel(msg.sent_at)}
+                        </span>
                       </div>
-                    </div>
-                  </motion.div>
-                )
-              })
+                    )
+                  }
+                  const isParent = msg.sender_id === parentId
+                  items.push(
+                    <motion.div
+                      key={msg.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2, delay: i * 0.03 }}
+                      style={{ display: 'flex', justifyContent: isParent ? 'flex-end' : 'flex-start' }}
+                    >
+                      <div style={{
+                        maxWidth: '66%', padding: '11px 16px',
+                        background: isParent ? T.accent : T.surface2,
+                        color: isParent ? '#FFFFFF' : T.ink,
+                        borderRadius: isParent ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                        fontSize: 14, lineHeight: 1.55,
+                        fontWeight: isParent ? 500 : 400,
+                      }}>
+                        <div style={{ minHeight: '1em' }}>{msg.body}</div>
+                        <div style={{ fontSize: 11, marginTop: 4, color: isParent ? 'rgba(255,255,255,0.65)' : T.ink3, textAlign: 'right' }}>
+                          {formatTime(msg.sent_at)}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })
+                return items
+              })()
             )}
           </motion.div>
 

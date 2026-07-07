@@ -24,6 +24,7 @@ type Message = {
   sender_id: string
   body: string
   sent_at: string
+  read_at: string | null
 }
 
 type ConversationThread = {
@@ -41,6 +42,33 @@ function relativeTime(iso: string): string {
   return `${Math.floor(diff / 86400)}d ago`
 }
 
+function dayKey(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+}
+
+function dateSeparatorLabel(iso: string): string {
+  const msgKey = dayKey(iso)
+  const now = new Date()
+  const todayKey = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
+  if (msgKey === todayKey) return 'Today'
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  const yestKey = `${yesterday.getFullYear()}-${yesterday.getMonth()}-${yesterday.getDate()}`
+  if (msgKey === yestKey) return 'Yesterday'
+  return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+}
+
+function onlineStatus(lastActive: string | null): string {
+  if (!lastActive) return ''
+  const diff = Math.floor((Date.now() - new Date(lastActive).getTime()) / 1000)
+  if (diff < 120) return 'Online'
+  if (diff < 3600) return `Last seen ${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `Last seen ${Math.floor(diff / 3600)}h ago`
+  if (diff < 172800) return 'Last seen yesterday'
+  return `Last seen ${Math.floor(diff / 86400)}d ago`
+}
+
 function MessagesViewInner() {
   const searchParams = useSearchParams()
   const withId = searchParams.get('withId')
@@ -48,12 +76,27 @@ function MessagesViewInner() {
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [otherName, setOtherName] = useState('')
+  const [otherLastActive, setOtherLastActive] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputVal, setInputVal] = useState('')
   const [sendError, setSendError] = useState('')
   const [ready, setReady] = useState(false)
   const [threads, setThreads] = useState<ConversationThread[]>([])
   const [inboxLoading, setInboxLoading] = useState(false)
+
+  // Heartbeat: keep own last_active fresh while thread is open
+  useEffect(() => {
+    if (!withId) return
+    const supabase = createClient()
+    async function beat() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await supabase.from('profiles').update({ last_active: new Date().toISOString() }).eq('id', user.id)
+    }
+    beat()
+    const id = setInterval(beat, 60000)
+    return () => clearInterval(id)
+  }, [withId])
 
   useEffect(() => {
     if (!withId) return
@@ -69,10 +112,12 @@ function MessagesViewInner() {
           const row = payload.new as Message & { recipient_id: string }
           if (!resolvedUserId) return
           if (row.sender_id === withId && row.recipient_id === resolvedUserId) {
+            const readAt = new Date().toISOString()
             setMessages((prev) => {
               if (prev.some((m) => m.id === row.id)) return prev
-              return [...prev, row]
+              return [...prev, { ...row, read_at: readAt }]
             })
+            supabase.from('messages').update({ read_at: readAt }).eq('id', row.id)
           }
         }
       )
@@ -85,15 +130,27 @@ function MessagesViewInner() {
       setCurrentUserId(user.id)
 
       const [{ data: profile }, { data: msgs }] = await Promise.all([
-        supabase.from('profiles').select('name').eq('id', withId).single(),
+        supabase.from('profiles').select('name, last_active').eq('id', withId).single(),
         supabase
           .from('messages')
-          .select('id, sender_id, body, sent_at')
+          .select('id, sender_id, body, sent_at, read_at')
           .or(`and(sender_id.eq.${user.id},recipient_id.eq.${withId}),and(sender_id.eq.${withId},recipient_id.eq.${user.id})`)
           .order('sent_at', { ascending: true }),
       ])
-      if (profile) setOtherName(profile.name)
-      if (msgs) setMessages(msgs)
+      if (profile) {
+        setOtherName(profile.name)
+        setOtherLastActive((profile as any).last_active ?? null)
+      }
+      if (msgs) {
+        const readNow = new Date().toISOString()
+        const unreadIds = (msgs as Message[])
+          .filter((m) => m.sender_id === withId && m.read_at === null)
+          .map((m) => m.id)
+        if (unreadIds.length > 0) {
+          supabase.from('messages').update({ read_at: readNow }).in('id', unreadIds)
+        }
+        setMessages((msgs as Message[]).map((m) => unreadIds.includes(m.id) ? { ...m, read_at: readNow } : m))
+      }
       setReady(true)
     }
     load()
@@ -144,17 +201,18 @@ function MessagesViewInner() {
     const { data, error } = await supabase
       .from('messages')
       .insert({ sender_id: currentUserId, recipient_id: withId, body: inputVal.trim() })
-      .select('id, sender_id, body, sent_at')
+      .select('id, sender_id, body, sent_at, read_at')
       .single()
     if (error) {
       setSendError('Failed to send. Try again.')
       return
     }
-    setMessages((prev) => [...prev, data])
+    setMessages((prev) => [...prev, data as Message])
     setInputVal('')
   }
 
   const otherInitials = otherName.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase()
+  const statusText = onlineStatus(otherLastActive)
 
   if (!withId) {
     return (
@@ -224,29 +282,64 @@ function MessagesViewInner() {
             </div>
             <div>
               <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px', color: T.ink }}>{otherName || '…'}</div>
+              {statusText && (
+                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: statusText === 'Online' ? T.cyan : T.ink3, marginTop: '1px' }}>
+                  {statusText}
+                </div>
+              )}
             </div>
           </div>
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', padding: '16px 24px' }}>
-            {messages.map((msg) => {
-              const isMine = msg.sender_id === currentUserId
-              return (
-                <div key={msg.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
-                  <div style={{
-                    padding: '12px 16px',
-                    borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                    background: isMine ? T.cyan : T.card,
-                    border: isMine ? 'none' : `1px solid ${T.border}`,
-                    color: isMine ? '#FFFFFF' : T.ink,
-                    fontFamily: "'Hanken Grotesk', sans-serif",
-                    fontSize: '14px',
-                    maxWidth: '72%',
-                  }}>
-                    {msg.body}
+            {(() => {
+              const items: React.ReactNode[] = []
+              let lastKey = ''
+              messages.forEach((msg, i) => {
+                const key = dayKey(msg.sent_at)
+                if (key !== lastKey) {
+                  lastKey = key
+                  items.push(
+                    <div key={`sep-${key}`} style={{ textAlign: 'center', margin: '2px 0' }}>
+                      <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3, background: 'rgba(0,0,0,0.04)', borderRadius: '99px', padding: '3px 10px' }}>
+                        {dateSeparatorLabel(msg.sent_at)}
+                      </span>
+                    </div>
+                  )
+                }
+                const isMine = msg.sender_id === currentUserId
+                items.push(
+                  <div key={msg.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
+                    <div style={{
+                      padding: '12px 16px',
+                      borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                      background: isMine ? T.cyan : T.card,
+                      border: isMine ? 'none' : `1px solid ${T.border}`,
+                      color: isMine ? '#FFFFFF' : T.ink,
+                      fontFamily: "'Hanken Grotesk', sans-serif",
+                      fontSize: '14px',
+                      maxWidth: '72%',
+                    }}>
+                      {msg.body}
+                      {isMine && (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                          {msg.read_at ? (
+                            <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
+                              <path d="M1 5 L4 8 L9 1" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M5 5 L8 8 L13 1" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          ) : (
+                            <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                              <path d="M1 5 L4 8 L11 1" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })
+              return items
+            })()}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '16px 24px', borderTop: `1px solid ${T.border}`, background: T.card, flexShrink: 0 }}>
