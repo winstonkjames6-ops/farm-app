@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/utils/supabase/client'
 import { useTrainerSport } from '../sport-context'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
@@ -177,9 +178,9 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function SaveButton() {
+function SaveButton({ onClick }: { onClick?: () => void }) {
   return (
-    <button style={{ width: '100%', height: '44px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 500, fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', marginTop: '20px' }}>
+    <button type="button" onClick={onClick} style={{ width: '100%', height: '44px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 500, fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', marginTop: '20px' }}>
       Save changes
     </button>
   )
@@ -269,13 +270,48 @@ function ProfilePhotoSection() {
 
 // ── Section: Basic info ────────────────────────────────────────────────────────
 
-function BasicInfoSection() {
-  const [fullName, setFullName] = useState('Marcus Torres')
+function BasicInfoSection({
+  initialFullName,
+  initialBio,
+  initialLocation,
+  onSave,
+}: {
+  initialFullName?: string
+  initialBio?: string
+  initialLocation?: string
+  onSave?: (fullName: string, bio: string, location: string) => Promise<void>
+}) {
+  const [fullName, setFullName] = useState(initialFullName ?? '')
   const [tagline, setTagline] = useState('')
-  const [bio, setBio] = useState('')
-  const [location, setLocation] = useState('')
+  const [bio, setBio] = useState(initialBio ?? '')
+  const [location, setLocation] = useState(initialLocation ?? '')
   const [experience, setExperience] = useState('')
   const [phone, setPhone] = useState('')
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [saveError, setSaveError] = useState('')
+
+  useEffect(() => {
+    if (initialFullName !== undefined) setFullName(initialFullName)
+  }, [initialFullName])
+  useEffect(() => {
+    if (initialBio !== undefined) setBio(initialBio)
+  }, [initialBio])
+  useEffect(() => {
+    if (initialLocation !== undefined) setLocation(initialLocation)
+  }, [initialLocation])
+
+  async function handleSave() {
+    if (!onSave) return
+    setSaveStatus('saving')
+    setSaveError('')
+    try {
+      await onSave(fullName, bio, location)
+      setSaveStatus('saved')
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Save failed')
+      setSaveStatus('error')
+    }
+  }
 
   const inputBase: React.CSSProperties = {
     width: '100%', height: '44px', borderRadius: '8px', border: '1px solid #E5E7EB',
@@ -318,7 +354,9 @@ function BasicInfoSection() {
           </div>
         </div>
       </div>
-      <SaveButton />
+      <SaveButton onClick={handleSave} />
+      {saveStatus === 'saved' && <div style={{ fontSize: '13px', color: '#10B981', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>Saved!</div>}
+      {saveStatus === 'error' && <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{saveError}</div>}
     </SectionCard>
   )
 }
@@ -399,11 +437,43 @@ function IntroVideoSection() {
 
 // ── Section: Specialties ───────────────────────────────────────────────────────
 
-function SpecialtiesSection({ primarySport, setPrimarySport }: { primarySport: string; setPrimarySport: (s: string) => void }) {
-  const [selectedSports, setSelectedSports] = useState<string[]>(['Soccer'])
+function SpecialtiesSection({
+  primarySport,
+  setPrimarySport,
+  initialSpecialty,
+  onSave,
+}: {
+  primarySport: string
+  setPrimarySport: (s: string) => void
+  initialSpecialty?: string
+  onSave?: (specialty: string) => Promise<void>
+}) {
+  const [selectedSports, setSelectedSports] = useState<string[]>([])
   const [selectedAges, setSelectedAges] = useState<string[]>(['U9-U10', 'U11-U12'])
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['In-Person'])
   const [pillPopover, setPillPopover] = useState<string | null>(null)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [saveError, setSaveError] = useState('')
+
+  useEffect(() => {
+    if (!initialSpecialty) return
+    setSelectedSports([initialSpecialty])
+    setPrimarySport(initialSpecialty.toLowerCase())
+  }, [initialSpecialty])
+
+  async function handleSave() {
+    if (!onSave) return
+    setSaveStatus('saving')
+    setSaveError('')
+    try {
+      const sportName = SPORTS.find((s) => s.toLowerCase() === primarySport) ?? primarySport
+      await onSave(sportName)
+      setSaveStatus('saved')
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Save failed')
+      setSaveStatus('error')
+    }
+  }
 
   function toggle(arr: string[], setArr: (a: string[]) => void, item: string) {
     setArr(arr.includes(item) ? arr.filter((x) => x !== item) : [...arr, item])
@@ -499,20 +569,47 @@ function SpecialtiesSection({ primarySport, setPrimarySport }: { primarySport: s
           </div>
         </div>
       </div>
-      <SaveButton />
+      <SaveButton onClick={handleSave} />
+      {saveStatus === 'saved' && <div style={{ fontSize: '13px', color: '#10B981', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>Saved!</div>}
+      {saveStatus === 'error' && <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{saveError}</div>}
     </SectionCard>
   )
 }
 
 // ── Section: Rate ──────────────────────────────────────────────────────────────
 
-function RateSection() {
-  const [hourlyRate, setHourlyRate] = useState('85')
+function RateSection({
+  initialHourlyRate,
+  onSave,
+}: {
+  initialHourlyRate?: string
+  onSave?: (rate: string) => Promise<void>
+}) {
+  const [hourlyRate, setHourlyRate] = useState(initialHourlyRate ?? '')
   const [selectedDurations, setSelectedDurations] = useState<string[]>(['60 min'])
   const [noticeTime, setNoticeTime] = useState('24 hours')
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [saveError, setSaveError] = useState('')
+
+  useEffect(() => {
+    if (initialHourlyRate !== undefined) setHourlyRate(initialHourlyRate)
+  }, [initialHourlyRate])
 
   function toggleDur(dur: string) {
     setSelectedDurations((prev) => prev.includes(dur) ? prev.filter((d) => d !== dur) : [...prev, dur])
+  }
+
+  async function handleSave() {
+    if (!onSave) return
+    setSaveStatus('saving')
+    setSaveError('')
+    try {
+      await onSave(hourlyRate)
+      setSaveStatus('saved')
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Save failed')
+      setSaveStatus('error')
+    }
   }
 
   return (
@@ -547,7 +644,9 @@ function RateSection() {
           </select>
         </div>
       </div>
-      <SaveButton />
+      <SaveButton onClick={handleSave} />
+      {saveStatus === 'saved' && <div style={{ fontSize: '13px', color: '#10B981', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>Saved!</div>}
+      {saveStatus === 'error' && <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{saveError}</div>}
     </SectionCard>
   )
 }
@@ -1100,6 +1199,57 @@ export default function TrainerProfilePage() {
   const { primarySport, setPrimarySport } = useTrainerSport()
   const [isEditing, setIsEditing] = useState(false)
 
+  const [userId, setUserId] = useState<string | null>(null)
+  const [initName, setInitName] = useState('')
+  const [initBio, setInitBio] = useState('')
+  const [initLocation, setInitLocation] = useState('')
+  const [initRate, setInitRate] = useState('')
+  const [initSpecialty, setInitSpecialty] = useState('')
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      setUserId(user.id)
+      const [profileRes, trainerRes] = await Promise.all([
+        supabase.from('profiles').select('name').eq('id', user.id).single(),
+        supabase.from('trainers').select('specialty, bio, rate, location').eq('profile_id', user.id).single(),
+      ])
+      if (profileRes.data?.name) setInitName(profileRes.data.name)
+      if (trainerRes.data?.bio) setInitBio(trainerRes.data.bio)
+      if (trainerRes.data?.location) setInitLocation(trainerRes.data.location)
+      if (trainerRes.data?.rate != null) setInitRate(String(trainerRes.data.rate))
+      if (trainerRes.data?.specialty) setInitSpecialty(trainerRes.data.specialty)
+    }
+    load()
+  }, [])
+
+  async function saveBasicInfo(fullName: string, bio: string, location: string) {
+    if (!userId) throw new Error('Not authenticated')
+    const supabase = createClient()
+    const [profileRes, trainerRes] = await Promise.all([
+      supabase.from('profiles').update({ name: fullName }).eq('id', userId),
+      supabase.from('trainers').update({ bio, location }).eq('profile_id', userId),
+    ])
+    if (profileRes.error) throw new Error(profileRes.error.message)
+    if (trainerRes.error) throw new Error(trainerRes.error.message)
+  }
+
+  async function saveRate(rate: string) {
+    if (!userId) throw new Error('Not authenticated')
+    const supabase = createClient()
+    const { error } = await supabase.from('trainers').update({ rate: Number(rate) }).eq('profile_id', userId)
+    if (error) throw new Error(error.message)
+  }
+
+  async function saveSpecialty(specialty: string) {
+    if (!userId) throw new Error('Not authenticated')
+    const supabase = createClient()
+    const { error } = await supabase.from('trainers').update({ specialty }).eq('profile_id', userId)
+    if (error) throw new Error(error.message)
+  }
+
   return (
     <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '672px', margin: '0 auto' }}>
 
@@ -1122,11 +1272,24 @@ export default function TrainerProfilePage() {
               >← Done editing</button>
             </div>
             <ProfilePhotoSection />
-            <BasicInfoSection />
+            <BasicInfoSection
+              initialFullName={initName}
+              initialBio={initBio}
+              initialLocation={initLocation}
+              onSave={saveBasicInfo}
+            />
             <SocialLinksSection />
             <IntroVideoSection />
-            <SpecialtiesSection primarySport={primarySport} setPrimarySport={setPrimarySport} />
-            <RateSection />
+            <SpecialtiesSection
+              primarySport={primarySport}
+              setPrimarySport={setPrimarySport}
+              initialSpecialty={initSpecialty}
+              onSave={saveSpecialty}
+            />
+            <RateSection
+              initialHourlyRate={initRate}
+              onSave={saveRate}
+            />
             <AvailabilitySection />
             <CredentialsSection />
             <ReviewsSection />
