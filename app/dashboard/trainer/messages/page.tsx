@@ -35,6 +35,7 @@ function MessagesViewInner() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputVal, setInputVal] = useState('')
   const [sendError, setSendError] = useState('')
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     if (!withId) return
@@ -75,6 +76,7 @@ function MessagesViewInner() {
       ])
       if (profile) setOtherName(profile.name)
       if (msgs) setMessages(msgs)
+      setReady(true)
     }
     load()
 
@@ -166,11 +168,13 @@ function MessagesViewInner() {
                 onChange={(e) => setInputVal(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') sendMessage() }}
                 placeholder={`Message ${otherName || '…'}...`}
-                style={{ flex: 1, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '999px', padding: '12px 20px', fontSize: '16px', fontFamily: "'Hanken Grotesk', sans-serif", outline: 'none' }}
+                disabled={!ready}
+                style={{ flex: 1, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '999px', padding: '12px 20px', fontSize: '16px', fontFamily: "'Hanken Grotesk', sans-serif", outline: 'none', opacity: ready ? 1 : 0.45, cursor: ready ? 'text' : 'not-allowed' }}
               />
               <button
                 onClick={sendMessage}
-                style={{ width: 44, height: 44, borderRadius: '999px', flexShrink: 0, background: T.cyan, color: '#FFFFFF', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                disabled={!ready}
+                style={{ width: 44, height: 44, borderRadius: '999px', flexShrink: 0, background: T.cyan, color: '#FFFFFF', border: 'none', cursor: ready ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: ready ? 1 : 0.45 }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="22" y1="2" x2="11" y2="13" />

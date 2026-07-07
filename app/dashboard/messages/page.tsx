@@ -56,6 +56,7 @@ function MessagesPageInner() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputVal, setInputVal] = useState('')
   const [sendError, setSendError] = useState('')
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     if (!withId) return
@@ -96,6 +97,7 @@ function MessagesPageInner() {
       ])
       if (profile) setOtherName(profile.name)
       if (msgs) setMessages(msgs)
+      setReady(true)
     }
     load()
 
@@ -187,11 +189,13 @@ function MessagesPageInner() {
                 onChange={(e) => setInputVal(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') sendMessage() }}
                 placeholder="Type a message..."
-                style={{ flex: 1, background: T.surface2, border: '1px solid rgba(0,0,0,0.10)', borderRadius: '10px', color: T.ink, padding: '11px 16px', fontSize: 14, outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif" }}
+                disabled={!ready}
+                style={{ flex: 1, background: T.surface2, border: '1px solid rgba(0,0,0,0.10)', borderRadius: '10px', color: T.ink, padding: '11px 16px', fontSize: 14, outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif", opacity: ready ? 1 : 0.45, cursor: ready ? 'text' : 'not-allowed' }}
               />
               <button
                 onClick={sendMessage}
-                style={{ background: T.accent, color: '#FFFFFF', border: 'none', cursor: 'pointer', borderRadius: '10px', padding: '11px 22px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: '.08em', flexShrink: 0 }}
+                disabled={!ready}
+                style={{ background: T.accent, color: '#FFFFFF', border: 'none', cursor: ready ? 'pointer' : 'not-allowed', borderRadius: '10px', padding: '11px 22px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: '.08em', flexShrink: 0, opacity: ready ? 1 : 0.45 }}
               >
                 SEND
               </button>
