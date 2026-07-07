@@ -132,6 +132,10 @@ function scrollTo(id: string) {
   if (el) el.scrollIntoView({ behavior: 'smooth' })
 }
 
+function getInitials(fullName: string): string {
+  return fullName.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '?'
+}
+
 function StarRow({ rating, size = 16 }: { rating: number; size?: number }) {
   return (
     <div style={{ display: 'flex', gap: '2px' }}>
@@ -199,22 +203,23 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: () => void }) {
 
 // ── Section: Profile photo ─────────────────────────────────────────────────────
 
-function ProfilePhotoSection() {
+function ProfilePhotoSection({ fullName, sport }: { fullName: string; sport: string }) {
   const profileStrength = PROFILE_ITEMS.filter((i) => i.completed).reduce((sum, i) => sum + parseInt(i.boost), 0)
   const [strengthExpanded, setStrengthExpanded] = useState(false)
+  const initials = getInitials(fullName)
 
   return (
     <SectionCard id="section-photo">
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
         <div style={{ position: 'relative', flexShrink: 0 }}>
-          <div style={{ width: 120, height: 120, borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '36px', color: '#FFFFFF' }}>MT</div>
+          <div style={{ width: 120, height: 120, borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '36px', color: '#FFFFFF' }}>{initials}</div>
           <button style={{ position: 'absolute', bottom: '4px', right: '4px', width: '32px', height: '32px', borderRadius: '999px', background: T.cyan, border: '2px solid #FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
             <Camera size={16} color="#FFFFFF" />
           </button>
         </div>
         <div style={{ flex: 1, minWidth: '180px' }}>
-          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '24px', color: T.ink, marginBottom: '8px' }}>Marcus Torres</div>
-          <div style={{ display: 'inline-block', background: 'rgba(0,188,200,0.1)', color: T.cyan, borderRadius: '6px', padding: '4px 12px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '12px' }}>Soccer</div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '24px', color: T.ink, marginBottom: '8px' }}>{fullName || 'Your Name'}</div>
+          <div style={{ display: 'inline-block', background: 'rgba(0,188,200,0.1)', color: T.cyan, borderRadius: '6px', padding: '4px 12px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '12px' }}>{sport || 'No sport set'}</div>
           <div
             onClick={() => setStrengthExpanded((e) => !e)}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', cursor: 'pointer', maxWidth: '320px' }}
@@ -1011,7 +1016,8 @@ function DangerZoneSection({ paused, setPaused }: { paused: boolean; setPaused: 
 
 // ── View mode ──────────────────────────────────────────────────────────────────
 
-function TrainerViewMode({ onEdit }: { onEdit: () => void }) {
+function TrainerViewMode({ onEdit, fullName, location, sport }: { onEdit: () => void; fullName: string; location: string; sport: string }) {
+  const initials = getInitials(fullName)
   const avgRating = (MOCK_REVIEWS.reduce((s, r) => s + r.rating, 0) / MOCK_REVIEWS.length).toFixed(1)
   const reviewCount = MOCK_REVIEWS.length
 
@@ -1047,7 +1053,7 @@ function TrainerViewMode({ onEdit }: { onEdit: () => void }) {
               fontFamily: "'Barlow Condensed', sans-serif",
               fontWeight: 700, fontSize: '24px', color: '#FFFFFF',
               boxShadow: '0 4px 12px rgba(0,188,200,0.3)',
-            }}>MT</div>
+            }}>{initials}</div>
 
             <div>
               {/* Name */}
@@ -1055,7 +1061,7 @@ function TrainerViewMode({ onEdit }: { onEdit: () => void }) {
                 fontFamily: "'Archivo Black', 'Archivo', sans-serif",
                 fontWeight: 900, fontSize: '22px', color: '#111827',
                 lineHeight: 1.1, marginBottom: '4px',
-              }}>Marcus Torres</div>
+              }}>{fullName || 'Your Name'}</div>
 
               {/* Location row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
@@ -1065,7 +1071,7 @@ function TrainerViewMode({ onEdit }: { onEdit: () => void }) {
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
                 <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: '#6B7280' }}>
-                  No location set
+                  {location || 'No location set'}
                 </span>
               </div>
 
@@ -1075,7 +1081,7 @@ function TrainerViewMode({ onEdit }: { onEdit: () => void }) {
                 background: 'rgba(0,188,200,0.1)', color: T.cyan,
                 borderRadius: '6px', padding: '3px 10px',
                 fontSize: '12px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600,
-              }}>Soccer</div>
+              }}>{sport || 'No sport set'}</div>
             </div>
           </div>
 
@@ -1271,7 +1277,7 @@ export default function TrainerProfilePage() {
                 style={{ border: '1px solid rgba(0,0,0,0.12)', color: T.ink2, background: 'transparent', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px', flexShrink: 0 }}
               >← Done editing</button>
             </div>
-            <ProfilePhotoSection />
+            <ProfilePhotoSection fullName={initName} sport={SPORTS.find((s) => s.toLowerCase() === primarySport) ?? primarySport} />
             <BasicInfoSection
               initialFullName={initName}
               initialBio={initBio}
@@ -1298,7 +1304,12 @@ export default function TrainerProfilePage() {
             <DangerZoneSection paused={paused} setPaused={setPaused} />
           </div>
         ) : (
-          <TrainerViewMode onEdit={() => setIsEditing(true)} />
+          <TrainerViewMode
+            onEdit={() => setIsEditing(true)}
+            fullName={initName}
+            location={initLocation}
+            sport={SPORTS.find((s) => s.toLowerCase() === primarySport) ?? primarySport}
+          />
         )}
       </motion.div>
     </div>
