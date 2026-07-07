@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/utils/supabase/client'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -13,20 +14,26 @@ const T = {
   ink3: '#9CA3AF',
 }
 
-// ── Mock data ──────────────────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────────
 
-const INITIAL_UPCOMING = [
-  { id: 1, date: 'Mon Jun 30', trainer: 'Marcus Rivera', sport: 'Soccer', time: '9:00 AM', format: 'In-Person' },
-  { id: 2, date: 'Wed Jul 2',  trainer: 'Marcus Rivera', sport: 'Soccer', time: '4:00 PM', format: 'In-Person' },
-]
+type UpcomingSession = {
+  id: string
+  date: string
+  trainer: string
+  sport: string
+  time: string
+  format: string
+}
 
-const PAST = [
-  { date: 'Jun 23', trainer: 'Marcus Rivera', sport: 'Soccer', time: '9:00 AM', format: 'In-Person', rating: 5 },
-  { date: 'Jun 16', trainer: 'Marcus Rivera', sport: 'Soccer', time: '9:00 AM', format: 'In-Person', rating: 5 },
-  { date: 'Jun 9',  trainer: 'Marcus Rivera', sport: 'Soccer', time: '4:00 PM', format: 'Remote',    rating: 5 },
-  { date: 'Jun 2',  trainer: 'Marcus Rivera', sport: 'Soccer', time: '9:00 AM', format: 'In-Person', rating: 4 },
-  { date: 'May 26', trainer: 'Marcus Rivera', sport: 'Soccer', time: '9:00 AM', format: 'In-Person', rating: 5 },
-]
+type PastSession = {
+  id: string
+  date: string
+  trainer: string
+  sport: string
+  time: string
+  format: string
+  rating: number
+}
 
 // ── Stars ──────────────────────────────────────────────────────────────────────
 
@@ -78,15 +85,106 @@ const sectionLabel: React.CSSProperties = {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SessionsPage() {
-  const [upcoming, setUpcoming] = useState(INITIAL_UPCOMING)
+  const [upcoming, setUpcoming] = useState<UpcomingSession[]>([])
+  const [past, setPast] = useState<PastSession[]>([])
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  function cancelSession(id: number) {
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: athleteRow, error: athleteErr } = await supabase
+        .from('athletes')
+        .select('id, sport')
+        .eq('profile_id', user.id)
+        .single()
+
+      if (athleteErr) {
+        console.error('[sessions] athletes fetch:', athleteErr.message)
+        setLoadError(athleteErr.message)
+        return
+      }
+      if (!athleteRow) return
+
+      const athleteId = (athleteRow as any).id
+      const sport: string = (athleteRow as any).sport ?? ''
+
+      const { data: bookings, error: bookingErr } = await supabase
+        .from('bookings')
+        .select('id, format, session_time, status, rating, trainers!trainer_id(profiles(name))')
+        .eq('athlete_id', athleteId)
+        .order('session_time', { ascending: false })
+
+      if (bookingErr) {
+        console.error('[sessions] bookings fetch:', bookingErr.message)
+        setLoadError(bookingErr.message)
+        return
+      }
+      if (!bookings) return
+
+      const now = new Date().toISOString()
+      const rows = bookings as any[]
+
+      const upcomingRows = rows
+        .filter(b => b.session_time > now && b.status !== 'cancelled')
+        .sort((a, b) => a.session_time.localeCompare(b.session_time))
+
+      const pastRows = rows
+        .filter(b => b.session_time <= now)
+        .sort((a, b) => b.session_time.localeCompare(a.session_time))
+
+      setUpcoming(upcomingRows.map(b => {
+        const dt = new Date(b.session_time)
+        return {
+          id: b.id,
+          date: dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          trainer: b.trainers?.profiles?.name ?? 'Trainer',
+          sport,
+          time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+          format: b.format === 'Remote Video' ? 'Remote' : (b.format ?? 'In-Person'),
+        }
+      }))
+
+      setPast(pastRows.map(b => {
+        const dt = new Date(b.session_time)
+        return {
+          id: b.id,
+          date: dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          trainer: b.trainers?.profiles?.name ?? 'Trainer',
+          sport,
+          time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+          format: b.format === 'Remote Video' ? 'Remote' : (b.format ?? 'In-Person'),
+          rating: b.rating ?? 0,
+        }
+      }))
+    }
+    load()
+  }, [])
+
+  async function cancelSession(id: string) {
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status: 'cancelled' })
+      .eq('id', id)
+    if (error) {
+      console.error('[sessions] cancel booking:', error.message)
+      return
+    }
     setUpcoming((prev) => prev.filter((s) => s.id !== id))
   }
 
   return (
     <div style={{ color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '32px 24px 80px' }}>
+
+        {loadError && (
+          <div style={{ marginBottom: '16px', padding: '12px 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: '#DC2626' }}>
+            Error loading sessions: {loadError}
+          </div>
+        )}
 
         {/* Section 1 — Upcoming sessions */}
         <div style={glassCard}>
@@ -158,44 +256,50 @@ export default function SessionsPage() {
         <div style={{ ...glassCard, marginTop: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
             <span style={sectionLabel}>PAST SESSIONS</span>
-            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>12 total</span>
+            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>{past.length} total</span>
           </div>
 
-          {PAST.map((s, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '16px 0',
-                borderBottom: i < PAST.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
-                minHeight: '44px',
-              }}
-            >
-              {/* Date + trainer */}
-              <div style={{ flex: '0 0 130px', minWidth: 0 }}>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.ink, lineHeight: 1.2 }}>{s.date}</div>
-                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, marginTop: '2px' }}>{s.trainer}</div>
-              </div>
-
-              {/* Sport badge */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                <SportBadge sport={s.sport} />
-              </div>
-
-              {/* Time + format */}
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>{s.time}</div>
-                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3, marginTop: '2px' }}>{s.format}</div>
-              </div>
-
-              {/* Star rating */}
-              <div style={{ flexShrink: 0 }}>
-                <Stars rating={s.rating} />
-              </div>
+          {past.length === 0 ? (
+            <div style={{ padding: '24px 0 8px', textAlign: 'center', color: T.ink3, fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
+              No past sessions
             </div>
-          ))}
+          ) : (
+            past.map((s, i) => (
+              <div
+                key={s.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '16px 0',
+                  borderBottom: i < past.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
+                  minHeight: '44px',
+                }}
+              >
+                {/* Date + trainer */}
+                <div style={{ flex: '0 0 130px', minWidth: 0 }}>
+                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.ink, lineHeight: 1.2 }}>{s.date}</div>
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, marginTop: '2px' }}>{s.trainer}</div>
+                </div>
+
+                {/* Sport badge */}
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                  <SportBadge sport={s.sport} />
+                </div>
+
+                {/* Time + format */}
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>{s.time}</div>
+                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3, marginTop: '2px' }}>{s.format}</div>
+                </div>
+
+                {/* Star rating */}
+                <div style={{ flexShrink: 0 }}>
+                  <Stars rating={s.rating} />
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
       </div>

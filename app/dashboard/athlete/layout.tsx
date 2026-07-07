@@ -5,14 +5,20 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
 
-// ── Mock data ──────────────────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────────
 
-const MOCK_ATHLETE = {
-  name: 'Liam Chen',
-  initials: 'LC',
-  sport: 'Soccer',
-  parentName: 'Sarah Chen',
+type AthleteIdentity = {
+  name: string
+  initials: string
+  sport: string
+  parentName: string
+}
+
+type NextSessionInfo = {
+  label: string
+  trainerName: string
 }
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
@@ -100,10 +106,14 @@ function Sidebar({
   active,
   sidebarOpen,
   onToggle,
+  identity,
+  nextSession,
 }: {
   active: string
   sidebarOpen: boolean
   onToggle: () => void
+  identity: AthleteIdentity
+  nextSession: NextSessionInfo | null
 }) {
   return (
     <motion.div
@@ -192,12 +202,14 @@ function Sidebar({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 24px', color: T.cyan }}>
                 <IconCalendar size={16} />
                 <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: '#374151' }}>
-                  Mon, Jun 30 · 9:00 AM
+                  {nextSession?.label ?? 'No upcoming sessions'}
                 </span>
               </div>
-              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, padding: '0 24px' }}>
-                with Marcus Rivera
-              </div>
+              {nextSession && (
+                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, padding: '0 24px' }}>
+                  with {nextSession.trainerName}
+                </div>
+              )}
             </div>
           ) : (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0', color: T.cyan }}>
@@ -211,13 +223,13 @@ function Sidebar({
         {/* Athlete info */}
         <div style={{ padding: '16px 12px 24px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: sidebarOpen ? 'flex-start' : 'center', flexShrink: 0 }}>
           <div style={{ width: 40, height: 40, borderRadius: '999px', background: T.cyanLight, border: `2px solid ${T.cyanBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', color: T.cyan, flexShrink: 0 }}>
-            {MOCK_ATHLETE.initials}
+            {identity.initials}
           </div>
           {sidebarOpen && (
             <div style={{ overflow: 'hidden' }}>
-              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: T.ink, lineHeight: 1.3, whiteSpace: 'nowrap' }}>{MOCK_ATHLETE.name}</div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: T.ink, lineHeight: 1.3, whiteSpace: 'nowrap' }}>{identity.name}</div>
               <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, whiteSpace: 'nowrap' }}>Athlete</div>
-              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3, whiteSpace: 'nowrap', marginTop: '2px' }}>Parent: {MOCK_ATHLETE.parentName}</div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3, whiteSpace: 'nowrap', marginTop: '2px' }}>Parent: {identity.parentName}</div>
             </div>
           )}
         </div>
@@ -268,7 +280,7 @@ function DesktopHeader({ sidebarOpen }: { sidebarOpen: boolean }) {
 
 // ── Mobile header with dropdown ────────────────────────────────────────────────
 
-function MobileHeader({ activeNav }: { activeNav: string }) {
+function MobileHeader({ activeNav, initials }: { activeNav: string; initials: string }) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -277,7 +289,7 @@ function MobileHeader({ activeNav }: { activeNav: string }) {
         <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: T.cyan, letterSpacing: '0.12em', textTransform: 'uppercase' }}>FARM</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '36px', height: '36px', borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '13px', color: '#FFFFFF', letterSpacing: '0.04em' }}>
-            {MOCK_ATHLETE.initials}
+            {initials}
           </div>
           <button onClick={() => setIsOpen((o) => !o)} style={{ background: 'transparent', border: 'none', color: '#374151', cursor: 'pointer', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isOpen ? <IconX /> : <IconMenu />}
@@ -340,12 +352,80 @@ export default function AthleteLayout({ children }: { children: React.ReactNode 
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const pathname = usePathname()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
+  const [identity, setIdentity] = useState<AthleteIdentity>({ name: '', initials: '', sport: '', parentName: '' })
+  const [nextSession, setNextSession] = useState<NextSessionInfo | null>(null)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
+    async function loadIdentity() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: athleteRow, error: athleteErr } = await supabase
+        .from('athletes')
+        .select('id, name, sport, parent_id')
+        .eq('profile_id', user.id)
+        .single()
+
+      if (athleteErr) {
+        console.error('[athlete layout] athletes fetch:', athleteErr.message)
+        return
+      }
+      if (!athleteRow) return
+
+      const rawName: string = (athleteRow as any).name ?? ''
+      const initials = rawName.trim().split(/\s+/).slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? '').join('')
+
+      let parentName = ''
+      const parentId = (athleteRow as any).parent_id
+      if (parentId) {
+        const { data: parentRow, error: parentErr } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', parentId)
+          .single()
+        if (parentErr) {
+          console.error('[athlete layout] parent profile fetch:', parentErr.message)
+        } else {
+          parentName = (parentRow as any)?.name ?? ''
+        }
+      }
+
+      setIdentity({ name: rawName, initials, sport: (athleteRow as any).sport ?? '', parentName })
+
+      const now = new Date().toISOString()
+      const { data: upcoming, error: bookingErr } = await supabase
+        .from('bookings')
+        .select('session_time, trainers!trainer_id(profiles(name))')
+        .eq('athlete_id', (athleteRow as any).id)
+        .gt('session_time', now)
+        .order('session_time', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+      if (bookingErr) {
+        console.error('[athlete layout] next session fetch:', bookingErr.message)
+        return
+      }
+
+      if (upcoming) {
+        const dt = new Date((upcoming as any).session_time)
+        const label =
+          dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) +
+          ' · ' +
+          dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+        const trainerName = (upcoming as any).trainers?.profiles?.name ?? 'Trainer'
+        setNextSession({ label, trainerName })
+      }
+    }
+    loadIdentity()
   }, [])
 
   const getActiveNav = () => {
@@ -370,13 +450,15 @@ export default function AthleteLayout({ children }: { children: React.ReactNode 
         background: 'rgba(248,248,246,0.60)', pointerEvents: 'none',
       }} />
       {isMobile ? (
-        <MobileHeader activeNav={activeNav} />
+        <MobileHeader activeNav={activeNav} initials={identity.initials} />
       ) : (
         <>
           <Sidebar
             active={activeNav}
             sidebarOpen={sidebarOpen}
             onToggle={() => setSidebarOpen((o) => !o)}
+            identity={identity}
+            nextSession={nextSession}
           />
           <DesktopHeader sidebarOpen={sidebarOpen} />
         </>
