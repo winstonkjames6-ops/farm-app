@@ -9,13 +9,13 @@ import { createClient } from '@/utils/supabase/client'
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
 const T = {
-  bg: '#09090B',
-  surface: '#111113',
-  surface2: '#18181B',
-  border: 'rgba(255,255,255,0.08)',
-  ink: '#FAFAFA',
-  ink2: '#A1A1AA',
-  ink3: '#71717A',
+  bg: '#F8F8F6',
+  surface: '#FFFFFF',
+  surface2: '#F0EFEB',
+  ink: '#1A1A1A',
+  ink2: '#4A4A4A',
+  ink3: '#9A9A9A',
+  border: 'rgba(0,0,0,0.08)',
   yellow: '#00BCC8',
 }
 
@@ -36,6 +36,13 @@ type SessionCtx = {
   date: string
   trainerId: string
 }
+
+// shared bg + scrim helpers
+const turfBg = `url('/backgrounds/turf-bg.jpg') center/cover no-repeat, ${T.bg}`
+const scrimBase = {
+  minHeight: '100vh',
+  background: 'rgba(248,248,246,0.92)',
+} as const
 
 // ── Inner page (needs Suspense for useSearchParams) ───────────────────────────
 
@@ -173,23 +180,24 @@ function ReviewPageInner() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: T.bg,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
+      <div style={{ minHeight: '100vh', background: turfBg }}>
         <div
           style={{
-            fontFamily: "'Hanken Grotesk', sans-serif",
-            fontSize: '14px',
-            color: T.ink3,
+            ...scrimBase,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          Loading…
+          <div
+            style={{
+              fontFamily: "'Hanken Grotesk', sans-serif",
+              fontSize: '14px',
+              color: T.ink3,
+            }}
+          >
+            Loading…
+          </div>
         </div>
       </div>
     )
@@ -199,63 +207,65 @@ function ReviewPageInner() {
 
   if (loadError) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: T.bg,
-          padding: '48px 20px 80px',
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ width: '100%', maxWidth: 520 }}>
-          <Link
-            href="/dashboard"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700,
-              fontSize: '12px',
-              letterSpacing: '0.1em',
-              color: T.ink3,
-              textDecoration: 'none',
-              textTransform: 'uppercase',
-              marginBottom: '32px',
-            }}
-          >
-            ← Dashboard
-          </Link>
-          <div
-            style={{
-              padding: '24px',
-              background: T.surface,
-              border: `1px solid ${T.border}`,
-            }}
-          >
-            <div
+      <div style={{ minHeight: '100vh', background: turfBg }}>
+        <div
+          style={{
+            ...scrimBase,
+            padding: '48px 20px 80px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+          }}
+        >
+          <div style={{ width: '100%', maxWidth: 520 }}>
+            <Link
+              href="/dashboard"
               style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 700,
-                fontSize: '18px',
-                color: T.ink,
+                fontSize: '12px',
+                letterSpacing: '0.1em',
+                color: T.ink3,
+                textDecoration: 'none',
                 textTransform: 'uppercase',
-                letterSpacing: '0.03em',
-                marginBottom: '8px',
+                marginBottom: '32px',
               }}
             >
-              Unable to Load Review
-            </div>
+              ← Dashboard
+            </Link>
             <div
               style={{
-                fontFamily: "'Hanken Grotesk', sans-serif",
-                fontSize: '14px',
-                color: T.ink2,
+                padding: '24px',
+                background: T.surface,
+                border: `1px solid ${T.border}`,
+                borderRadius: '16px',
               }}
             >
-              {loadError}
+              <div
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: T.ink,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.03em',
+                  marginBottom: '8px',
+                }}
+              >
+                Unable to Load Review
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontSize: '14px',
+                  color: T.ink2,
+                }}
+              >
+                {loadError}
+              </div>
             </div>
           </div>
         </div>
@@ -267,152 +277,36 @@ function ReviewPageInner() {
 
   if (alreadyReviewed) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: T.bg,
-          padding: '48px 20px 80px',
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'center',
-        }}
-      >
-        <div style={{ width: '100%', maxWidth: 520 }}>
-          <Link
-            href="/dashboard"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700,
-              fontSize: '12px',
-              letterSpacing: '0.1em',
-              color: T.ink3,
-              textDecoration: 'none',
-              textTransform: 'uppercase',
-              marginBottom: '32px',
-            }}
-          >
-            ← Dashboard
-          </Link>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              paddingTop: '60px',
-              gap: '20px',
-            }}
-          >
-            <div
-              style={{
-                width: 72,
-                height: 72,
-                background: 'rgba(0,188,200,0.10)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={T.yellow} strokeWidth="2.5" strokeLinecap="square">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-            <div>
-              <div
-                style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontWeight: 800,
-                  fontSize: '32px',
-                  color: T.ink,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.02em',
-                  lineHeight: 1.1,
-                  marginBottom: '10px',
-                }}
-              >
-                Already Reviewed.
-              </div>
-              <div
-                style={{
-                  fontFamily: "'Hanken Grotesk', sans-serif",
-                  fontSize: '15px',
-                  color: T.ink2,
-                  lineHeight: 1.55,
-                }}
-              >
-                You've already submitted a review for this session.
-              </div>
-            </div>
+      <div style={{ minHeight: '100vh', background: turfBg }}>
+        <div
+          style={{
+            ...scrimBase,
+            padding: '48px 20px 80px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+          }}
+        >
+          <div style={{ width: '100%', maxWidth: 520 }}>
             <Link
               href="/dashboard"
               style={{
-                marginTop: '8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 700,
-                fontSize: '13px',
-                letterSpacing: '0.08em',
-                color: T.yellow,
+                fontSize: '12px',
+                letterSpacing: '0.1em',
+                color: T.ink3,
                 textDecoration: 'none',
                 textTransform: 'uppercase',
-                borderBottom: `1px solid ${T.yellow}`,
-                paddingBottom: '2px',
+                marginBottom: '32px',
               }}
             >
-              Back to Sessions →
+              ← Dashboard
             </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // ── Form ──────────────────────────────────────────────────────────────────
-
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: T.bg,
-        padding: '48px 20px 80px',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: 520 }}>
-        {/* Back */}
-        {!submitted && (
-          <Link
-            href="/dashboard"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700,
-              fontSize: '12px',
-              letterSpacing: '0.1em',
-              color: T.ink3,
-              textDecoration: 'none',
-              textTransform: 'uppercase',
-              marginBottom: '32px',
-            }}
-          >
-            ← Dashboard
-          </Link>
-        )}
-
-        <AnimatePresence mode="wait">
-          {submitted ? (
-            // ── Success state ─────────────────────────────────────────────
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.32 }}
+            <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -422,12 +316,13 @@ function ReviewPageInner() {
                 gap: '20px',
               }}
             >
-              {/* Checkmark */}
               <div
                 style={{
                   width: 72,
                   height: 72,
                   background: 'rgba(0,188,200,0.10)',
+                  border: '1px solid rgba(0,188,200,0.18)',
+                  borderRadius: '16px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -437,7 +332,6 @@ function ReviewPageInner() {
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
-
               <div>
                 <div
                   style={{
@@ -451,7 +345,7 @@ function ReviewPageInner() {
                     marginBottom: '10px',
                   }}
                 >
-                  Review Submitted.
+                  Already Reviewed.
                 </div>
                 <div
                   style={{
@@ -461,10 +355,9 @@ function ReviewPageInner() {
                     lineHeight: 1.55,
                   }}
                 >
-                  Thank you for your feedback.
+                  You've already submitted a review for this session.
                 </div>
               </div>
-
               <Link
                 href="/dashboard"
                 style={{
@@ -480,284 +373,413 @@ function ReviewPageInner() {
                   paddingBottom: '2px',
                 }}
               >
-                Back to Dashboard →
+                Back to Sessions →
               </Link>
-            </motion.div>
-          ) : (
-            // ── Form ──────────────────────────────────────────────────────
-            <motion.div
-              key="form"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {/* Headline */}
-              <h1
-                style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontWeight: 800,
-                  fontSize: 'clamp(38px, 8vw, 60px)',
-                  color: T.ink,
-                  textTransform: 'uppercase',
-                  letterSpacing: '-0.01em',
-                  lineHeight: 1,
-                  margin: '0 0 28px',
-                }}
-              >
-                Rate Your
-                <br />
-                Session
-              </h1>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-              {/* Trainer card */}
-              <div
+  // ── Form ──────────────────────────────────────────────────────────────────
+
+  return (
+    <div style={{ minHeight: '100vh', background: turfBg }}>
+      <div
+        style={{
+          ...scrimBase,
+          padding: '48px 20px 80px',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+        }}
+      >
+        <div style={{ width: '100%', maxWidth: 520 }}>
+          {/* Back */}
+          {!submitted && (
+            <Link
+              href="/dashboard"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                fontSize: '12px',
+                letterSpacing: '0.1em',
+                color: T.ink3,
+                textDecoration: 'none',
+                textTransform: 'uppercase',
+                marginBottom: '32px',
+              }}
+            >
+              ← Dashboard
+            </Link>
+          )}
+
+          <AnimatePresence mode="wait">
+            {submitted ? (
+              // ── Success state ─────────────────────────────────────────────
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.32 }}
                 style={{
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '14px',
-                  background: T.surface,
-                  border: `1px solid ${T.border}`,
-                  padding: '16px 18px',
-                  marginBottom: '32px',
+                  textAlign: 'center',
+                  paddingTop: '60px',
+                  gap: '20px',
                 }}
               >
+                {/* Checkmark */}
                 <div
                   style={{
-                    width: 48,
-                    height: 48,
-                    background: T.surface2,
-                    border: `1px solid ${T.border}`,
+                    width: 72,
+                    height: 72,
+                    background: 'rgba(0,188,200,0.10)',
+                    border: '1px solid rgba(0,188,200,0.18)',
+                    borderRadius: '16px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontWeight: 700,
-                    fontSize: '16px',
-                    color: T.yellow,
-                    letterSpacing: '0.04em',
-                    flexShrink: 0,
                   }}
                 >
-                  {ctx?.initials}
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={T.yellow} strokeWidth="2.5" strokeLinecap="square">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                 </div>
+
                 <div>
                   <div
                     style={{
                       fontFamily: "'Barlow Condensed', sans-serif",
-                      fontWeight: 700,
-                      fontSize: '16px',
+                      fontWeight: 800,
+                      fontSize: '32px',
                       color: T.ink,
                       textTransform: 'uppercase',
-                      letterSpacing: '0.03em',
+                      letterSpacing: '0.02em',
+                      lineHeight: 1.1,
+                      marginBottom: '10px',
                     }}
                   >
-                    {ctx?.trainerName}
+                    Review Submitted.
                   </div>
                   <div
                     style={{
                       fontFamily: "'Hanken Grotesk', sans-serif",
-                      fontSize: '13px',
+                      fontSize: '15px',
                       color: T.ink2,
-                      marginTop: '2px',
+                      lineHeight: 1.55,
                     }}
                   >
-                    {ctx?.sport} · {ctx?.date}
+                    Thank you for your feedback.
                   </div>
                 </div>
-              </div>
 
-              {/* Star rating */}
-              <div style={{ marginBottom: '28px' }}>
-                <div
+                <Link
+                  href="/dashboard"
                   style={{
+                    marginTop: '8px',
                     fontFamily: "'Barlow Condensed', sans-serif",
                     fontWeight: 700,
-                    fontSize: '11px',
-                    letterSpacing: '0.12em',
-                    color: T.ink3,
+                    fontSize: '13px',
+                    letterSpacing: '0.08em',
+                    color: T.yellow,
+                    textDecoration: 'none',
                     textTransform: 'uppercase',
-                    marginBottom: '14px',
+                    borderBottom: `1px solid ${T.yellow}`,
+                    paddingBottom: '2px',
                   }}
                 >
-                  Your Rating
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setRating(star)}
-                      onMouseEnter={() => setHovered(star)}
-                      onMouseLeave={() => setHovered(0)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        padding: '4px',
-                        cursor: 'pointer',
-                        transition: 'transform 0.1s',
-                        transform: displayRating >= star ? 'scale(1.08)' : 'scale(1)',
-                      }}
-                    >
-                      <svg width="36" height="36" viewBox="0 0 24 24">
-                        <polygon
-                          points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1"
-                          fill={displayRating >= star ? T.yellow : T.surface2}
-                          stroke={displayRating >= star ? T.yellow : T.border}
-                          strokeWidth="1"
-                        />
-                      </svg>
-                    </button>
-                  ))}
-                </div>
-
-                {rating > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    style={{
-                      fontFamily: "'Hanken Grotesk', sans-serif",
-                      fontSize: '13px',
-                      color: T.ink2,
-                    }}
-                  >
-                    <span style={{ color: T.yellow, fontWeight: 600 }}>{rating}</span> out of 5
-                  </motion.div>
-                )}
-              </div>
-
-              {/* Quick tags */}
-              <div style={{ marginBottom: '28px' }}>
-                <div
+                  Back to Dashboard →
+                </Link>
+              </motion.div>
+            ) : (
+              // ── Form ──────────────────────────────────────────────────────
+              <motion.div
+                key="form"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Headline */}
+                <h1
                   style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
-                    fontWeight: 700,
-                    fontSize: '11px',
-                    letterSpacing: '0.12em',
-                    color: T.ink3,
+                    fontWeight: 800,
+                    fontSize: 'clamp(38px, 8vw, 60px)',
+                    color: T.ink,
                     textTransform: 'uppercase',
-                    marginBottom: '12px',
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1,
+                    margin: '0 0 28px',
                   }}
                 >
-                  Quick Tags
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {TAGS.map((tag) => {
-                    const sel = selectedTags.includes(tag)
-                    return (
-                      <button
-                        key={tag}
-                        onClick={() => toggleTag(tag)}
-                        style={{
-                          padding: '8px 14px',
-                          background: sel ? T.yellow : 'transparent',
-                          border: `1px solid ${sel ? T.yellow : T.border}`,
-                          color: sel ? '#09090B' : T.ink2,
-                          fontFamily: "'Hanken Grotesk', sans-serif",
-                          fontWeight: sel ? 600 : 400,
-                          fontSize: '13px',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s',
-                        }}
-                      >
-                        {tag}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
+                  Rate Your
+                  <br />
+                  Session
+                </h1>
 
-              {/* Textarea */}
-              <div style={{ marginBottom: '28px' }}>
+                {/* Trainer card */}
                 <div
                   style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontWeight: 700,
-                    fontSize: '11px',
-                    letterSpacing: '0.12em',
-                    color: T.ink3,
-                    textTransform: 'uppercase',
-                    marginBottom: '10px',
-                  }}
-                >
-                  Your Experience
-                </div>
-                <textarea
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Share your experience (optional)"
-                  rows={4}
-                  style={{
-                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
                     background: T.surface,
                     border: `1px solid ${T.border}`,
-                    color: T.ink,
-                    fontFamily: "'Hanken Grotesk', sans-serif",
-                    fontSize: '14px',
-                    padding: '14px 16px',
-                    resize: 'vertical',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    lineHeight: 1.55,
-                  }}
-                />
-              </div>
-
-              {/* Submit error */}
-              {submitError && (
-                <div
-                  style={{
-                    marginBottom: '12px',
-                    padding: '12px 16px',
-                    background: 'rgba(239,68,68,0.08)',
-                    border: '1px solid rgba(239,68,68,0.2)',
-                    fontFamily: "'Hanken Grotesk', sans-serif",
-                    fontSize: '13px',
-                    color: '#F87171',
+                    borderRadius: '16px',
+                    padding: '16px 18px',
+                    marginBottom: '32px',
                   }}
                 >
-                  {submitError}
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      background: T.surface2,
+                      border: `1px solid ${T.border}`,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '16px',
+                      color: T.yellow,
+                      letterSpacing: '0.04em',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {ctx?.initials}
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontWeight: 700,
+                        fontSize: '16px',
+                        color: T.ink,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.03em',
+                      }}
+                    >
+                      {ctx?.trainerName}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "'Hanken Grotesk', sans-serif",
+                        fontSize: '13px',
+                        color: T.ink2,
+                        marginTop: '2px',
+                      }}
+                    >
+                      {ctx?.sport} · {ctx?.date}
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              {/* Submit */}
-              <button
-                onClick={handleSubmit}
-                disabled={rating === 0 || submitting}
-                style={{
-                  width: '100%',
-                  padding: '16px',
-                  background: rating === 0 ? 'rgba(0,188,200,0.25)' : T.yellow,
-                  border: 'none',
-                  color: '#09090B',
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontWeight: 800,
-                  fontSize: '15px',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  cursor: rating === 0 || submitting ? 'not-allowed' : 'pointer',
-                  transition: 'background 0.15s',
-                  opacity: submitting ? 0.7 : 1,
-                }}
-              >
-                {submitting ? 'Submitting…' : 'Submit Review'}
-              </button>
+                {/* Star rating */}
+                <div style={{ marginBottom: '28px' }}>
+                  <div
+                    style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '11px',
+                      letterSpacing: '0.12em',
+                      color: T.ink3,
+                      textTransform: 'uppercase',
+                      marginBottom: '14px',
+                    }}
+                  >
+                    Your Rating
+                  </div>
 
-              {rating === 0 && (
-                <div
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setRating(star)}
+                        onMouseEnter={() => setHovered(star)}
+                        onMouseLeave={() => setHovered(0)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          padding: '4px',
+                          cursor: 'pointer',
+                          transition: 'transform 0.1s',
+                          transform: displayRating >= star ? 'scale(1.08)' : 'scale(1)',
+                        }}
+                      >
+                        <svg width="36" height="36" viewBox="0 0 24 24">
+                          <polygon
+                            points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1"
+                            fill={displayRating >= star ? T.yellow : T.surface2}
+                            stroke={displayRating >= star ? T.yellow : T.border}
+                            strokeWidth="1"
+                          />
+                        </svg>
+                      </button>
+                    ))}
+                  </div>
+
+                  {rating > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      style={{
+                        fontFamily: "'Hanken Grotesk', sans-serif",
+                        fontSize: '13px',
+                        color: T.ink2,
+                      }}
+                    >
+                      <span style={{ color: T.yellow, fontWeight: 600 }}>{rating}</span> out of 5
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Quick tags */}
+                <div style={{ marginBottom: '28px' }}>
+                  <div
+                    style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '11px',
+                      letterSpacing: '0.12em',
+                      color: T.ink3,
+                      textTransform: 'uppercase',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    Quick Tags
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {TAGS.map((tag) => {
+                      const sel = selectedTags.includes(tag)
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => toggleTag(tag)}
+                          style={{
+                            padding: '8px 14px',
+                            background: sel ? T.yellow : T.surface2,
+                            border: `1px solid ${sel ? T.yellow : T.border}`,
+                            borderRadius: '8px',
+                            color: sel ? T.surface : T.ink2,
+                            fontFamily: "'Hanken Grotesk', sans-serif",
+                            fontWeight: sel ? 600 : 400,
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s',
+                          }}
+                        >
+                          {tag}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Textarea */}
+                <div style={{ marginBottom: '28px' }}>
+                  <div
+                    style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '11px',
+                      letterSpacing: '0.12em',
+                      color: T.ink3,
+                      textTransform: 'uppercase',
+                      marginBottom: '10px',
+                    }}
+                  >
+                    Your Experience
+                  </div>
+                  <textarea
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Share your experience (optional)"
+                    rows={4}
+                    style={{
+                      width: '100%',
+                      background: T.surface,
+                      border: `1px solid ${T.border}`,
+                      borderRadius: '12px',
+                      color: T.ink,
+                      fontFamily: "'Hanken Grotesk', sans-serif",
+                      fontSize: '14px',
+                      padding: '14px 16px',
+                      resize: 'vertical',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      lineHeight: 1.55,
+                    }}
+                  />
+                </div>
+
+                {/* Submit error */}
+                {submitError && (
+                  <div
+                    style={{
+                      marginBottom: '12px',
+                      padding: '12px 16px',
+                      background: 'rgba(239,68,68,0.08)',
+                      border: '1px solid rgba(239,68,68,0.2)',
+                      borderRadius: '10px',
+                      fontFamily: "'Hanken Grotesk', sans-serif",
+                      fontSize: '13px',
+                      color: '#DC2626',
+                    }}
+                  >
+                    {submitError}
+                  </div>
+                )}
+
+                {/* Submit */}
+                <button
+                  onClick={handleSubmit}
+                  disabled={rating === 0 || submitting}
                   style={{
-                    fontFamily: "'Hanken Grotesk', sans-serif",
-                    fontSize: '12px',
-                    color: T.ink3,
-                    marginTop: '8px',
-                    textAlign: 'center',
+                    width: '100%',
+                    padding: '16px',
+                    background: rating === 0 ? 'rgba(0,188,200,0.25)' : T.yellow,
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: rating === 0 ? T.ink2 : T.surface,
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 800,
+                    fontSize: '15px',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    cursor: rating === 0 || submitting ? 'not-allowed' : 'pointer',
+                    transition: 'background 0.15s',
+                    opacity: submitting ? 0.7 : 1,
                   }}
                 >
-                  Select a star rating to continue
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  {submitting ? 'Submitting…' : 'Submit Review'}
+                </button>
+
+                {rating === 0 && (
+                  <div
+                    style={{
+                      fontFamily: "'Hanken Grotesk', sans-serif",
+                      fontSize: '12px',
+                      color: T.ink3,
+                      marginTop: '8px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Select a star rating to continue
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   )
