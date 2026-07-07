@@ -441,8 +441,12 @@ function ReviewPageInner() {
                 </div>
               </div>
 
-              <Link
+              <a
                 href="/dashboard"
+                onClick={(e) => {
+                  e.preventDefault()
+                  window.location.href = '/dashboard'
+                }}
                 style={{
                   marginTop: '8px',
                   fontFamily: "'Barlow Condensed', sans-serif",
@@ -457,7 +461,7 @@ function ReviewPageInner() {
                 }}
               >
                 Back to Dashboard →
-              </Link>
+              </a>
             </motion.div>
           ) : (
             // ── Form ────────────────────────────────────────────────────────
