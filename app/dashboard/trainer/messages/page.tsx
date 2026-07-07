@@ -38,10 +38,31 @@ function MessagesViewInner() {
 
   useEffect(() => {
     if (!withId) return
+    const supabase = createClient()
+    let resolvedUserId: string | null = null
+
+    const channel = supabase
+      .channel(`thread-${withId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (payload) => {
+          const row = payload.new as Message & { recipient_id: string }
+          if (!resolvedUserId) return
+          if (row.sender_id === withId && row.recipient_id === resolvedUserId) {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === row.id)) return prev
+              return [...prev, row]
+            })
+          }
+        }
+      )
+      .subscribe()
+
     async function load() {
-      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      resolvedUserId = user.id
       setCurrentUserId(user.id)
 
       const [{ data: profile }, { data: msgs }] = await Promise.all([
@@ -56,6 +77,10 @@ function MessagesViewInner() {
       if (msgs) setMessages(msgs)
     }
     load()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [withId])
 
   async function sendMessage() {
