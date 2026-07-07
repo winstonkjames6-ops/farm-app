@@ -28,8 +28,43 @@ export async function middleware(request: NextRequest) {
   // Refresh session — do not remove, required for Server Components to read auth state
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
+  const { pathname } = request.nextUrl
+
+  if (pathname.startsWith('/dashboard') && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  if (pathname.startsWith('/dashboard') && user) {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (error || !profile?.role) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    const role = profile.role as 'parent' | 'trainer' | 'athlete'
+    const roleHome = role === 'trainer' ? '/dashboard/trainer'
+      : role === 'athlete' ? '/dashboard/athlete'
+      : '/dashboard'
+
+    if (pathname.startsWith('/dashboard/trainer') && role !== 'trainer') {
+      return NextResponse.redirect(new URL(roleHome, request.url))
+    }
+
+    if (pathname.startsWith('/dashboard/athlete') && role !== 'athlete') {
+      return NextResponse.redirect(new URL(roleHome, request.url))
+    }
+
+    if (
+      !pathname.startsWith('/dashboard/trainer') &&
+      !pathname.startsWith('/dashboard/athlete') &&
+      role !== 'parent'
+    ) {
+      return NextResponse.redirect(new URL(roleHome, request.url))
+    }
   }
 
   return supabaseResponse
