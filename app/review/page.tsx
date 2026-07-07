@@ -40,6 +40,30 @@ type SessionCtx = {
 // 55% cream scrim baked into the CSS background shorthand — cards stay solid white on top
 const turfBg = `linear-gradient(rgba(248,248,246,0.55), rgba(248,248,246,0.55)), url('/backgrounds/turf-bg.jpg') center/cover no-repeat`
 
+const card = {
+  background: T.surface,
+  border: `1px solid ${T.border}`,
+  borderRadius: '24px',
+  padding: '32px',
+} as const
+
+const backLink = {
+  display: 'inline-flex' as const,
+  alignItems: 'center' as const,
+  gap: '6px',
+  fontFamily: "'Barlow Condensed', sans-serif",
+  fontWeight: 700,
+  fontSize: '12px',
+  letterSpacing: '0.1em',
+  color: T.ink2,
+  textDecoration: 'none',
+  textTransform: 'uppercase' as const,
+  marginBottom: '16px',
+  background: 'rgba(255,255,255,0.85)',
+  padding: '6px 12px',
+  borderRadius: '999px',
+}
+
 // ── Inner page (needs Suspense for useSearchParams) ───────────────────────────
 
 function ReviewPageInner() {
@@ -183,10 +207,12 @@ function ReviewPageInner() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          padding: '20px',
         }}
       >
         <div
           style={{
+            ...card,
             fontFamily: "'Hanken Grotesk', sans-serif",
             fontSize: '14px',
             color: T.ink3,
@@ -212,60 +238,33 @@ function ReviewPageInner() {
           justifyContent: 'center',
         }}
       >
-          <div style={{ width: '100%', maxWidth: 520 }}>
-            <Link
-              href="/dashboard"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 700,
-                fontSize: '12px',
-                letterSpacing: '0.1em',
-                color: T.ink2,
-                textDecoration: 'none',
-                textTransform: 'uppercase',
-                marginBottom: '32px',
-                background: 'rgba(255,255,255,0.85)',
-                padding: '6px 12px',
-                borderRadius: '999px',
-              }}
-            >
-              ← Dashboard
-            </Link>
+        <div style={{ width: '100%', maxWidth: 520 }}>
+          <Link href="/dashboard" style={backLink}>← Dashboard</Link>
+          <div style={card}>
             <div
               style={{
-                padding: '24px',
-                background: T.surface,
-                border: `1px solid ${T.border}`,
-                borderRadius: '16px',
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                fontSize: '18px',
+                color: T.ink,
+                textTransform: 'uppercase',
+                letterSpacing: '0.03em',
+                marginBottom: '8px',
               }}
             >
-              <div
-                style={{
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontWeight: 700,
-                  fontSize: '18px',
-                  color: T.ink,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.03em',
-                  marginBottom: '8px',
-                }}
-              >
-                Unable to Load Review
-              </div>
-              <div
-                style={{
-                  fontFamily: "'Hanken Grotesk', sans-serif",
-                  fontSize: '14px',
-                  color: T.ink2,
-                }}
-              >
-                {loadError}
-              </div>
+              Unable to Load Review
+            </div>
+            <div
+              style={{
+                fontFamily: "'Hanken Grotesk', sans-serif",
+                fontSize: '14px',
+                color: T.ink2,
+              }}
+            >
+              {loadError}
             </div>
           </div>
+        </div>
       </div>
     )
   }
@@ -284,99 +283,79 @@ function ReviewPageInner() {
           justifyContent: 'center',
         }}
       >
-          <div style={{ width: '100%', maxWidth: 520 }}>
+        <div style={{ width: '100%', maxWidth: 520 }}>
+          <Link href="/dashboard" style={backLink}>← Dashboard</Link>
+          <div
+            style={{
+              ...card,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              gap: '20px',
+            }}
+          >
+            <div
+              style={{
+                width: 72,
+                height: 72,
+                background: 'rgba(0,188,200,0.10)',
+                border: '1px solid rgba(0,188,200,0.18)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={T.yellow} strokeWidth="2.5" strokeLinecap="square">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <div>
+              <div
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 800,
+                  fontSize: '32px',
+                  color: T.ink,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.1,
+                  marginBottom: '10px',
+                }}
+              >
+                Already Reviewed.
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontSize: '15px',
+                  color: T.ink2,
+                  lineHeight: 1.55,
+                }}
+              >
+                You've already submitted a review for this session.
+              </div>
+            </div>
             <Link
               href="/dashboard"
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
+                marginTop: '8px',
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 700,
-                fontSize: '12px',
-                letterSpacing: '0.1em',
-                color: T.ink2,
+                fontSize: '13px',
+                letterSpacing: '0.08em',
+                color: T.yellow,
                 textDecoration: 'none',
                 textTransform: 'uppercase',
-                marginBottom: '32px',
-                background: 'rgba(255,255,255,0.85)',
-                padding: '6px 12px',
-                borderRadius: '999px',
+                borderBottom: `1px solid ${T.yellow}`,
+                paddingBottom: '2px',
               }}
             >
-              ← Dashboard
+              Back to Sessions →
             </Link>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                paddingTop: '60px',
-                gap: '20px',
-              }}
-            >
-              <div
-                style={{
-                  width: 72,
-                  height: 72,
-                  background: 'rgba(0,188,200,0.10)',
-                  border: '1px solid rgba(0,188,200,0.18)',
-                  borderRadius: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={T.yellow} strokeWidth="2.5" strokeLinecap="square">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontWeight: 800,
-                    fontSize: '32px',
-                    color: T.ink,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.02em',
-                    lineHeight: 1.1,
-                    marginBottom: '10px',
-                  }}
-                >
-                  Already Reviewed.
-                </div>
-                <div
-                  style={{
-                    fontFamily: "'Hanken Grotesk', sans-serif",
-                    fontSize: '15px',
-                    color: T.ink2,
-                    lineHeight: 1.55,
-                  }}
-                >
-                  You've already submitted a review for this session.
-                </div>
-              </div>
-              <Link
-                href="/dashboard"
-                style={{
-                  marginTop: '8px',
-                  fontFamily: "'Barlow Condensed', sans-serif",
-                  fontWeight: 700,
-                  fontSize: '13px',
-                  letterSpacing: '0.08em',
-                  color: T.yellow,
-                  textDecoration: 'none',
-                  textTransform: 'uppercase',
-                  borderBottom: `1px solid ${T.yellow}`,
-                  paddingBottom: '2px',
-                }}
-              >
-                Back to Sessions →
-              </Link>
-            </div>
           </div>
+        </div>
       </div>
     )
   }
@@ -394,149 +373,128 @@ function ReviewPageInner() {
         justifyContent: 'center',
       }}
     >
-        <div style={{ width: '100%', maxWidth: 520 }}>
-          {/* Back */}
-          {!submitted && (
-            <Link
-              href="/dashboard"
+      <div style={{ width: '100%', maxWidth: 520 }}>
+        {/* Back */}
+        {!submitted && (
+          <Link href="/dashboard" style={backLink}>← Dashboard</Link>
+        )}
+
+        <AnimatePresence mode="wait">
+          {submitted ? (
+            // ── Success state ───────────────────────────────────────────────
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.32 }}
               style={{
-                display: 'inline-flex',
+                ...card,
+                display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                gap: '6px',
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 700,
-                fontSize: '12px',
-                letterSpacing: '0.1em',
-                color: T.ink2,
-                textDecoration: 'none',
-                textTransform: 'uppercase',
-                marginBottom: '32px',
-                background: 'rgba(255,255,255,0.85)',
-                padding: '6px 12px',
-                borderRadius: '999px',
+                textAlign: 'center',
+                gap: '20px',
               }}
             >
-              ← Dashboard
-            </Link>
-          )}
-
-          <AnimatePresence mode="wait">
-            {submitted ? (
-              // ── Success state ─────────────────────────────────────────────
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.32 }}
+              {/* Checkmark */}
+              <div
                 style={{
+                  width: 72,
+                  height: 72,
+                  background: 'rgba(0,188,200,0.10)',
+                  border: '1px solid rgba(0,188,200,0.18)',
+                  borderRadius: '16px',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
-                  textAlign: 'center',
-                  paddingTop: '60px',
-                  gap: '20px',
+                  justifyContent: 'center',
                 }}
               >
-                {/* Checkmark */}
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={T.yellow} strokeWidth="2.5" strokeLinecap="square">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+
+              <div>
                 <div
-                  style={{
-                    width: 72,
-                    height: 72,
-                    background: 'rgba(0,188,200,0.10)',
-                    border: '1px solid rgba(0,188,200,0.18)',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={T.yellow} strokeWidth="2.5" strokeLinecap="square">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </div>
-
-                <div>
-                  <div
-                    style={{
-                      fontFamily: "'Barlow Condensed', sans-serif",
-                      fontWeight: 800,
-                      fontSize: '32px',
-                      color: T.ink,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.02em',
-                      lineHeight: 1.1,
-                      marginBottom: '10px',
-                    }}
-                  >
-                    Review Submitted.
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "'Hanken Grotesk', sans-serif",
-                      fontSize: '15px',
-                      color: T.ink2,
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    Thank you for your feedback.
-                  </div>
-                </div>
-
-                <Link
-                  href="/dashboard"
-                  style={{
-                    marginTop: '8px',
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontWeight: 700,
-                    fontSize: '13px',
-                    letterSpacing: '0.08em',
-                    color: T.yellow,
-                    textDecoration: 'none',
-                    textTransform: 'uppercase',
-                    borderBottom: `1px solid ${T.yellow}`,
-                    paddingBottom: '2px',
-                  }}
-                >
-                  Back to Dashboard →
-                </Link>
-              </motion.div>
-            ) : (
-              // ── Form ──────────────────────────────────────────────────────
-              <motion.div
-                key="form"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {/* Headline */}
-                <h1
                   style={{
                     fontFamily: "'Barlow Condensed', sans-serif",
                     fontWeight: 800,
-                    fontSize: 'clamp(38px, 8vw, 60px)',
+                    fontSize: '32px',
                     color: T.ink,
                     textTransform: 'uppercase',
-                    letterSpacing: '-0.01em',
-                    lineHeight: 1,
-                    margin: '0 0 28px',
+                    letterSpacing: '0.02em',
+                    lineHeight: 1.1,
+                    marginBottom: '10px',
                   }}
                 >
-                  Rate Your
-                  <br />
-                  Session
-                </h1>
+                  Review Submitted.
+                </div>
+                <div
+                  style={{
+                    fontFamily: "'Hanken Grotesk', sans-serif",
+                    fontSize: '15px',
+                    color: T.ink2,
+                    lineHeight: 1.55,
+                  }}
+                >
+                  Thank you for your feedback.
+                </div>
+              </div>
 
-                {/* Trainer card */}
+              <Link
+                href="/dashboard"
+                style={{
+                  marginTop: '8px',
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  letterSpacing: '0.08em',
+                  color: T.yellow,
+                  textDecoration: 'none',
+                  textTransform: 'uppercase',
+                  borderBottom: `1px solid ${T.yellow}`,
+                  paddingBottom: '2px',
+                }}
+              >
+                Back to Dashboard →
+              </Link>
+            </motion.div>
+          ) : (
+            // ── Form ────────────────────────────────────────────────────────
+            <motion.div
+              key="form"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* Headline — above the card, on the grass */}
+              <h1
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 800,
+                  fontSize: 'clamp(38px, 8vw, 60px)',
+                  color: T.ink,
+                  textTransform: 'uppercase',
+                  letterSpacing: '-0.01em',
+                  lineHeight: 1,
+                  margin: '0 0 20px',
+                }}
+              >
+                Rate Your
+                <br />
+                Session
+              </h1>
+
+              {/* Single white card containing all form content */}
+              <div style={card}>
+
+                {/* Trainer info — flush inside the card, no nested card chrome */}
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '14px',
-                    background: T.surface,
-                    border: `1px solid ${T.border}`,
-                    borderRadius: '16px',
-                    padding: '16px 18px',
-                    marginBottom: '32px',
+                    marginBottom: '28px',
                   }}
                 >
                   <div
@@ -596,10 +554,6 @@ function ReviewPageInner() {
                       color: T.ink2,
                       textTransform: 'uppercase',
                       marginBottom: '14px',
-                      display: 'inline-block',
-                      background: 'rgba(255,255,255,0.85)',
-                      padding: '4px 10px',
-                      borderRadius: '6px',
                     }}
                   >
                     Your Rating
@@ -659,10 +613,6 @@ function ReviewPageInner() {
                       color: T.ink2,
                       textTransform: 'uppercase',
                       marginBottom: '12px',
-                      display: 'inline-block',
-                      background: 'rgba(255,255,255,0.85)',
-                      padding: '4px 10px',
-                      borderRadius: '6px',
                     }}
                   >
                     Quick Tags
@@ -716,7 +666,7 @@ function ReviewPageInner() {
                     rows={4}
                     style={{
                       width: '100%',
-                      background: T.surface,
+                      background: T.surface2,
                       border: `1px solid ${T.border}`,
                       borderRadius: '12px',
                       color: T.ink,
@@ -786,10 +736,12 @@ function ReviewPageInner() {
                     Select a star rating to continue
                   </div>
                 )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+
+              </div>{/* end content card */}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   )
 }
