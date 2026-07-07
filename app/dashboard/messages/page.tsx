@@ -33,6 +33,21 @@ type Message = {
   sent_at: string
 }
 
+type ConversationThread = {
+  otherId: string
+  otherName: string
+  lastBody: string
+  lastSentAt: string
+}
+
+function relativeTime(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+  if (diff < 60) return 'just now'
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  return `${Math.floor(diff / 86400)}d ago`
+}
+
 function Avatar({ initials, size }: { initials: string; size: number }) {
   return (
     <div style={{
@@ -57,6 +72,8 @@ function MessagesPageInner() {
   const [inputVal, setInputVal] = useState('')
   const [sendError, setSendError] = useState('')
   const [ready, setReady] = useState(false)
+  const [threads, setThreads] = useState<ConversationThread[]>([])
+  const [inboxLoading, setInboxLoading] = useState(false)
 
   useEffect(() => {
     if (!withId) return
@@ -106,6 +123,40 @@ function MessagesPageInner() {
     }
   }, [withId])
 
+  useEffect(() => {
+    if (withId) return
+    const supabase = createClient()
+    async function loadInbox() {
+      setInboxLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setInboxLoading(false); return }
+      const { data: msgs } = await supabase
+        .from('messages')
+        .select('id, sender_id, recipient_id, body, sent_at')
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .order('sent_at', { ascending: false })
+      if (!msgs || msgs.length === 0) { setThreads([]); setInboxLoading(false); return }
+      const seen = new Set<string>()
+      const grouped: { otherId: string; lastBody: string; lastSentAt: string }[] = []
+      for (const msg of msgs) {
+        const otherId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id
+        if (!seen.has(otherId)) { seen.add(otherId); grouped.push({ otherId, lastBody: msg.body, lastSentAt: msg.sent_at }) }
+      }
+      const { data: profiles } = await supabase
+        .from('profiles').select('id, name').in('id', grouped.map(g => g.otherId))
+      const nameMap = new Map<string, string>()
+      if (profiles) profiles.forEach((p: { id: string; name: string }) => nameMap.set(p.id, p.name))
+      setThreads(grouped.map(g => ({
+        otherId: g.otherId,
+        otherName: nameMap.get(g.otherId) ?? 'Unknown',
+        lastBody: g.lastBody,
+        lastSentAt: g.lastSentAt,
+      })))
+      setInboxLoading(false)
+    }
+    loadInbox()
+  }, [withId])
+
   async function sendMessage() {
     if (!inputVal.trim() || !withId || !currentUserId) return
     setSendError('')
@@ -127,9 +178,44 @@ function MessagesPageInner() {
 
   if (!withId) {
     return (
-      <div style={{ padding: '32px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>
-        No conversation selected.
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
+      >
+        <div style={{ padding: '32px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+          <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 22, color: T.ink, marginBottom: 20 }}>Messages</div>
+          <div style={{ ...cardStyle }}>
+            {inboxLoading ? (
+              <div style={{ padding: '32px', color: T.ink3, fontSize: 14 }}>Loading…</div>
+            ) : threads.length === 0 ? (
+              <div style={{ padding: '32px', color: T.ink3, fontSize: 14 }}>No messages yet.</div>
+            ) : (
+              threads.map((thread, i) => {
+                const initials = thread.otherName.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase()
+                return (
+                  <a
+                    key={thread.otherId}
+                    href={`/dashboard/messages?withId=${thread.otherId}`}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px',
+                      borderBottom: i < threads.length - 1 ? `1px solid ${T.line}` : 'none',
+                      textDecoration: 'none', color: 'inherit',
+                    }}
+                  >
+                    <Avatar initials={initials || '?'} size={42} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink }}>{thread.otherName}</div>
+                      <div style={{ fontSize: 13, color: T.ink3, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{thread.lastBody}</div>
+                    </div>
+                    <div style={{ fontSize: 11, color: T.ink3, flexShrink: 0 }}>{relativeTime(thread.lastSentAt)}</div>
+                  </a>
+                )
+              })
+            )}
+          </div>
+        </div>
+      </motion.div>
     )
   }
 

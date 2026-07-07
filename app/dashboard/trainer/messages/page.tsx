@@ -26,6 +26,21 @@ type Message = {
   sent_at: string
 }
 
+type ConversationThread = {
+  otherId: string
+  otherName: string
+  lastBody: string
+  lastSentAt: string
+}
+
+function relativeTime(iso: string): string {
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+  if (diff < 60) return 'just now'
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  return `${Math.floor(diff / 86400)}d ago`
+}
+
 function MessagesViewInner() {
   const searchParams = useSearchParams()
   const withId = searchParams.get('withId')
@@ -36,6 +51,8 @@ function MessagesViewInner() {
   const [inputVal, setInputVal] = useState('')
   const [sendError, setSendError] = useState('')
   const [ready, setReady] = useState(false)
+  const [threads, setThreads] = useState<ConversationThread[]>([])
+  const [inboxLoading, setInboxLoading] = useState(false)
 
   useEffect(() => {
     if (!withId) return
@@ -85,6 +102,40 @@ function MessagesViewInner() {
     }
   }, [withId])
 
+  useEffect(() => {
+    if (withId) return
+    const supabase = createClient()
+    async function loadInbox() {
+      setInboxLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setInboxLoading(false); return }
+      const { data: msgs } = await supabase
+        .from('messages')
+        .select('id, sender_id, recipient_id, body, sent_at')
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .order('sent_at', { ascending: false })
+      if (!msgs || msgs.length === 0) { setThreads([]); setInboxLoading(false); return }
+      const seen = new Set<string>()
+      const grouped: { otherId: string; lastBody: string; lastSentAt: string }[] = []
+      for (const msg of msgs) {
+        const otherId = msg.sender_id === user.id ? msg.recipient_id : msg.sender_id
+        if (!seen.has(otherId)) { seen.add(otherId); grouped.push({ otherId, lastBody: msg.body, lastSentAt: msg.sent_at }) }
+      }
+      const { data: profiles } = await supabase
+        .from('profiles').select('id, name').in('id', grouped.map(g => g.otherId))
+      const nameMap = new Map<string, string>()
+      if (profiles) profiles.forEach((p: { id: string; name: string }) => nameMap.set(p.id, p.name))
+      setThreads(grouped.map(g => ({
+        otherId: g.otherId,
+        otherName: nameMap.get(g.otherId) ?? 'Unknown',
+        lastBody: g.lastBody,
+        lastSentAt: g.lastSentAt,
+      })))
+      setInboxLoading(false)
+    }
+    loadInbox()
+  }, [withId])
+
   async function sendMessage() {
     if (!inputVal.trim() || !withId || !currentUserId) return
     setSendError('')
@@ -112,9 +163,37 @@ function MessagesViewInner() {
         transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
       >
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '28px', color: T.ink }}>Messages</div>
-            <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink2, marginTop: '4px' }}>No conversation selected.</div>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '28px', color: T.ink }}>Messages</div>
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', overflow: 'hidden' }}>
+            {inboxLoading ? (
+              <div style={{ padding: '32px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px' }}>Loading…</div>
+            ) : threads.length === 0 ? (
+              <div style={{ padding: '32px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px' }}>No messages yet.</div>
+            ) : (
+              threads.map((thread, i) => {
+                const initials = thread.otherName.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase()
+                return (
+                  <a
+                    key={thread.otherId}
+                    href={`/dashboard/trainer/messages?withId=${thread.otherId}`}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 24px',
+                      borderBottom: i < threads.length - 1 ? `1px solid ${T.border}` : 'none',
+                      textDecoration: 'none', color: 'inherit',
+                    }}
+                  >
+                    <div style={{ width: 44, height: 44, borderRadius: '999px', background: T.cyanLight, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.cyan }}>
+                      {initials || '?'}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px', color: T.ink }}>{thread.otherName}</div>
+                      <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink3, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{thread.lastBody}</div>
+                    </div>
+                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3, flexShrink: 0 }}>{relativeTime(thread.lastSentAt)}</div>
+                  </a>
+                )
+              })
+            )}
           </div>
         </div>
       </motion.div>
