@@ -15,6 +15,7 @@ type Session = {
   childName: string
   parentName: string
   parentInitials: string
+  parentProfileId: string
   sport: string
   type: SessionType
   day: string
@@ -72,7 +73,7 @@ function ScheduleView() {
 
       const { data: bookings } = await supabase
         .from('bookings')
-        .select('id, format, session_time, status, athletes!athlete_id(name, sport), profiles!parent_id(name)')
+        .select('id, format, session_time, status, parent_id, athletes!athlete_id(name, sport), profiles!parent_id(name)')
         .eq('trainer_id', trainerRow.id)
       if (!bookings) return
 
@@ -89,6 +90,7 @@ function ScheduleView() {
           childName: b.athletes?.name ?? 'Unknown',
           parentName,
           parentInitials,
+          parentProfileId: b.parent_id ?? '',
           sport: b.athletes?.sport ?? '',
           type,
           day: JS_DAYS[dt.getDay()],
@@ -228,7 +230,7 @@ function ScheduleView() {
                                 </span>
                               )}
                               <Link
-                                href="/dashboard/trainer/messages"
+                                href={`/dashboard/trainer/messages?withId=${session.parentProfileId}`}
                                 style={{ color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', textDecoration: 'none' }}
                                 onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = T.cyan }}
                                 onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = T.ink3 }}
@@ -238,7 +240,7 @@ function ScheduleView() {
                             </div>
                           ) : (
                             <Link
-                              href="/dashboard/trainer/messages"
+                              href={`/dashboard/trainer/messages?withId=${session.parentProfileId}`}
                               style={{ background: 'none', border: '1px solid rgba(0,0,0,0.10)', color: T.ink2, padding: '6px 12px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', textDecoration: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}
                               onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(0,0,0,0.24)' }}
                               onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(0,0,0,0.10)' }}

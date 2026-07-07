@@ -1,54 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-
-// ── Mock data ──────────────────────────────────────────────────────────────────
-
-const MOCK_MESSAGES = [
-  {
-    id: 1,
-    parentName: 'Sarah Williams',
-    parentInitials: 'SW',
-    childName: 'Ethan Williams',
-    sport: 'Soccer',
-    lastMessage: "Will Ethan need to bring any equipment to Saturday's session?",
-    time: '2m ago',
-    unread: true,
-  },
-  {
-    id: 2,
-    parentName: 'David Chen',
-    parentInitials: 'DC',
-    childName: 'Maya Chen',
-    sport: 'Tennis',
-    lastMessage: 'Thanks so much — Maya was so excited after the last session!',
-    time: '1h ago',
-    unread: false,
-  },
-  {
-    id: 3,
-    parentName: 'Lisa Blake',
-    parentInitials: 'LB',
-    childName: 'Jordan Blake',
-    sport: 'Basketball',
-    lastMessage: 'Can we move Tuesday to Wednesday this week?',
-    time: 'Yesterday',
-    unread: true,
-  },
-  {
-    id: 4,
-    parentName: 'Marcus Webb',
-    parentInitials: 'MW',
-    childName: 'Darius Webb',
-    sport: 'Soccer',
-    lastMessage: 'Booked — looking forward to it.',
-    time: '2d ago',
-    unread: false,
-  },
-]
-
-// ── Design tokens ──────────────────────────────────────────────────────────────
+import { createClient } from '@/utils/supabase/client'
 
 const T = {
   bg: '#F8F8F6',
@@ -64,69 +19,75 @@ const T = {
   ink3: '#9CA3AF',
 }
 
-// ── MessagesView ───────────────────────────────────────────────────────────────
+type Message = {
+  id: string
+  sender_id: string
+  body: string
+  sent_at: string
+}
 
-function MessagesView() {
-  const [activeThread, setActiveThread] = useState<number | null>(null)
-  const unreadCount = MOCK_MESSAGES.filter(m => m.unread).length
-  const activeMessage = MOCK_MESSAGES.find(m => m.id === activeThread)
+function MessagesViewInner() {
+  const searchParams = useSearchParams()
+  const withId = searchParams.get('withId')
 
-  if (activeThread !== null && activeMessage) {
-    const mockConversation = [
-      { from: 'parent', text: `Hi! Quick question about ${activeMessage.childName}'s upcoming session.` },
-      { from: 'trainer', text: "Of course! Happy to help. What's on your mind?" },
-      { from: 'parent', text: activeMessage.lastMessage },
-    ]
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [otherName, setOtherName] = useState('')
+  const [messages, setMessages] = useState<Message[]>([])
+  const [inputVal, setInputVal] = useState('')
+  const [sendError, setSendError] = useState('')
+
+  useEffect(() => {
+    if (!withId) return
+    async function load() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      setCurrentUserId(user.id)
+
+      const [{ data: profile }, { data: msgs }] = await Promise.all([
+        supabase.from('profiles').select('name').eq('id', withId).single(),
+        supabase
+          .from('messages')
+          .select('id, sender_id, body, sent_at')
+          .or(`and(sender_id.eq.${user.id},recipient_id.eq.${withId}),and(sender_id.eq.${withId},recipient_id.eq.${user.id})`)
+          .order('sent_at', { ascending: true }),
+      ])
+      if (profile) setOtherName(profile.name)
+      if (msgs) setMessages(msgs)
+    }
+    load()
+  }, [withId])
+
+  async function sendMessage() {
+    if (!inputVal.trim() || !withId || !currentUserId) return
+    setSendError('')
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({ sender_id: currentUserId, recipient_id: withId, body: inputVal.trim() })
+      .select('id, sender_id, body, sent_at')
+      .single()
+    if (error) {
+      setSendError('Failed to send. Try again.')
+      return
+    }
+    setMessages((prev) => [...prev, data])
+    setInputVal('')
+  }
+
+  const otherInitials = otherName.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase()
+
+  if (!withId) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
       >
-        <div style={{ padding: '32px' }}>
-          <button
-            onClick={() => setActiveThread(null)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, textAlign: 'left', padding: '0 0 16px 0', minHeight: '44px' }}
-          >
-            ← Messages
-          </button>
-
-          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                <div style={{ width: 44, height: 44, borderRadius: '999px', background: T.cyanLight, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.cyan }}>
-                  {activeMessage.parentInitials}
-                </div>
-                <div>
-                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px', color: T.ink }}>{activeMessage.parentName}</div>
-                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>{activeMessage.childName} · {activeMessage.sport}</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '200px', overflowY: 'auto', padding: '16px 0' }}>
-                {mockConversation.map((msg, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: msg.from === 'trainer' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ padding: '12px 16px', borderRadius: msg.from === 'trainer' ? '18px 18px 4px 18px' : '18px 18px 18px 4px', background: msg.from === 'trainer' ? T.cyan : T.card, border: msg.from === 'trainer' ? 'none' : `1px solid ${T.border}`, color: msg.from === 'trainer' ? '#FFFFFF' : T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', maxWidth: '72%' }}>
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', padding: '16px 24px', borderTop: `1px solid ${T.border}`, background: T.card }}>
-              <input
-                type="text"
-                placeholder={`Message ${activeMessage.parentName}...`}
-                style={{ flex: 1, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '999px', padding: '12px 20px', fontSize: '16px', fontFamily: "'Hanken Grotesk', sans-serif", outline: 'none' }}
-              />
-              <button style={{ width: 44, height: 44, borderRadius: '999px', flexShrink: 0, background: T.cyan, color: '#FFFFFF', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="22" y1="2" x2="11" y2="13" />
-                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              </button>
-            </div>
+        <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '28px', color: T.ink }}>Messages</div>
+            <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink2, marginTop: '4px' }}>No conversation selected.</div>
           </div>
         </div>
       </motion.div>
@@ -139,43 +100,71 @@ function MessagesView() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
     >
-      <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div>
-          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '28px', color: T.ink }}>Messages</div>
-          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink2, marginTop: '4px' }}>{unreadCount} unread</div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {MOCK_MESSAGES.map((message) => (
-            <div
-              key={message.id}
-              onClick={() => setActiveThread(message.id)}
-              style={{ background: T.card, border: `1px solid ${message.unread ? 'rgba(0,188,200,0.20)' : T.border}`, borderRadius: '14px', padding: '16px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }}
-            >
-              <div style={{ width: 44, height: 44, borderRadius: '999px', background: T.cyanLight, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.cyan }}>
-                {message.parentInitials}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px', color: T.ink, marginBottom: '2px' }}>{message.parentName}</div>
-                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, marginBottom: '4px' }}>{message.childName} · {message.sport}</div>
-                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {message.lastMessage}
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
-                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>{message.time}</span>
-                {message.unread && <div style={{ width: 8, height: 8, borderRadius: '50%', background: T.cyan }} />}
-              </div>
+      <div style={{ padding: '32px' }}>
+        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden', height: 'calc(100vh - 160px)' }}>
+          <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
+            <div style={{ width: 44, height: 44, borderRadius: '999px', background: T.cyanLight, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.cyan }}>
+              {otherInitials || '?'}
             </div>
-          ))}
+            <div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px', color: T.ink }}>{otherName || '…'}</div>
+            </div>
+          </div>
+
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', padding: '16px 24px' }}>
+            {messages.map((msg) => {
+              const isMine = msg.sender_id === currentUserId
+              return (
+                <div key={msg.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start' }}>
+                  <div style={{
+                    padding: '12px 16px',
+                    borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                    background: isMine ? T.cyan : T.card,
+                    border: isMine ? 'none' : `1px solid ${T.border}`,
+                    color: isMine ? '#FFFFFF' : T.ink,
+                    fontFamily: "'Hanken Grotesk', sans-serif",
+                    fontSize: '14px',
+                    maxWidth: '72%',
+                  }}>
+                    {msg.body}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '16px 24px', borderTop: `1px solid ${T.border}`, background: T.card, flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="text"
+                value={inputVal}
+                onChange={(e) => setInputVal(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') sendMessage() }}
+                placeholder={`Message ${otherName || '…'}...`}
+                style={{ flex: 1, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '999px', padding: '12px 20px', fontSize: '16px', fontFamily: "'Hanken Grotesk', sans-serif", outline: 'none' }}
+              />
+              <button
+                onClick={sendMessage}
+                style={{ width: 44, height: 44, borderRadius: '999px', flexShrink: 0, background: T.cyan, color: '#FFFFFF', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+              </button>
+            </div>
+            {sendError && <div style={{ color: '#EF4444', fontSize: 12, fontFamily: "'Hanken Grotesk', sans-serif" }}>{sendError}</div>}
+          </div>
         </div>
       </div>
     </motion.div>
   )
 }
 
-// ── Page ───────────────────────────────────────────────────────────────────────
-
 export default function TrainerMessagesPage() {
-  return <MessagesView />
+  return (
+    <Suspense fallback={null}>
+      <MessagesViewInner />
+    </Suspense>
+  )
 }
