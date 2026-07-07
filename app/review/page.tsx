@@ -211,7 +211,7 @@ function ReviewPageInner() {
       >
         <div style={{ width: '100%', maxWidth: 520 }}>
           <Link
-            href="/sessions"
+            href="/dashboard"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -226,7 +226,7 @@ function ReviewPageInner() {
               marginBottom: '32px',
             }}
           >
-            ← Sessions
+            ← Dashboard
           </Link>
           <div
             style={{
@@ -279,7 +279,7 @@ function ReviewPageInner() {
       >
         <div style={{ width: '100%', maxWidth: 520 }}>
           <Link
-            href="/sessions"
+            href="/dashboard"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -294,7 +294,7 @@ function ReviewPageInner() {
               marginBottom: '32px',
             }}
           >
-            ← Sessions
+            ← Dashboard
           </Link>
           <div
             style={{
@@ -347,7 +347,7 @@ function ReviewPageInner() {
               </div>
             </div>
             <Link
-              href="/sessions"
+              href="/dashboard"
               style={{
                 marginTop: '8px',
                 fontFamily: "'Barlow Condensed', sans-serif",
@@ -386,7 +386,7 @@ function ReviewPageInner() {
         {/* Back */}
         {!submitted && (
           <Link
-            href="/sessions"
+            href="/dashboard"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -401,7 +401,7 @@ function ReviewPageInner() {
               marginBottom: '32px',
             }}
           >
-            ← Sessions
+            ← Dashboard
           </Link>
         )}
 
@@ -466,7 +466,7 @@ function ReviewPageInner() {
               </div>
 
               <Link
-                href="/sessions"
+                href="/dashboard"
                 style={{
                   marginTop: '8px',
                   fontFamily: "'Barlow Condensed', sans-serif",
@@ -480,7 +480,7 @@ function ReviewPageInner() {
                   paddingBottom: '2px',
                 }}
               >
-                Back to Sessions →
+                Back to Dashboard →
               </Link>
             </motion.div>
           ) : (
