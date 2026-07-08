@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { TrainerSportProvider, useTrainerSport } from './sport-context'
 import { createClient } from '@/utils/supabase/client'
+import NotificationsDropdown from '@/components/NotificationsDropdown'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -111,23 +112,21 @@ const IconX = () => (
 // ── Nav items ──────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { key: 'home',          label: 'Home',          Icon: IconHome,       badge: false },
-  { key: 'schedule',      label: 'Schedule',      Icon: IconCalendar,   badge: false },
-  { key: 'earnings',      label: 'Earnings',      Icon: IconDollarSign, badge: false },
-  { key: 'messages',      label: 'Messages',      Icon: MessageSquare,  badge: true  },
-  { key: 'notifications', label: 'Notifications', Icon: IconBell,       badge: true  },
-  { key: 'profile',       label: 'Profile',       Icon: IconUser,       badge: false },
-  { key: 'settings',      label: 'Settings',      Icon: IconSettings,   badge: false },
+  { key: 'home',     label: 'Home',     Icon: IconHome,       badge: false },
+  { key: 'schedule', label: 'Schedule', Icon: IconCalendar,   badge: false },
+  { key: 'earnings', label: 'Earnings', Icon: IconDollarSign, badge: false },
+  { key: 'messages', label: 'Messages', Icon: MessageSquare,  badge: true  },
+  { key: 'profile',  label: 'Profile',  Icon: IconUser,       badge: false },
+  { key: 'settings', label: 'Settings', Icon: IconSettings,   badge: false },
 ]
 
 const NAV_HREFS: Record<string, string> = {
-  home:          '/dashboard/trainer',
-  schedule:      '/dashboard/trainer/schedule',
-  earnings:      '/dashboard/trainer/earnings',
-  messages:      '/dashboard/trainer/messages',
-  notifications: '/notifications',
-  profile:       '/dashboard/trainer/profile',
-  settings:      '/dashboard/trainer/settings',
+  home:     '/dashboard/trainer',
+  schedule: '/dashboard/trainer/schedule',
+  earnings: '/dashboard/trainer/earnings',
+  messages: '/dashboard/trainer/messages',
+  profile:  '/dashboard/trainer/profile',
+  settings: '/dashboard/trainer/settings',
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
@@ -138,14 +137,12 @@ function Sidebar({
   onToggle,
   trainerName,
   trainerInitials,
-  notifUnread,
 }: {
   active: string
   sidebarOpen: boolean
   onToggle: () => void
   trainerName: string
   trainerInitials: string
-  notifUnread: number
 }) {
   const todaySessions = 2
   const weeklyDone = 7
@@ -219,7 +216,7 @@ function Sidebar({
                   <Icon size={20} />
                 </span>
                 {sidebarOpen && <span style={{ whiteSpace: 'nowrap' }}>{label}</span>}
-                {(key === 'notifications' ? notifUnread > 0 : badge) && (
+                {badge && (
                   <span style={{ position: 'absolute', top: '10px', right: '20px', width: '8px', height: '8px', borderRadius: '50%', background: '#00BCC8', flexShrink: 0 }} />
                 )}
               </Link>
@@ -311,9 +308,7 @@ function DesktopHeader({ sidebarOpen }: { sidebarOpen: boolean }) {
           Dashboard
         </span>
       </div>
-      <Link href="/notifications" style={{ background: 'transparent', border: 'none', color: T.ink2, cursor: 'pointer', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-        <IconBell />
-      </Link>
+      <NotificationsDropdown />
     </motion.header>
   )
 }
@@ -529,7 +524,6 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [trainerName, setTrainerName] = useState('')
   const [trainerInitials, setTrainerInitials] = useState('')
-  const [notifUnread, setNotifUnread] = useState(0)
   const pathname = usePathname()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
 
@@ -557,19 +551,6 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
         })
     })
   }, [])
-
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      supabase
-        .from('notifications')
-        .select('id', { count: 'exact', head: true })
-        .eq('profile_id', user.id)
-        .is('read_at', null)
-        .then(({ count }) => setNotifUnread(count ?? 0))
-    })
-  }, [pathname])
 
   const getActiveNav = () => {
     if (pathname === '/dashboard/trainer') return 'home'
@@ -609,7 +590,6 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
             onToggle={() => setSidebarOpen((o) => !o)}
             trainerName={trainerName}
             trainerInitials={trainerInitials}
-            notifUnread={notifUnread}
           />
           <DesktopHeader sidebarOpen={sidebarOpen} />
         </>

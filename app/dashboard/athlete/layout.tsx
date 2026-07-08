@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
+import NotificationsDropdown from '@/components/NotificationsDropdown'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -87,19 +88,17 @@ const IconX = () => (
 // ── Nav items ──────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { key: 'home',          label: 'Home',          Icon: IconHome,      badge: false },
-  { key: 'sessions',      label: 'Sessions',      Icon: IconCalendar,  badge: false },
-  { key: 'messages',      label: 'Messages',      Icon: MessageSquare, badge: true  },
-  { key: 'notifications', label: 'Notifications', Icon: IconBell,      badge: true  },
-  { key: 'profile',       label: 'Profile',       Icon: IconUser,      badge: false },
+  { key: 'home',     label: 'Home',     Icon: IconHome,      badge: false },
+  { key: 'sessions', label: 'Sessions', Icon: IconCalendar,  badge: false },
+  { key: 'messages', label: 'Messages', Icon: MessageSquare, badge: true  },
+  { key: 'profile',  label: 'Profile',  Icon: IconUser,      badge: false },
 ]
 
 const NAV_HREFS: Record<string, string> = {
-  home:          '/dashboard/athlete',
-  sessions:      '/dashboard/athlete/sessions',
-  messages:      '/dashboard/athlete/messages',
-  notifications: '/notifications',
-  profile:       '/dashboard/athlete/profile',
+  home:     '/dashboard/athlete',
+  sessions: '/dashboard/athlete/sessions',
+  messages: '/dashboard/athlete/messages',
+  profile:  '/dashboard/athlete/profile',
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
@@ -110,14 +109,12 @@ function Sidebar({
   onToggle,
   identity,
   nextSession,
-  notifUnread,
 }: {
   active: string
   sidebarOpen: boolean
   onToggle: () => void
   identity: AthleteIdentity
   nextSession: NextSessionInfo | null
-  notifUnread: number
 }) {
   return (
     <motion.div
@@ -187,7 +184,7 @@ function Sidebar({
                   <Icon size={20} />
                 </span>
                 {sidebarOpen && <span style={{ whiteSpace: 'nowrap' }}>{label}</span>}
-                {(key === 'notifications' ? notifUnread > 0 : badge) && (
+                {badge && (
                   <span style={{ position: 'absolute', top: '10px', right: '20px', width: '8px', height: '8px', borderRadius: '50%', background: '#00BCC8', flexShrink: 0 }} />
                 )}
               </Link>
@@ -275,9 +272,7 @@ function DesktopHeader({ sidebarOpen }: { sidebarOpen: boolean }) {
           Athlete Dashboard
         </span>
       </div>
-      <Link href="/notifications" style={{ background: 'transparent', border: 'none', color: T.ink2, cursor: 'pointer', minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-        <IconBell />
-      </Link>
+      <NotificationsDropdown />
     </motion.header>
   )
 }
@@ -354,7 +349,6 @@ function MobileHeader({ activeNav, initials }: { activeNav: string; initials: st
 export default function AthleteLayout({ children }: { children: React.ReactNode }) {
   const [isMobile, setIsMobile] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [notifUnread, setNotifUnread] = useState(0)
   const pathname = usePathname()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
   const [identity, setIdentity] = useState<AthleteIdentity>({ name: '', initials: '', sport: '', parentName: '' })
@@ -433,19 +427,6 @@ export default function AthleteLayout({ children }: { children: React.ReactNode 
     loadIdentity()
   }, [])
 
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      supabase
-        .from('notifications')
-        .select('id', { count: 'exact', head: true })
-        .eq('profile_id', user.id)
-        .is('read_at', null)
-        .then(({ count }) => setNotifUnread(count ?? 0))
-    })
-  }, [pathname])
-
   const getActiveNav = () => {
     if (pathname === '/dashboard/athlete') return 'home'
     if (pathname.startsWith('/dashboard/athlete/sessions')) return 'sessions'
@@ -477,7 +458,6 @@ export default function AthleteLayout({ children }: { children: React.ReactNode 
             onToggle={() => setSidebarOpen((o) => !o)}
             identity={identity}
             nextSession={nextSession}
-            notifUnread={notifUnread}
           />
           <DesktopHeader sidebarOpen={sidebarOpen} />
         </>
