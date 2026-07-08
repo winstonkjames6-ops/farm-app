@@ -8,11 +8,11 @@ import { createClient } from '@/utils/supabase/client'
 
 const T = {
   bg: '#F8F8F6',
-  surface: 'rgba(255,255,255,0.85)',
+  surface: '#FFFFFF',
   surface2: '#F3F4F6',
-  border: 'rgba(0,0,0,0.08)',
+  border: '#E5E7EB',
   yellow: '#00BCC8',
-  yellowBg: 'rgba(0,188,200,0.06)',
+  yellowBg: '#E8F9FA',
   ink: '#111827',
   ink2: '#6B7280',
   ink3: '#9CA3AF',
@@ -87,8 +87,8 @@ function NotifIcon({ type, read }: { type: NotifType; read: boolean }) {
   return (
     <div style={{
       width: 36, height: 36, flexShrink: 0,
-      background: read ? T.surface2 : 'rgba(0,188,200,0.08)',
-      border: `1px solid ${read ? T.border : 'rgba(0,188,200,0.2)'}`,
+      background: read ? T.surface2 : '#DCF5F7',
+      border: `1px solid ${read ? T.border : '#A5DEE4'}`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       {type === 'Sessions' && <IconCalendar color={color} />}
@@ -264,7 +264,7 @@ export default function NotificationsPage() {
           <button
             onClick={markAllRead}
             style={{
-              background: 'none', border: `1px solid ${T.border}`,
+              background: '#FFFFFF', border: `1px solid ${T.border}`,
               color: T.ink2, cursor: 'pointer', padding: '9px 16px',
               fontSize: 12, fontWeight: 700, letterSpacing: '.08em',
               fontFamily: "'Barlow Condensed', sans-serif", textTransform: 'uppercase' as const,
