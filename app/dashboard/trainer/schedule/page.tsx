@@ -27,13 +27,15 @@ type Session = {
 
 type AvailabilitySlot = {
   id: string
-  day_of_week: string
+  day_of_week: number
   start_time: string
   end_time: string
 }
 
 const FULL_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const ALL_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DAY_MAP: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -49,6 +51,15 @@ const T = {
   ink: '#111827',
   ink2: '#6B7280',
   ink3: '#9CA3AF',
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function formatTime(t: string): string {
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
 // ── Section label ──────────────────────────────────────────────────────────────
@@ -179,7 +190,7 @@ function ScheduleView() {
     const supabase = createClient()
     const { data, error } = await supabase
       .from('availability')
-      .insert({ trainer_id: trainerId, day_of_week: avFormDay, start_time: avFormStart, end_time: avFormEnd })
+      .insert({ trainer_id: trainerId, day_of_week: DAY_MAP[avFormDay], start_time: avFormStart, end_time: avFormEnd })
       .select('id, day_of_week, start_time, end_time')
       .single()
     setAvSaving(false)
@@ -362,10 +373,10 @@ function ScheduleView() {
               {availabilitySlots.map((slot) => (
                 <div key={slot.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: T.cyanDim, border: `1px solid ${T.cyanBorder}`, borderRadius: '10px' }}>
                   <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', color: T.ink, minWidth: '36px' }}>
-                    {slot.day_of_week}
+                    {DAY_LABELS[slot.day_of_week]}
                   </span>
                   <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, flex: 1 }}>
-                    {slot.start_time} – {slot.end_time}
+                    {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
                   </span>
                   {avDeleteErrors[slot.id] && (
                     <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
