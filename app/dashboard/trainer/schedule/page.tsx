@@ -33,9 +33,7 @@ type AvailabilitySlot = {
 }
 
 const FULL_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const ALL_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const DAY_MAP: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 }
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -62,16 +60,6 @@ function formatTime(t: string): string {
   return `${hour}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
-// ── Section label ──────────────────────────────────────────────────────────────
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '11px', letterSpacing: '0.08em', color: '#111827', textTransform: 'uppercase', marginBottom: '12px' }}>
-      {children}
-    </div>
-  )
-}
-
 // ── ScheduleView ───────────────────────────────────────────────────────────────
 
 function ScheduleView() {
@@ -79,9 +67,8 @@ function ScheduleView() {
   const [trainerId, setTrainerId] = useState<string | null>(null)
   const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([])
 
-  // Availability form state
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [avFormDay, setAvFormDay] = useState('Mon')
+  // Availability form state — holds the day label whose form is open, or null
+  const [showAddForm, setShowAddForm] = useState<string | null>(null)
   const [avFormStart, setAvFormStart] = useState('')
   const [avFormEnd, setAvFormEnd] = useState('')
   const [avFormError, setAvFormError] = useState('')
@@ -176,7 +163,7 @@ function ScheduleView() {
   }
 
   async function addAvailability() {
-    if (!trainerId) return
+    if (!trainerId || !showAddForm) return
     if (!avFormStart || !avFormEnd) {
       setAvFormError('Please set both start and end times.')
       return
@@ -190,7 +177,7 @@ function ScheduleView() {
     const supabase = createClient()
     const { data, error } = await supabase
       .from('availability')
-      .insert({ trainer_id: trainerId, day_of_week: DAY_MAP[avFormDay], start_time: avFormStart, end_time: avFormEnd })
+      .insert({ trainer_id: trainerId, day_of_week: DAY_MAP[showAddForm], start_time: avFormStart, end_time: avFormEnd })
       .select('id, day_of_week, start_time, end_time')
       .single()
     setAvSaving(false)
@@ -199,7 +186,7 @@ function ScheduleView() {
       return
     }
     setAvailabilitySlots((prev) => [...prev, data])
-    setShowAddForm(false)
+    setShowAddForm(null)
     setAvFormStart('')
     setAvFormEnd('')
   }
@@ -218,9 +205,18 @@ function ScheduleView() {
     setAvailabilitySlots((prev) => prev.filter((s) => s.id !== id))
   }
 
+  function openForm(day: string) {
+    setShowAddForm(day)
+    setAvFormError('')
+    setAvFormStart('')
+    setAvFormEnd('')
+  }
+
   const sessionsByDay: Record<string, Session[]> = {}
+  const slotsByDay: Record<string, AvailabilitySlot[]> = {}
   FULL_WEEK.forEach((day) => {
     sessionsByDay[day] = sessions.filter((s) => s.day === day)
+    slotsByDay[day] = availabilitySlots.filter((s) => s.day_of_week === DAY_MAP[day])
   })
 
   return (
@@ -242,16 +238,22 @@ function ScheduleView() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {FULL_WEEK.map((day) => {
             const daySessions = sessionsByDay[day] || []
+            const daySlots = slotsByDay[day] || []
+            const formOpen = showAddForm === day
+            const hasContent = daySessions.length > 0 || daySlots.length > 0 || formOpen
+
             return (
               <div key={day} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: daySessions.length > 0 ? '16px' : '0' }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: hasContent ? '16px' : '0' }}>
                   <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink }}>{day}</span>
                   <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3 }}>
                     {daySessions.length > 0 ? `${daySessions.length} session${daySessions.length > 1 ? 's' : ''}` : 'Available'}
                   </span>
                 </div>
 
-                {daySessions.length > 0 ? (
+                {/* Sessions */}
+                {daySessions.length > 0 && (
                   <div>
                     {daySessions.map((session, i) => (
                       <div key={session.id}>
@@ -334,9 +336,88 @@ function ScheduleView() {
                       </div>
                     ))}
                   </div>
-                ) : (
+                )}
+
+                {/* Availability slots for this day */}
+                {daySlots.length > 0 && (
+                  <div style={{ marginTop: daySessions.length > 0 ? '12px' : '0', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {daySlots.map((slot) => (
+                      <div key={slot.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: T.cyanDim, border: `1px solid ${T.cyanBorder}`, borderRadius: '8px' }}>
+                        <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, flex: 1 }}>
+                          {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
+                        </span>
+                        {avDeleteErrors[slot.id] && (
+                          <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
+                            {avDeleteErrors[slot.id]}
+                          </span>
+                        )}
+                        <button
+                          onClick={() => deleteAvailability(slot.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: '12px', padding: '2px 6px', borderRadius: '6px', fontFamily: "'Hanken Grotesk', sans-serif" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = '#EF4444' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = T.ink3 }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Inline add form */}
+                {formOpen && (
+                  <div style={{ marginTop: (daySessions.length > 0 || daySlots.length > 0) ? '12px' : '0', padding: '14px', background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>Start</label>
+                        <input
+                          type="time"
+                          value={avFormStart}
+                          onChange={(e) => setAvFormStart(e.target.value)}
+                          style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>End</label>
+                        <input
+                          type="time"
+                          value={avFormEnd}
+                          onChange={(e) => setAvFormEnd(e.target.value)}
+                          style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+                        />
+                      </div>
+                    </div>
+                    {avFormError && (
+                      <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px' }}>
+                        {avFormError}
+                      </span>
+                    )}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={addAvailability}
+                        disabled={avSaving}
+                        style={{ background: T.cyan, color: '#FFFFFF', border: 'none', cursor: avSaving ? 'default' : 'pointer', padding: '7px 16px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 700, opacity: avSaving ? 0.7 : 1 }}
+                        onMouseEnter={(e) => { if (!avSaving) e.currentTarget.style.filter = 'brightness(1.06)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
+                      >
+                        {avSaving ? 'Saving…' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => { setShowAddForm(null); setAvFormError(''); setAvFormStart(''); setAvFormEnd('') }}
+                        style={{ background: 'none', border: `1px solid ${T.border}`, color: T.ink2, cursor: 'pointer', padding: '7px 14px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px' }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.22)' }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.border }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty state / add button */}
+                {!formOpen && daySlots.length === 0 && daySessions.length === 0 && (
                   <div
-                    onClick={() => { setAvFormDay(day); setShowAddForm(true) }}
+                    onClick={() => openForm(day)}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '44px', border: '1px dashed rgba(0,0,0,0.10)', borderRadius: '10px', fontSize: '13px', color: T.ink3, cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif", transition: 'border-color 0.15s, color 0.15s' }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = T.cyanBorder; e.currentTarget.style.color = T.cyan }}
                     onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.10)'; e.currentTarget.style.color = T.ink3 }}
@@ -344,128 +425,19 @@ function ScheduleView() {
                     + Add availability
                   </div>
                 )}
+                {!formOpen && (daySlots.length > 0 || daySessions.length > 0) && (
+                  <div
+                    onClick={() => openForm(day)}
+                    style={{ marginTop: '10px', fontSize: '12px', color: T.ink3, cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif", textAlign: 'center', transition: 'color 0.15s' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = T.cyan }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = T.ink3 }}
+                  >
+                    + Add availability
+                  </div>
+                )}
               </div>
             )
           })}
-        </div>
-
-        {/* ── Availability management ─────────────────────────────────────────── */}
-        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '11px', letterSpacing: '0.08em', color: T.ink, textTransform: 'uppercase' }}>
-              My Availability
-            </div>
-            {!showAddForm && (
-              <button
-                onClick={() => setShowAddForm(true)}
-                style={{ background: 'none', border: `1px solid ${T.cyanBorder}`, color: T.cyan, cursor: 'pointer', padding: '5px 14px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 600 }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = T.cyanDim }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
-              >
-                + Add slot
-              </button>
-            )}
-          </div>
-
-          {/* Existing slots */}
-          {availabilitySlots.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: showAddForm ? '16px' : '0' }}>
-              {availabilitySlots.map((slot) => (
-                <div key={slot.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: T.cyanDim, border: `1px solid ${T.cyanBorder}`, borderRadius: '10px' }}>
-                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', color: T.ink, minWidth: '36px' }}>
-                    {DAY_LABELS[slot.day_of_week]}
-                  </span>
-                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, flex: 1 }}>
-                    {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
-                  </span>
-                  {avDeleteErrors[slot.id] && (
-                    <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
-                      {avDeleteErrors[slot.id]}
-                    </span>
-                  )}
-                  <button
-                    onClick={() => deleteAvailability(slot.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: '12px', padding: '4px 8px', borderRadius: '6px', fontFamily: "'Hanken Grotesk', sans-serif" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = '#EF4444' }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = T.ink3 }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Add form */}
-          {showAddForm && (
-            <div style={{ padding: '16px', background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>Day</label>
-                  <select
-                    value={avFormDay}
-                    onChange={(e) => setAvFormDay(e.target.value)}
-                    style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, cursor: 'pointer', outline: 'none', minWidth: '90px' }}
-                  >
-                    {ALL_DAYS.map((d) => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>Start</label>
-                  <input
-                    type="time"
-                    value={avFormStart}
-                    onChange={(e) => setAvFormStart(e.target.value)}
-                    style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>End</label>
-                  <input
-                    type="time"
-                    value={avFormEnd}
-                    onChange={(e) => setAvFormEnd(e.target.value)}
-                    style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
-                  />
-                </div>
-              </div>
-
-              {avFormError && (
-                <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px' }}>
-                  {avFormError}
-                </span>
-              )}
-
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  onClick={addAvailability}
-                  disabled={avSaving}
-                  style={{ background: T.cyan, color: '#FFFFFF', border: 'none', cursor: avSaving ? 'default' : 'pointer', padding: '8px 18px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 700, opacity: avSaving ? 0.7 : 1 }}
-                  onMouseEnter={(e) => { if (!avSaving) e.currentTarget.style.filter = 'brightness(1.06)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
-                >
-                  {avSaving ? 'Saving…' : 'Save'}
-                </button>
-                <button
-                  onClick={() => { setShowAddForm(false); setAvFormError(''); setAvFormStart(''); setAvFormEnd('') }}
-                  style={{ background: 'none', border: `1px solid ${T.border}`, color: T.ink2, cursor: 'pointer', padding: '8px 14px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.22)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.border }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Empty state */}
-          {availabilitySlots.length === 0 && !showAddForm && (
-            <div style={{ textAlign: 'center', padding: '20px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px' }}>
-              No availability set yet.
-            </div>
-          )}
         </div>
       </div>
     </motion.div>
