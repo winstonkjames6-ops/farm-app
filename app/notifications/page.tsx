@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { createClient } from '@/utils/supabase/client'
 
 const T = {
   bg: '#09090B',
@@ -20,64 +22,38 @@ type NotifType = 'Sessions' | 'Messages' | 'Reviews'
 type TabType = 'All' | NotifType
 
 type Notif = {
-  id: number
+  id: string
   type: NotifType
   title: string
   body: string
   timestamp: string
   read: boolean
+  link: string | null
+  read_at: string | null
 }
 
-const INITIAL_NOTIFS: Notif[] = [
-  {
-    id: 1, type: 'Sessions',
-    title: 'Session tomorrow — Marcus Rivera',
-    body: 'Your session with Marcus Rivera is tomorrow at 10:00 AM at Zilker Park. Don\'t forget to bring cleats.',
-    timestamp: '24hr ago', read: false,
-  },
-  {
-    id: 2, type: 'Sessions',
-    title: 'Session in 1 hour — Marcus Rivera',
-    body: 'Your session with Marcus Rivera starts in 1 hour. Head to Field 4 at Zilker Park.',
-    timestamp: '1hr ago', read: false,
-  },
-  {
-    id: 3, type: 'Messages',
-    title: 'New message from Marcus Rivera',
-    body: 'Saturday works great — see you at 10am!',
-    timestamp: '2m ago', read: false,
-  },
-  {
-    id: 4, type: 'Reviews',
-    title: 'How was your session with Marcus Rivera?',
-    body: 'Leave a review for your session last Tuesday to help other parents find great trainers.',
-    timestamp: 'Jun 17', read: true,
-  },
-  {
-    id: 5, type: 'Sessions',
-    title: 'Slot opened — Jordan Wells',
-    body: 'Jordan Wells has new availability this weekend. Saturday at 2pm and Sunday at 11am.',
-    timestamp: 'Jun 16', read: true,
-  },
-  {
-    id: 6, type: 'Messages',
-    title: 'New message from Priya Nair',
-    body: "I'll send over the drill sheet before Friday.",
-    timestamp: 'Jun 14', read: true,
-  },
-  {
-    id: 7, type: 'Reviews',
-    title: 'Review request — Jamal Brooks session',
-    body: 'Your session with Jamal Brooks on Jun 4 is still awaiting your review.',
-    timestamp: 'Jun 5', read: true,
-  },
-  {
-    id: 8, type: 'Sessions',
-    title: 'Booking confirmed — Marcus Rivera',
-    body: 'Your session on Saturday, Jun 28 at 10:00 AM has been confirmed.',
-    timestamp: 'Jun 4', read: true,
-  },
-]
+function mapDbType(dbType: string): NotifType {
+  if (dbType === 'new_message') return 'Messages'
+  if (dbType === 'booking_completed') return 'Reviews'
+  return 'Sessions'
+}
+
+function formatRelativeTime(createdAt: string): string {
+  const now = new Date()
+  const created = new Date(createdAt)
+  const diffMs = now.getTime() - created.getTime()
+  const diffMins = Math.floor(diffMs / 60_000)
+  const diffHrs = Math.floor(diffMs / 3_600_000)
+
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  if (created >= todayStart) {
+    if (diffMins < 60) return `${diffMins}m ago`
+    return `${diffHrs}hr ago`
+  }
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return `${months[created.getMonth()]} ${created.getDate()}`
+}
 
 function IconCalendar({ color }: { color: string }) {
   return (
@@ -125,14 +101,78 @@ function NotifIcon({ type, read }: { type: NotifType; read: boolean }) {
 const TABS: TabType[] = ['All', 'Sessions', 'Messages', 'Reviews']
 
 export default function NotificationsPage() {
+  const router = useRouter()
   const [tab, setTab] = useState<TabType>('All')
-  const [notifs, setNotifs] = useState<Notif[]>(INITIAL_NOTIFS)
+  const [notifs, setNotifs] = useState<Notif[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = createClient()
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from('notifications')
+        .select('id, type, title, body, link, read_at, created_at')
+        .eq('profile_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (data) {
+        setNotifs(data.map((row) => ({
+          id: row.id,
+          type: mapDbType(row.type),
+          title: row.title,
+          body: row.body,
+          timestamp: formatRelativeTime(row.created_at),
+          read: row.read_at !== null,
+          link: row.link,
+          read_at: row.read_at,
+        })))
+      }
+      setLoading(false)
+    }
+    load()
+  }, [])
 
   const filtered = tab === 'All' ? notifs : notifs.filter((n) => n.type === tab)
   const unreadCount = notifs.filter((n) => !n.read).length
 
-  function markAllRead() {
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })))
+  async function markAllRead() {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    await supabase
+      .from('notifications')
+      .update({ read_at: new Date().toISOString() })
+      .eq('profile_id', user.id)
+      .is('read_at', null)
+
+    setNotifs((prev) => prev.map((n) => ({
+      ...n,
+      read: true,
+      read_at: n.read_at ?? new Date().toISOString(),
+    })))
+  }
+
+  async function handleNotifClick(notif: Notif) {
+    if (!notif.read) {
+      const supabase = createClient()
+      const now = new Date().toISOString()
+      await supabase
+        .from('notifications')
+        .update({ read_at: now })
+        .eq('id', notif.id)
+
+      setNotifs((prev) => prev.map((n) =>
+        n.id === notif.id ? { ...n, read: true, read_at: now } : n
+      ))
+    }
+
+    if (notif.link) {
+      router.push(notif.link)
+    }
   }
 
   return (
@@ -223,12 +263,19 @@ export default function NotificationsPage() {
 
         {/* Notification list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {filtered.map((notif, i) => (
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '60px 24px', color: T.ink3 }}>
+              <p style={{ fontSize: 13, margin: 0 }}>Loading…</p>
+            </div>
+          )}
+
+          {!loading && filtered.map((notif, i) => (
             <motion.div
               key={notif.id}
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: i * 0.06 }}
+              onClick={() => handleNotifClick(notif)}
               style={{
                 background: notif.read ? T.surface : T.yellowBg,
                 borderLeft: notif.read ? `3px solid transparent` : `3px solid ${T.yellow}`,
@@ -255,7 +302,7 @@ export default function NotificationsPage() {
             </motion.div>
           ))}
 
-          {filtered.length === 0 && (
+          {!loading && filtered.length === 0 && (
             <div style={{ textAlign: 'center', padding: '60px 24px', color: T.ink3 }}>
               <p style={{
                 fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 18,
