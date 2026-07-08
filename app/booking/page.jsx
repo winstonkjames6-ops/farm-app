@@ -791,6 +791,13 @@ function BookingPageInner() {
     const { data: trainerRow } = await supabase.from('trainers').select('id').eq('profile_id', trainerId).single()
     if (!trainerRow) throw new Error('Trainer not found. Please go back and try again.')
     const sessionTime = buildSessionTime(dateParam, timeParam)
+    const { data: existing } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('trainer_id', trainerRow.id)
+      .eq('session_time', sessionTime)
+      .not('status', 'in', '(cancelled,declined)')
+    if (existing && existing.length > 0) throw new Error('This time slot was just booked by someone else. Please choose another time.')
     const { error } = await supabase.from('bookings').insert({
       parent_id: user.id,
       athlete_id: selectedAthlete?.id ?? null,

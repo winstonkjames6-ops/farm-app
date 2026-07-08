@@ -5,10 +5,6 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 
-// ── Constants ──────────────────────────────────────────────────────────────
-
-const TIMES = ['9:00 AM', '11:00 AM', '2:00 PM', '4:00 PM']
-
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function getInitials(name) {
@@ -16,6 +12,14 @@ function getInitials(name) {
   if (words.length === 0) return '?'
   if (words.length === 1) return words[0][0].toUpperCase()
   return (words[0][0] + words[words.length - 1][0]).toUpperCase()
+}
+
+function formatTime12h(timeStr) {
+  if (!timeStr) return ''
+  const [h, m] = timeStr.split(':').map(Number)
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  return `${hour}:${String(m).padStart(2, '0')} ${period}`
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────
@@ -26,8 +30,9 @@ export default function TrainerProfile({ params: { slug } }) {
   const [notFound, setNotFound] = useState(false)
 
   const [selectedDate, setSelectedDate] = useState(0)
-  const [selectedTime, setSelectedTime] = useState(0)
+  const [selectedTime, setSelectedTime] = useState(null)
   const [selectedFormat, setSelectedFormat] = useState('In-Person')
+  const [availability, setAvailability] = useState([])
 
   const DATES = useMemo(() => {
     const result = []
@@ -45,18 +50,33 @@ export default function TrainerProfile({ params: { slug } }) {
     return result
   }, [])
 
+  const daySlots = useMemo(() => {
+    if (!DATES[selectedDate]) return []
+    const dow = new Date(DATES[selectedDate].isoDate + 'T00:00:00').getDay()
+    return availability.filter(a => a.day_of_week === dow)
+  }, [availability, selectedDate, DATES])
+
+  useEffect(() => {
+    setSelectedTime(daySlots.length > 0 ? formatTime12h(daySlots[0].start_time) : null)
+  }, [daySlots])
+
   useEffect(() => {
     async function load() {
       const supabase = createClient()
       const { data } = await supabase
         .from('trainers')
-        .select('profile_id, specialty, bio, rate, location, profiles(name)')
+        .select('id, profile_id, specialty, bio, rate, location, profiles(name)')
         .eq('profile_id', slug)
         .single()
       if (!data) {
         setNotFound(true)
       } else {
         setTrainer(data)
+        const { data: avail } = await supabase
+          .from('availability')
+          .select('day_of_week, start_time, end_time')
+          .eq('trainer_id', data.id)
+        setAvailability(avail || [])
       }
       setLoading(false)
     }
@@ -92,8 +112,8 @@ export default function TrainerProfile({ params: { slug } }) {
   const name = trainer?.profiles?.name ?? ''
   const { profile_id, specialty, bio, rate, location } = trainer ?? {}
 
-  const bookingHref = trainer
-    ? `/booking?trainerId=${profile_id}&name=${encodeURIComponent(name)}&specialty=${encodeURIComponent(specialty ?? '')}&rate=${rate ?? ''}&date=${encodeURIComponent(DATES[selectedDate]?.isoDate ?? '')}&time=${encodeURIComponent(TIMES[selectedTime])}&format=${encodeURIComponent(selectedFormat)}`
+  const bookingHref = trainer && selectedTime
+    ? `/booking?trainerId=${profile_id}&name=${encodeURIComponent(name)}&specialty=${encodeURIComponent(specialty ?? '')}&rate=${rate ?? ''}&date=${encodeURIComponent(DATES[selectedDate]?.isoDate ?? '')}&time=${encodeURIComponent(selectedTime)}&format=${encodeURIComponent(selectedFormat)}`
     : '/booking'
 
   if (loading) {
@@ -378,21 +398,28 @@ export default function TrainerProfile({ params: { slug } }) {
               {/* Time slots */}
               <div style={{ marginBottom: '18px' }}>
                 <div style={labelCaps}>Time</div>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  {TIMES.map((t, i) => (
-                    <button
-                      key={t}
-                      onClick={() => setSelectedTime(i)}
-                      style={{
-                        padding: '8px 13px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-                        background: selectedTime === i ? 'var(--ink)' : 'var(--bg)',
-                        border: selectedTime === i ? '1px solid var(--ink)' : '1px solid var(--line)',
-                        color: selectedTime === i ? 'var(--bg)' : 'var(--ink-2)',
-                        transition: 'all .15s ease',
-                      }}
-                    >{t}</button>
-                  ))}
-                </div>
+                {daySlots.length === 0 ? (
+                  <div style={{ fontSize: '13.5px', color: 'var(--ink-3)', padding: '8px 0' }}>No availability this day</div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {daySlots.map((slot) => {
+                      const label = formatTime12h(slot.start_time)
+                      return (
+                        <button
+                          key={slot.start_time}
+                          onClick={() => setSelectedTime(label)}
+                          style={{
+                            padding: '8px 13px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                            background: selectedTime === label ? 'var(--ink)' : 'var(--bg)',
+                            border: selectedTime === label ? '1px solid var(--ink)' : '1px solid var(--line)',
+                            color: selectedTime === label ? 'var(--bg)' : 'var(--ink-2)',
+                            transition: 'all .15s ease',
+                          }}
+                        >{label}</button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Format toggle */}
@@ -427,15 +454,27 @@ export default function TrainerProfile({ params: { slug } }) {
               </div>
 
               {/* CTA */}
-              <Link href={bookingHref} style={{
-                display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box',
-                width: '100%', padding: '15px', borderRadius: '12px',
-                background: '#00BCC8', color: '#FFFFFF',
-                fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16px',
-                cursor: 'pointer', marginBottom: '10px',
-              }}>
-                Request session
-              </Link>
+              {selectedTime ? (
+                <Link href={bookingHref} style={{
+                  display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box',
+                  width: '100%', padding: '15px', borderRadius: '12px',
+                  background: '#00BCC8', color: '#FFFFFF',
+                  fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16px',
+                  cursor: 'pointer', marginBottom: '10px',
+                }}>
+                  Request session
+                </Link>
+              ) : (
+                <div style={{
+                  display: 'block', textAlign: 'center', boxSizing: 'border-box',
+                  width: '100%', padding: '15px', borderRadius: '12px',
+                  background: 'var(--surface-2)', color: 'var(--ink-3)',
+                  fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16px',
+                  cursor: 'not-allowed', marginBottom: '10px',
+                }}>
+                  Request session
+                </div>
+              )}
 
               <Link href={`/dashboard/messages?withId=${profile_id}`} style={{
                 display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box',
