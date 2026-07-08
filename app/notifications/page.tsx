@@ -241,64 +241,77 @@ export default function NotificationsPage() {
 
       <main style={{ position: 'relative', zIndex: 2, maxWidth: 640, margin: '0 auto', padding: '40px 24px 80px' }}>
 
-        {/* Page header */}
+        {/* Heading — sits on the background, outside the card */}
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: [0.2, 0.7, 0.2, 1] }}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32, flexWrap: 'wrap', gap: 12 }}
+          style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <h1 style={{
-              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 42,
-              color: T.ink, margin: 0, textTransform: 'uppercase' as const, letterSpacing: '.04em', lineHeight: 1,
-            }}>Notifications</h1>
-            {unreadCount > 0 && (
-              <span style={{
-                background: T.yellow, color: '#fff', fontSize: 11, fontWeight: 800,
-                padding: '3px 9px', fontFamily: "'Barlow Condensed', sans-serif",
-                letterSpacing: '.06em',
-              }}>{unreadCount} NEW</span>
-            )}
-          </div>
-          <button
-            onClick={markAllRead}
-            style={{
-              background: '#FFFFFF', border: `1px solid ${T.border}`,
-              color: T.ink2, cursor: 'pointer', padding: '9px 16px',
-              fontSize: 12, fontWeight: 700, letterSpacing: '.08em',
-              fontFamily: "'Barlow Condensed', sans-serif", textTransform: 'uppercase' as const,
-            }}
-          >Mark all read</button>
+          <h1 style={{
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 42,
+            color: T.ink, margin: 0, textTransform: 'uppercase' as const, letterSpacing: '.04em', lineHeight: 1,
+          }}>Notifications</h1>
+          {unreadCount > 0 && (
+            <span style={{
+              background: T.yellow, color: '#fff', fontSize: 11, fontWeight: 800,
+              padding: '3px 9px', fontFamily: "'Barlow Condensed', sans-serif",
+              letterSpacing: '.06em',
+            }}>{unreadCount} NEW</span>
+          )}
         </motion.div>
 
-        {/* Filter tabs */}
+        {/* Single white card — mark all read + tabs + list */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.05 }}
-          style={{ display: 'flex', gap: 0, marginBottom: 28, borderBottom: `1px solid ${T.border}` }}
+          style={{
+            background: T.surface,
+            borderRadius: 24,
+            border: `1px solid ${T.border}`,
+            overflow: 'hidden',
+          }}
         >
-          {TABS.map((t) => (
+          {/* Card header: Mark all read */}
+          <div style={{
+            padding: '16px 24px',
+            borderBottom: `1px solid ${T.border}`,
+            display: 'flex',
+            justifyContent: 'flex-end',
+          }}>
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              onClick={markAllRead}
               style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                padding: '10px 18px', fontSize: 12, fontWeight: 700,
-                color: tab === t ? T.yellow : T.ink3,
-                borderBottom: tab === t ? `2px solid ${T.yellow}` : '2px solid transparent',
-                marginBottom: -1,
-                fontFamily: "'Barlow Condensed', sans-serif",
-                letterSpacing: '.08em', textTransform: 'uppercase' as const,
-                transition: 'color .15s ease',
+                background: T.surface, border: `1px solid ${T.border}`,
+                color: T.ink2, cursor: 'pointer', padding: '9px 16px',
+                fontSize: 12, fontWeight: 700, letterSpacing: '.08em',
+                fontFamily: "'Barlow Condensed', sans-serif", textTransform: 'uppercase' as const,
               }}
-            >{t}</button>
-          ))}
-        </motion.div>
+            >Mark all read</button>
+          </div>
 
-        {/* Notification list */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* Filter tabs */}
+          <div style={{ display: 'flex', borderBottom: `1px solid ${T.border}`, padding: '0 8px' }}>
+            {TABS.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  padding: '10px 18px', fontSize: 12, fontWeight: 700,
+                  color: tab === t ? T.yellow : T.ink3,
+                  borderBottom: tab === t ? `2px solid ${T.yellow}` : '2px solid transparent',
+                  marginBottom: -1,
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  letterSpacing: '.08em', textTransform: 'uppercase' as const,
+                  transition: 'color .15s ease',
+                }}
+              >{t}</button>
+            ))}
+          </div>
+
+          {/* Notification rows */}
           {loading && (
             <div style={{ textAlign: 'center', padding: '60px 24px', color: T.ink3 }}>
               <p style={{ fontSize: 13, margin: 0 }}>Loading…</p>
@@ -315,7 +328,8 @@ export default function NotificationsPage() {
               style={{
                 background: notif.read ? T.surface : T.yellowBg,
                 borderLeft: notif.read ? `3px solid transparent` : `3px solid ${T.yellow}`,
-                padding: '18px 20px',
+                borderBottom: `1px solid ${T.border}`,
+                padding: '18px 24px',
                 cursor: 'pointer',
               }}
             >
@@ -347,7 +361,8 @@ export default function NotificationsPage() {
               <p style={{ fontSize: 13, margin: 0 }}>Nothing here yet for this filter.</p>
             </div>
           )}
-        </div>
+
+        </motion.div>
 
       </main>
     </div>
