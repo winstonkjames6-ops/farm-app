@@ -22,6 +22,12 @@ function formatTime12h(timeStr) {
   return `${hour}:${String(m).padStart(2, '0')} ${period}`
 }
 
+function buildSlotISO(isoDate, startTime) {
+  const parts = startTime.split(':').map(Number)
+  const [year, month, day] = isoDate.split('-').map(Number)
+  return new Date(year, month - 1, day, parts[0], parts[1], 0).toISOString()
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function TrainerProfile({ params: { slug } }) {
@@ -33,6 +39,7 @@ export default function TrainerProfile({ params: { slug } }) {
   const [selectedTime, setSelectedTime] = useState(null)
   const [selectedFormat, setSelectedFormat] = useState('In-Person')
   const [availability, setAvailability] = useState([])
+  const [existingBookings, setExistingBookings] = useState([])
 
   const DATES = useMemo(() => {
     const result = []
@@ -56,9 +63,13 @@ export default function TrainerProfile({ params: { slug } }) {
     return availability.filter(a => a.day_of_week === dow)
   }, [availability, selectedDate, DATES])
 
+  const bookedSet = useMemo(() => new Set(existingBookings.map(b => b.session_time)), [existingBookings])
+
   useEffect(() => {
-    setSelectedTime(daySlots.length > 0 ? formatTime12h(daySlots[0].start_time) : null)
-  }, [daySlots])
+    const isoDate = DATES[selectedDate]?.isoDate ?? ''
+    const firstAvailable = daySlots.find(slot => !bookedSet.has(buildSlotISO(isoDate, slot.start_time)))
+    setSelectedTime(firstAvailable ? formatTime12h(firstAvailable.start_time) : null)
+  }, [daySlots, bookedSet, DATES, selectedDate])
 
   useEffect(() => {
     async function load() {
@@ -82,6 +93,20 @@ export default function TrainerProfile({ params: { slug } }) {
     }
     load()
   }, [slug])
+
+  useEffect(() => {
+    if (!trainer?.id) return
+    async function fetchBookings() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('bookings')
+        .select('session_time')
+        .eq('trainer_id', trainer.id)
+        .not('status', 'in', '(cancelled,declined)')
+      setExistingBookings(data || [])
+    }
+    fetchBookings()
+  }, [trainer?.id])
 
   const card = {
     background: 'var(--surface)',
@@ -404,15 +429,20 @@ export default function TrainerProfile({ params: { slug } }) {
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     {daySlots.map((slot) => {
                       const label = formatTime12h(slot.start_time)
+                      const slotISO = buildSlotISO(DATES[selectedDate]?.isoDate ?? '', slot.start_time)
+                      const isBooked = bookedSet.has(slotISO)
                       return (
                         <button
                           key={slot.start_time}
-                          onClick={() => setSelectedTime(label)}
+                          onClick={isBooked ? undefined : () => setSelectedTime(label)}
                           style={{
-                            padding: '8px 13px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-                            background: selectedTime === label ? 'var(--ink)' : 'var(--bg)',
-                            border: selectedTime === label ? '1px solid var(--ink)' : '1px solid var(--line)',
-                            color: selectedTime === label ? 'var(--bg)' : 'var(--ink-2)',
+                            padding: '8px 13px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+                            cursor: isBooked ? 'default' : 'pointer',
+                            background: !isBooked && selectedTime === label ? 'var(--ink)' : 'var(--bg)',
+                            border: `1px solid ${!isBooked && selectedTime === label ? 'var(--ink)' : 'var(--line)'}`,
+                            color: isBooked ? 'var(--ink-3)' : selectedTime === label ? 'var(--bg)' : 'var(--ink-2)',
+                            textDecoration: isBooked ? 'line-through' : 'none',
+                            opacity: isBooked ? 0.55 : 1,
                             transition: 'all .15s ease',
                           }}
                         >{label}</button>
