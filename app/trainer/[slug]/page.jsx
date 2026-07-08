@@ -63,11 +63,11 @@ export default function TrainerProfile({ params: { slug } }) {
     return availability.filter(a => a.day_of_week === dow)
   }, [availability, selectedDate, DATES])
 
-  const bookedSet = useMemo(() => new Set(existingBookings.map(b => b.session_time)), [existingBookings])
+  const bookedSet = useMemo(() => new Set(existingBookings.map(b => new Date(b.session_time).getTime())), [existingBookings])
 
   useEffect(() => {
     const isoDate = DATES[selectedDate]?.isoDate ?? ''
-    const firstAvailable = daySlots.find(slot => !bookedSet.has(buildSlotISO(isoDate, slot.start_time)))
+    const firstAvailable = daySlots.find(slot => !bookedSet.has(new Date(buildSlotISO(isoDate, slot.start_time)).getTime()))
     setSelectedTime(firstAvailable ? formatTime12h(firstAvailable.start_time) : null)
   }, [daySlots, bookedSet, DATES, selectedDate])
 
@@ -430,7 +430,7 @@ export default function TrainerProfile({ params: { slug } }) {
                     {daySlots.map((slot) => {
                       const label = formatTime12h(slot.start_time)
                       const slotISO = buildSlotISO(DATES[selectedDate]?.isoDate ?? '', slot.start_time)
-                      const isBooked = bookedSet.has(slotISO)
+                      const isBooked = bookedSet.has(new Date(slotISO).getTime())
                       return (
                         <button
                           key={slot.start_time}
