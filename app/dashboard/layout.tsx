@@ -55,8 +55,8 @@ function formatNextSessionDisplay(sessionTime: string): string {
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
-const IconBell = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+const IconBell = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
@@ -117,19 +117,21 @@ const IconX = () => (
 // ── Nav items ──────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { key: 'home',     label: 'Home',     Icon: IconHome,      badge: false },
-  { key: 'search',   label: 'Search',   Icon: IconSearch,    badge: false },
-  { key: 'messages', label: 'Messages', Icon: MessageSquare, badge: true  },
-  { key: 'profile',  label: 'Profile',  Icon: IconUser,      badge: false },
-  { key: 'settings', label: 'Settings', Icon: IconSettings,  badge: false },
+  { key: 'home',          label: 'Home',          Icon: IconHome,      badge: false },
+  { key: 'search',        label: 'Search',        Icon: IconSearch,    badge: false },
+  { key: 'messages',      label: 'Messages',      Icon: MessageSquare, badge: true  },
+  { key: 'notifications', label: 'Notifications', Icon: IconBell,      badge: true  },
+  { key: 'profile',       label: 'Profile',       Icon: IconUser,      badge: false },
+  { key: 'settings',      label: 'Settings',      Icon: IconSettings,  badge: false },
 ]
 
 const NAV_HREFS: Record<string, string> = {
-  home:     '/dashboard',
-  search:   '/dashboard/search',
-  messages: '/dashboard/messages',
-  profile:  '/dashboard/profile',
-  settings: '/dashboard/settings',
+  home:          '/dashboard',
+  search:        '/dashboard/search',
+  messages:      '/dashboard/messages',
+  notifications: '/notifications',
+  profile:       '/dashboard/profile',
+  settings:      '/dashboard/settings',
 }
 
 // ── Page help ──────────────────────────────────────────────────────────────────
@@ -295,6 +297,7 @@ function Sidebar({
   parentInitials,
   nextSessionText,
   nextSessionTrainer,
+  notifUnread,
 }: {
   active: string
   sidebarOpen: boolean
@@ -303,6 +306,7 @@ function Sidebar({
   parentInitials: string
   nextSessionText: string | null
   nextSessionTrainer: string | null
+  notifUnread: number
 }) {
   return (
     <motion.div
@@ -372,7 +376,7 @@ function Sidebar({
                   <Icon size={20} />
                 </span>
                 {sidebarOpen && <span style={{ whiteSpace: 'nowrap' }}>{label}</span>}
-                {badge && (
+                {(key === 'notifications' ? notifUnread > 0 : badge) && (
                   <span style={{ position: 'absolute', top: '10px', right: '20px', width: '8px', height: '8px', borderRadius: '50%', background: '#00BCC8', flexShrink: 0 }} />
                 )}
               </Link>
@@ -567,6 +571,7 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
   const [athletes, setAthletes] = useState<Array<{ name: string; sport: string }>>([])
   const [nextSessionText, setNextSessionText] = useState<string | null>(null)
   const [nextSessionTrainer, setNextSessionTrainer] = useState<string | null>(null)
+  const [notifUnread, setNotifUnread] = useState(0)
   const pathname = usePathname()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
 
@@ -615,6 +620,19 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('profile_id', user.id)
+        .is('read_at', null)
+        .then(({ count }) => setNotifUnread(count ?? 0))
+    })
+  }, [pathname])
+
   const parentInitials = computeInitials(parentName)
 
   const getActiveNav = () => {
@@ -652,6 +670,7 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
               parentInitials={parentInitials}
               nextSessionText={nextSessionText}
               nextSessionTrainer={nextSessionTrainer}
+              notifUnread={notifUnread}
             />
             <DesktopHeader sidebarOpen={sidebarOpen} />
           </>
