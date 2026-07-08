@@ -7,15 +7,15 @@ import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 
 const T = {
-  bg: '#09090B',
-  surface: '#111113',
-  surface2: '#18181B',
-  border: 'rgba(255,255,255,0.08)',
+  bg: '#F8F8F6',
+  surface: 'rgba(255,255,255,0.85)',
+  surface2: '#F3F4F6',
+  border: 'rgba(0,0,0,0.08)',
   yellow: '#00BCC8',
-  yellowBg: 'rgba(0,188,200,0.05)',
-  ink: '#FAFAFA',
-  ink2: '#A1A1AA',
-  ink3: '#52525B',
+  yellowBg: 'rgba(0,188,200,0.06)',
+  ink: '#111827',
+  ink2: '#6B7280',
+  ink3: '#9CA3AF',
 }
 
 type NotifType = 'Sessions' | 'Messages' | 'Reviews'
@@ -105,12 +105,31 @@ export default function NotificationsPage() {
   const [tab, setTab] = useState<TabType>('All')
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [loading, setLoading] = useState(true)
+  const [sportKey, setSportKey] = useState('parent')
 
   useEffect(() => {
     const supabase = createClient()
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      // Resolve sport key from role/specialty
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.role === 'trainer') {
+        const { data: trainer } = await supabase
+          .from('trainers')
+          .select('specialty')
+          .eq('profile_id', user.id)
+          .single()
+        if (trainer?.specialty) {
+          setSportKey(trainer.specialty.toLowerCase())
+        }
+      }
 
       const { data } = await supabase
         .from('notifications')
@@ -178,17 +197,34 @@ export default function NotificationsPage() {
   return (
     <div
       style={{
-        background: T.bg, color: T.ink, minHeight: '100vh',
+        minHeight: '100vh',
+        position: 'relative',
+        color: T.ink,
         fontFamily: "'Hanken Grotesk', sans-serif",
         WebkitFontSmoothing: 'antialiased',
       }}
     >
+      {/* Background image — role/sport-aware */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0,
+        backgroundImage: `url('/backgrounds/${sportKey}.jpg')`,
+        backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed',
+      }} />
+
+      {/* Overlay */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1,
+        background: 'rgba(248,248,246,0.60)', pointerEvents: 'none',
+      }} />
+
       {/* Nav */}
       <nav style={{
         height: 60, borderBottom: `1px solid ${T.border}`,
         display: 'flex', alignItems: 'center', padding: '0 24px',
         justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50,
-        background: T.bg,
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
       }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <span style={{
@@ -203,7 +239,7 @@ export default function NotificationsPage() {
         }}>← Dashboard</Link>
       </nav>
 
-      <main style={{ maxWidth: 640, margin: '0 auto', padding: '40px 24px 80px' }}>
+      <main style={{ position: 'relative', zIndex: 2, maxWidth: 640, margin: '0 auto', padding: '40px 24px 80px' }}>
 
         {/* Page header */}
         <motion.div
@@ -219,7 +255,7 @@ export default function NotificationsPage() {
             }}>Notifications</h1>
             {unreadCount > 0 && (
               <span style={{
-                background: T.yellow, color: '#000', fontSize: 11, fontWeight: 800,
+                background: T.yellow, color: '#fff', fontSize: 11, fontWeight: 800,
                 padding: '3px 9px', fontFamily: "'Barlow Condensed', sans-serif",
                 letterSpacing: '.06em',
               }}>{unreadCount} NEW</span>
