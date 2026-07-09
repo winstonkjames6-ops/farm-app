@@ -7,20 +7,7 @@ import Link from 'next/link'
 import { ChevronDown, CheckCircle, Circle, Camera } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
-// ── Design tokens ──────────────────────────────────────────────────────────────
-
-const T = {
-  cyan: '#00BCC8',
-  cyanLight: 'rgba(0,188,200,0.08)',
-  cyanBorder: 'rgba(0,188,200,0.25)',
-  border: 'rgba(0,0,0,0.08)',
-  line: 'rgba(0,0,0,0.08)',
-  ink: '#111827',
-  ink2: '#6B7280',
-  ink3: '#9CA3AF',
-  surface2: '#F0EFEB',
-  danger: '#EF4444',
-}
+import { T } from '@/lib/theme'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 

@@ -4,20 +4,10 @@ import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 
-const T = {
-  card: 'rgba(255,255,255,0.92)',
-  surface2: '#F0EFEB',
-  accent: '#00BCC8',
-  ink: '#1A1A1A',
-  ink2: '#4A4A4A',
-  ink3: '#9A9A9A',
-  line: 'rgba(0,0,0,0.08)',
-}
+import { T } from '@/lib/theme'
 
 const cardStyle: React.CSSProperties = {
   background: T.card,
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
   borderRadius: '16px',
   border: '1px solid rgba(0,0,0,0.08)',
   overflow: 'hidden',
@@ -252,7 +242,7 @@ export default function MessagesPage() {
                     >
                       <div style={{
                         maxWidth: '66%', padding: '11px 16px',
-                        background: isParent ? T.accent : T.surface2,
+                        background: isParent ? T.cyan : T.surface2,
                         color: isParent ? '#FFFFFF' : T.ink,
                         borderRadius: isParent ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                         fontSize: 14, lineHeight: 1.55,

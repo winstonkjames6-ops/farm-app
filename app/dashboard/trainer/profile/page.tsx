@@ -22,6 +22,7 @@ import {
   Music,
   PlayCircle,
 } from 'lucide-react'
+import { T } from '@/lib/theme'
 
 const IconInstagram = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -111,18 +112,6 @@ for (let h = 6; h <= 21; h++) {
   const ap = h >= 12 ? 'PM' : 'AM'
   TIME_SLOTS.push(`${d}:00 ${ap}`)
   if (h < 21) TIME_SLOTS.push(`${d}:30 ${ap}`)
-}
-
-// ── Design tokens ──────────────────────────────────────────────────────────────
-
-const T = {
-  cyan: '#00BCC8',
-  cyanBorder: 'rgba(0,188,200,0.25)',
-  cyanLight: 'rgba(0,188,200,0.08)',
-  border: 'rgba(0,0,0,0.08)',
-  ink: '#111827',
-  ink2: '#6B7280',
-  ink3: '#9CA3AF',
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────

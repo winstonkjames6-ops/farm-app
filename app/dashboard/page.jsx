@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
+import { T } from '@/lib/theme'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -40,22 +41,6 @@ function formatBookingTime(sessionTime) {
   return `${hours}${minuteStr} ${ampm}`
 }
 
-// ── Design tokens ────────────────────────────────────────────────────────────
-
-const T = {
-  bg: '#F8F8F6',
-  surface: '#FFFFFF',
-  surface2: '#F0EFEB',
-  ink: '#1A1A1A',
-  ink2: '#4A4A4A',
-  ink3: '#9A9A9A',
-  line: 'rgba(0,0,0,0.08)',
-  accent: '#00BCC8',
-  accentInk: '#FFFFFF',
-  green: '#00BCC8',
-  radius: '14px',
-}
-
 // ── Stars ────────────────────────────────────────────────────────────────────
 
 function Stars({ rating, size = 14 }) {
@@ -65,7 +50,7 @@ function Stars({ rating, size = 14 }) {
         <svg key={i} width={size} height={size} viewBox="0 0 24 24">
           <polygon
             points="12 3 14.6 9.1 21 9.7 16.1 13.9 17.7 20.5 12 16.9 6.3 20.5 7.9 13.9 3 9.7 9.4 9.1"
-            fill={i <= rating ? T.accent : 'rgba(0,0,0,0.10)'}
+            fill={i <= rating ? T.cyan : 'rgba(0,0,0,0.10)'}
           />
         </svg>
       ))}
@@ -81,7 +66,7 @@ function Avatar({ initials }) {
       className="flex-none flex items-center justify-center rounded-xl text-white font-black text-lg"
       style={{
         width: 52, height: 52,
-        background: `linear-gradient(140deg, ${T.accent} 0%, #00D4E2 100%)`,
+        background: `linear-gradient(140deg, ${T.cyan} 0%, #00D4E2 100%)`,
         fontFamily: "'Archivo', sans-serif",
       }}
     >
@@ -97,8 +82,8 @@ function SportBadge({ sport }) {
     <span
       className="text-[11px] font-bold tracking-wide uppercase px-2 py-[3px] rounded-full"
       style={{
-        background: `color-mix(in srgb, ${T.accent} 12%, ${T.surface2})`,
-        color: T.accent,
+        background: `color-mix(in srgb, ${T.cyan} 12%, ${T.surface2})`,
+        color: T.cyan,
         letterSpacing: '.08em',
       }}
     >
@@ -116,7 +101,7 @@ function UpcomingCard({ booking, index, onCancel }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.38, ease: [0.2, 0.7, 0.2, 1], delay: 0.15 + index * 0.08 }}
       className="rounded-2xl p-6"
-      style={{ background: T.surface, border: `1px solid ${T.line}` }}
+      style={{ background: T.card, border: `1px solid ${T.line}` }}
     >
       <div className="dash-card-row flex items-start gap-4">
         <Avatar initials={booking.trainerInitials} />
@@ -159,7 +144,7 @@ function UpcomingCard({ booking, index, onCancel }) {
           <Link
             href="/dashboard/messages"
             className="font-bold text-sm px-5 py-2.5 rounded-xl transition-[filter] duration-150"
-            style={{ background: T.green, color: '#FFFFFF', textDecoration: 'none', display: 'inline-block' }}
+            style={{ background: T.cyan, color: '#FFFFFF', textDecoration: 'none', display: 'inline-block' }}
             onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.06)' }}
             onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
           >
@@ -169,7 +154,7 @@ function UpcomingCard({ booking, index, onCancel }) {
             onClick={() => onCancel(booking.id)}
             className="text-[12.5px] font-medium transition-colors duration-150"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3 }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = T.accent }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = T.cyan }}
             onMouseLeave={(e) => { e.currentTarget.style.color = T.ink3 }}
           >
             Cancel
@@ -189,7 +174,7 @@ function PastCard({ booking, index }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.38, ease: [0.2, 0.7, 0.2, 1], delay: 0.25 + index * 0.08 }}
       className="rounded-2xl p-6"
-      style={{ background: T.surface, border: `1px solid ${T.line}` }}
+      style={{ background: T.card, border: `1px solid ${T.line}` }}
     >
       <div className="flex items-start gap-4">
         <Avatar initials={booking.trainerInitials} />
@@ -281,7 +266,7 @@ function EmptyState() {
       <Link
         href="/dashboard/search"
         className="inline-flex items-center gap-2 font-bold text-[15px] px-6 py-3 rounded-xl transition-[filter] duration-150"
-        style={{ background: T.accent, color: T.accentInk, textDecoration: 'none' }}
+        style={{ background: T.cyan, color: '#FFFFFF', textDecoration: 'none' }}
         onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.07)' }}
         onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
       >
@@ -431,7 +416,7 @@ export default function DashboardPage() {
               <span
                 key={label}
                 className="text-[13.5px] font-semibold px-4 py-2 rounded-full"
-                style={{ background: T.surface, border: `1px solid ${T.line}`, color: T.ink2 }}
+                style={{ background: T.card, border: `1px solid ${T.line}`, color: T.ink2 }}
               >
                 {label}
               </span>
@@ -481,7 +466,7 @@ export default function DashboardPage() {
               <Link
                 href="/child/create"
                 className="flex items-center gap-4 rounded-2xl p-5 no-underline transition-[border-color] duration-150"
-                style={{ background: T.surface, border: `1.5px dashed ${T.line}`, color: T.ink2 }}
+                style={{ background: T.card, border: `1.5px dashed ${T.line}`, color: T.ink2 }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.26)' }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
               >

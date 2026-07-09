@@ -4,16 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 
-// ── Design tokens ──────────────────────────────────────────────────────────────
-
-const T = {
-  cyan: '#00BCC8',
-  cyanBorder: 'rgba(0,188,200,0.25)',
-  cyanLight: 'rgba(0,188,200,0.08)',
-  ink: '#111827',
-  ink2: '#6B7280',
-  ink3: '#9CA3AF',
-}
+import { T } from '@/lib/theme'
 
 // ── Shared styles ──────────────────────────────────────────────────────────────
 

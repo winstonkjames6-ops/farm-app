@@ -5,20 +5,10 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 
-const T = {
-  card: 'rgba(255,255,255,0.92)',
-  surface2: '#F0EFEB',
-  accent: '#00BCC8',
-  ink: '#1A1A1A',
-  ink2: '#4A4A4A',
-  ink3: '#9A9A9A',
-  line: 'rgba(0,0,0,0.08)',
-}
+import { T } from '@/lib/theme'
 
 const cardStyle: React.CSSProperties = {
   background: T.card,
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
   borderRadius: '16px',
   border: '1px solid rgba(0,0,0,0.08)',
   overflow: 'hidden',
@@ -305,7 +295,7 @@ function MessagesPageInner() {
             <div>
               <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>{otherName || '…'}</div>
               {statusText && (
-                <div style={{ fontSize: 11, color: statusText === 'Online' ? T.accent : T.ink3, marginTop: 1 }}>
+                <div style={{ fontSize: 11, color: statusText === 'Online' ? T.cyan : T.ink3, marginTop: 1 }}>
                   {statusText}
                 </div>
               )}
@@ -345,7 +335,7 @@ function MessagesPageInner() {
                   >
                     <div style={{
                       maxWidth: '66%', padding: '11px 16px',
-                      background: isMine ? T.accent : T.surface2,
+                      background: isMine ? T.cyan : T.surface2,
                       color: isMine ? '#FFFFFF' : T.ink,
                       borderRadius: isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                       fontSize: 14, lineHeight: 1.55,
@@ -390,7 +380,7 @@ function MessagesPageInner() {
               <button
                 onClick={sendMessage}
                 disabled={!ready}
-                style={{ background: T.accent, color: '#FFFFFF', border: 'none', cursor: ready ? 'pointer' : 'not-allowed', borderRadius: '10px', padding: '11px 22px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: '.08em', flexShrink: 0, opacity: ready ? 1 : 0.45 }}
+                style={{ background: T.cyan, color: '#FFFFFF', border: 'none', cursor: ready ? 'pointer' : 'not-allowed', borderRadius: '10px', padding: '11px 22px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: '.08em', flexShrink: 0, opacity: ready ? 1 : 0.45 }}
               >
                 SEND
               </button>
