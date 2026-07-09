@@ -109,7 +109,7 @@ function SportBadge({ sport }) {
 
 // ── Upcoming session card ─────────────────────────────────────────────────────
 
-function UpcomingCard({ booking, index }) {
+function UpcomingCard({ booking, index, onCancel }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -156,15 +156,17 @@ function UpcomingCard({ booking, index }) {
         </div>
 
         <div className="dash-card-actions flex-none flex flex-col items-end gap-2 pt-1">
-          <button
+          <Link
+            href="/dashboard/messages"
             className="font-bold text-sm px-5 py-2.5 rounded-xl transition-[filter] duration-150"
-            style={{ background: T.green, color: '#FFFFFF', border: 'none', cursor: 'pointer' }}
+            style={{ background: T.green, color: '#FFFFFF', textDecoration: 'none', display: 'inline-block' }}
             onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.06)' }}
             onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
           >
             Join session
-          </button>
+          </Link>
           <button
+            onClick={() => onCancel(booking.id)}
             className="text-[12.5px] font-medium transition-colors duration-150"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3 }}
             onMouseEnter={(e) => { e.currentTarget.style.color = T.accent }}
@@ -354,7 +356,7 @@ export default function DashboardPage() {
               date: formatBookingDate(b.session_time),
               time: formatBookingTime(b.session_time),
               format: FORMAT_MAP[b.format] ?? b.format,
-              status: b.status === 'completed' ? 'completed' : 'upcoming',
+              status: b.status ?? 'confirmed',
               totalPaid: b.rate,
               rating: (Array.isArray(b.reviews) ? b.reviews[0]?.rating : b.reviews?.rating) ?? null,
             }
@@ -364,9 +366,15 @@ export default function DashboardPage() {
     })
   }, [])
 
-  const upcoming = bookings.filter((b) => b.status === 'upcoming')
+  const upcoming = bookings.filter((b) => b.status !== 'completed' && b.status !== 'cancelled')
   const past = bookings.filter((b) => b.status === 'completed')
   const isEmpty = bookings.length === 0
+
+  async function cancelBooking(id) {
+    const supabase = createClient()
+    const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', id)
+    if (!error) setBookings((prev) => prev.filter((b) => b.id !== id))
+  }
 
   const sportsSet = new Set(bookings.map((b) => b.sport))
 
@@ -443,7 +451,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col gap-4">
                   {upcoming.map((b, i) => (
                     <div key={b.id} id={i === 0 ? 'tour-home-upcoming' : undefined}>
-                      <UpcomingCard booking={b} index={i} />
+                      <UpcomingCard booking={b} index={i} onCancel={cancelBooking} />
                     </div>
                   ))}
                 </div>

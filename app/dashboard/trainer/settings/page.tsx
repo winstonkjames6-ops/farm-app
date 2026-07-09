@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -118,6 +120,14 @@ function ToggleRow({
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function TrainerSettingsPage() {
+  const router = useRouter()
+
+  async function handleLogOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
   const [sessionReminders, setSessionReminders] = useState(true)
   const [newMessages, setNewMessages] = useState(true)
   const [bookingRequests, setBookingRequests] = useState(true)
@@ -190,11 +200,14 @@ export default function TrainerSettingsPage() {
           <div>
             <SectionHeading>Account</SectionHeading>
             <div style={cardStyle}>
-              <div style={{
-                display: 'flex', alignItems: 'center',
-                paddingTop: '16px', paddingBottom: '16px',
-                borderBottom: `1px solid ${T.line}`, cursor: 'pointer',
-              }}>
+              <div
+                onClick={handleLogOut}
+                style={{
+                  display: 'flex', alignItems: 'center',
+                  paddingTop: '16px', paddingBottom: '16px',
+                  borderBottom: `1px solid ${T.line}`, cursor: 'pointer',
+                }}
+              >
                 <span style={{
                   fontFamily: "'Hanken Grotesk', sans-serif",
                   fontSize: '15px', fontWeight: 600, color: T.ink2,

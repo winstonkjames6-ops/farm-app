@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { ChevronDown, CheckCircle, Circle, Camera } from 'lucide-react'
@@ -894,7 +895,7 @@ function NotificationsSection() {
 
 // ── Section: Danger Zone ───────────────────────────────────────────────────────
 
-function DangerZoneSection() {
+function DangerZoneSection({ onLogOut }: { onLogOut: () => void }) {
   return (
     <SectionCard dangerBorder>
       <CardLabel danger>Danger Zone</CardLabel>
@@ -914,14 +915,17 @@ function DangerZoneSection() {
               fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px',
             }}>Sign out of your account on this device</div>
           </div>
-          <button style={{
-            padding: '8px 16px',
-            border: '1px solid rgba(0,0,0,0.12)',
-            color: T.ink2, background: 'transparent',
-            borderRadius: '8px', fontSize: '14px',
-            fontFamily: "'Hanken Grotesk', sans-serif",
-            cursor: 'pointer', minHeight: '44px', flexShrink: 0,
-          }}>Log out</button>
+          <button
+            onClick={onLogOut}
+            style={{
+              padding: '8px 16px',
+              border: '1px solid rgba(0,0,0,0.12)',
+              color: T.ink2, background: 'transparent',
+              borderRadius: '8px', fontSize: '14px',
+              fontFamily: "'Hanken Grotesk', sans-serif",
+              cursor: 'pointer', minHeight: '44px', flexShrink: 0,
+            }}
+          >Log out</button>
         </div>
         <div style={{
           display: 'flex', alignItems: 'center',
@@ -1196,7 +1200,7 @@ function ViewMode({
 // ── Edit mode ──────────────────────────────────────────────────────────────────
 
 function EditMode({
-  onBack, firstName, lastName, email, userId, onProfileUpdate, athletes,
+  onBack, firstName, lastName, email, userId, onProfileUpdate, athletes, onLogOut,
 }: {
   onBack: () => void
   firstName: string
@@ -1205,6 +1209,7 @@ function EditMode({
   userId: string
   onProfileUpdate: (updates: { firstName: string; lastName: string }) => void
   athletes: AthleteRow[]
+  onLogOut: () => void
 }) {
   const initials = [firstName?.[0], lastName?.[0]].filter(Boolean).join('').toUpperCase() || '?'
 
@@ -1249,7 +1254,7 @@ function EditMode({
         />
         <AthletesSection initialAthletes={athletes} />
         <NotificationsSection />
-        <DangerZoneSection />
+        <DangerZoneSection onLogOut={onLogOut} />
       </div>
     </div>
   )
@@ -1264,6 +1269,7 @@ interface ProfileState {
 }
 
 export default function ParentProfilePage() {
+  const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [profile, setProfile] = useState<ProfileState | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -1313,6 +1319,12 @@ export default function ParentProfilePage() {
 
   function handleProfileUpdate(updates: { firstName: string; lastName: string }) {
     setProfile((p) => p ? { ...p, ...updates } : p)
+  }
+
+  async function handleLogOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
   }
 
   if (profileLoading) {
@@ -1369,6 +1381,7 @@ export default function ParentProfilePage() {
               userId={userId}
               onProfileUpdate={handleProfileUpdate}
               athletes={athletes}
+              onLogOut={handleLogOut}
             />
           ) : (
             <ViewMode

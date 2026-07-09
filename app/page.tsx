@@ -687,8 +687,8 @@ export default function Home() {
               <span style={{ fontSize: '13px', color: 'var(--ink-3)', fontFamily: "'Hanken Grotesk',sans-serif" }}>© 2026 FARM. All rights reserved.</span>
             </div>
             <div style={{ display: 'flex', gap: '26px' }}>
-              <a href="#" style={{ color: 'var(--ink-3)', textDecoration: 'none', fontSize: '13px', fontFamily: "'Hanken Grotesk',sans-serif" }}>Privacy</a>
-              <a href="#" style={{ color: 'var(--ink-3)', textDecoration: 'none', fontSize: '13px', fontFamily: "'Hanken Grotesk',sans-serif" }}>Terms</a>
+              <Link href="/privacy" style={{ color: 'var(--ink-3)', textDecoration: 'none', fontSize: '13px', fontFamily: "'Hanken Grotesk',sans-serif" }}>Privacy</Link>
+              <Link href="/terms" style={{ color: 'var(--ink-3)', textDecoration: 'none', fontSize: '13px', fontFamily: "'Hanken Grotesk',sans-serif" }}>Terms</Link>
               <a href="mailto:hello@farm.coach" style={{ color: 'var(--ink-3)', textDecoration: 'none', fontSize: '13px', fontFamily: "'Hanken Grotesk',sans-serif" }}>Contact</a>
             </div>
           </div>

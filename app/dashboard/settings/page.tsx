@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/utils/supabase/client'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 
@@ -122,12 +124,19 @@ function ToggleRow({
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [sessionReminders, setSessionReminders] = useState(true)
   const [trainerMessages, setTrainerMessages] = useState(true)
   const [reviewReminders, setReviewReminders] = useState(true)
   const [promoUpdates, setPromoUpdates] = useState(false)
   const [shareProgress, setShareProgress] = useState(true)
   const [publicProfile, setPublicProfile] = useState(false)
+
+  async function handleLogOut() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   const chevronRight = (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.ink3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -311,11 +320,14 @@ export default function SettingsPage() {
           <div>
             <SectionHeading>Account actions</SectionHeading>
             <div style={cardStyle}>
-              <div style={{
-                display: 'flex', alignItems: 'center',
-                paddingTop: '16px', paddingBottom: '16px',
-                borderBottom: `1px solid ${T.line}`, cursor: 'pointer',
-              }}>
+              <div
+                onClick={handleLogOut}
+                style={{
+                  display: 'flex', alignItems: 'center',
+                  paddingTop: '16px', paddingBottom: '16px',
+                  borderBottom: `1px solid ${T.line}`, cursor: 'pointer',
+                }}
+              >
                 <span style={{
                   fontFamily: "'Hanken Grotesk', sans-serif",
                   fontSize: '15px', fontWeight: 600, color: T.ink2,

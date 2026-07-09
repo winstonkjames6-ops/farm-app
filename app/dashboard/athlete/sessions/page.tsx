@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
@@ -114,7 +115,7 @@ export default function SessionsPage() {
         .sort((a, b) => a.session_time.localeCompare(b.session_time))
 
       const pastRows = rows
-        .filter(b => b.session_time <= now)
+        .filter(b => b.session_time <= now && b.status !== 'cancelled')
         .sort((a, b) => b.session_time.localeCompare(a.session_time))
 
       setUpcoming(upcomingRows.map(b => {
@@ -212,13 +213,14 @@ export default function SessionsPage() {
 
                 {/* Actions */}
                 <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                  <button
-                    style={{ background: T.cyan, color: '#FFFFFF', border: 'none', cursor: 'pointer', padding: '6px 12px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 700, whiteSpace: 'nowrap' }}
+                  <Link
+                    href="/dashboard/athlete/messages"
+                    style={{ background: T.cyan, color: '#FFFFFF', border: 'none', cursor: 'pointer', padding: '6px 12px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 700, whiteSpace: 'nowrap', textDecoration: 'none', display: 'inline-block' }}
                     onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.06)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
                   >
                     Join session
-                  </button>
+                  </Link>
                   <button
                     onClick={() => cancelSession(s.id)}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', padding: '2px 0' }}

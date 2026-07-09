@@ -95,7 +95,7 @@ export default function SignupPage() {
   const [calculatedAge, setCalculatedAge] = useState<number | null>(null)
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', password: '',
-    role: '' as 'parent' | 'trainer' | '',
+    role: '' as 'parent' | 'trainer' | 'athlete' | '',
     trainerSport: '', trainerRate: '', trainerLocation: '',
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -167,6 +167,32 @@ export default function SignupPage() {
   function handleRoleContinue() {
     if (form.role === 'parent') handleParentDone()
     else if (form.role === 'trainer') setStep('onboarding-trainer')
+    else if (form.role === 'athlete') createSelfAthleteAccount()
+  }
+
+  async function createSelfAthleteAccount() {
+    const supabase = createClient()
+    const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password })
+    if (error) { setAuthError(error.message); setStep('account'); return }
+    if (data.user) {
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: data.user.id,
+        role: 'athlete',
+        name: `${form.firstName} ${form.lastName}`,
+        email: form.email,
+      })
+      if (profileError) { setAuthError('Account created but profile setup failed. Please contact support.'); setStep('account'); return }
+      // Requires: ALTER TABLE athletes ALTER COLUMN parent_id DROP NOT NULL;
+      // and an RLS INSERT policy where profile_id = auth.uid()
+      const { error: athleteError } = await supabase.from('athletes').insert({
+        profile_id: data.user.id,
+        parent_id: null,
+        name: `${form.firstName} ${form.lastName}`,
+      })
+      if (athleteError) { setAuthError('Account created but athlete profile setup failed. Please contact support.'); setStep('account'); return }
+    }
+    setStep('done')
+    router.push('/dashboard/athlete')
   }
 
   async function handleParentDone() {
@@ -572,7 +598,7 @@ export default function SignupPage() {
 
           {/* I'll do this later */}
           <button
-            onClick={() => router.push('/dashboard/athlete')}
+            onClick={createSelfAthleteAccount}
             style={{
               width: '100%', height: '44px', borderRadius: '11px',
               background: 'transparent', border: `1px solid ${T.line}`,
@@ -590,7 +616,7 @@ export default function SignupPage() {
     }
 
     if (step === 'role') {
-      const roleCard = (id: 'parent' | 'trainer', icon: React.ReactNode, title: string, desc: string) => {
+      const roleCard = (id: 'parent' | 'trainer' | 'athlete', icon: React.ReactNode, title: string, desc: string, fullWidth?: boolean) => {
         const selected = form.role === id
         return (
           <div
@@ -623,26 +649,38 @@ export default function SignupPage() {
             This determines how FARM works for you.
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '28px' }}>
-            {roleCard('parent',
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '28px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              {roleCard('parent',
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={T.ink2} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="7" r="3" />
+                  <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+                  <circle cx="18" cy="10" r="2" />
+                  <path d="M21 21v-1a3 3 0 0 0-3-3h-1" />
+                </svg>,
+                'Parent',
+                'Find and book trainers for your athlete.'
+              )}
+              {roleCard('trainer',
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={T.ink2} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                  <rect x="9" y="3" width="6" height="4" rx="2" />
+                  <line x1="9" y1="12" x2="15" y2="12" />
+                  <line x1="9" y1="16" x2="13" y2="16" />
+                </svg>,
+                'Trainer',
+                'List your services and get booked by parents.'
+              )}
+            </div>
+            {roleCard('athlete',
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={T.ink2} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="9" cy="7" r="3" />
-                <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
-                <circle cx="18" cy="10" r="2" />
-                <path d="M21 21v-1a3 3 0 0 0-3-3h-1" />
+                <circle cx="12" cy="5" r="3" />
+                <path d="M6 21v-2a6 6 0 0 1 12 0v2" />
+                <path d="M12 8v4" />
+                <path d="M8 14l4 2 4-2" />
               </svg>,
-              'Parent',
-              'Find and book trainers for your athlete.'
-            )}
-            {roleCard('trainer',
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={T.ink2} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-                <rect x="9" y="3" width="6" height="4" rx="2" />
-                <line x1="9" y1="12" x2="15" y2="12" />
-                <line x1="9" y1="16" x2="13" y2="16" />
-              </svg>,
-              'Trainer',
-              'List your services and get booked by parents.'
+              'Athlete (18+)',
+              'Book sessions and track your own training.'
             )}
           </div>
 

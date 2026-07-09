@@ -518,8 +518,10 @@ export default function TrainerDashboardLayout({ children }: { children: React.R
   )
 }
 
+const KNOWN_SPORTS = new Set(['soccer', 'basketball', 'tennis', 'volleyball', 'lacrosse', 'baseball', 'swimming', 'track'])
+
 function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
-  const { primarySport } = useTrainerSport()
+  const { primarySport, setPrimarySport } = useTrainerSport()
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [trainerName, setTrainerName] = useState('')
@@ -547,6 +549,17 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
           if (data?.name) {
             setTrainerName(data.name)
             setTrainerInitials(computeInitials(data.name))
+          }
+        })
+      supabase
+        .from('trainers')
+        .select('specialty')
+        .eq('profile_id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.specialty) {
+            const sport = data.specialty.toLowerCase()
+            setPrimarySport(KNOWN_SPORTS.has(sport) ? sport : 'turf-bg')
           }
         })
     })
