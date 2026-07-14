@@ -506,6 +506,12 @@ function WeeklyHoursPanel({
           </div>
         </div>
 
+        {quickDays.size > 0 && (!quickStart || !quickEnd) && !showSavePresetForm && (
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, marginBottom: '10px' }}>
+            Enter a start and end time to save this as a preset.
+          </div>
+        )}
+
         {quickError && (
           <div style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', marginBottom: '10px' }}>
             {quickError}
