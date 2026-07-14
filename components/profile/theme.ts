@@ -1,0 +1,29 @@
+import { ProfileCardTokens, ThemePreference } from './types'
+
+const LIGHT: ProfileCardTokens = {
+  bg: '#F8F8F6',
+  card: '#FFFFFF',
+  ink: '#111827',
+  ink2: '#6B7280',
+  ink3: '#9CA3AF',
+  border: 'rgba(0,0,0,0.08)',
+  surface2: '#F0EFEB',
+  cyan: '#00BCC8',
+  heroOverlay: 'rgba(255,255,255,0.72)',
+}
+
+const DARK: ProfileCardTokens = {
+  bg: '#161616',
+  card: '#161616',
+  ink: '#FFFFFF',
+  ink2: 'rgba(255,255,255,0.65)',
+  ink3: 'rgba(255,255,255,0.45)',
+  border: 'rgba(255,255,255,0.12)',
+  surface2: 'rgba(255,255,255,0.06)',
+  cyan: '#00BCC8',
+  heroOverlay: 'rgba(10,20,18,0.62)',
+}
+
+export function getProfileCardTokens(theme: ThemePreference): ProfileCardTokens {
+  return theme === 'light' ? LIGHT : DARK
+}

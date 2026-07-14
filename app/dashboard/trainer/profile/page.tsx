@@ -23,6 +23,11 @@ import {
   PlayCircle,
 } from 'lucide-react'
 import { T } from '@/lib/theme'
+import { ProfileCard } from '@/components/profile/ProfileCard'
+import { AppearanceSection } from '@/components/profile/AppearanceSection'
+import { ActivityList } from '@/components/profile/ActivityList'
+import { getProfileCardTokens } from '@/components/profile/theme'
+import type { ActivityItem, BackgroundMode, ThemePreference } from '@/components/profile/types'
 
 const IconInstagram = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -268,19 +273,21 @@ function BasicInfoSection({
   initialFullName,
   initialBio,
   initialLocation,
+  initialPhone,
   onSave,
 }: {
   initialFullName?: string
   initialBio?: string
   initialLocation?: string
-  onSave?: (fullName: string, bio: string, location: string) => Promise<void>
+  initialPhone?: string
+  onSave?: (fullName: string, bio: string, location: string, phone: string) => Promise<void>
 }) {
   const [fullName, setFullName] = useState(initialFullName ?? '')
   const [tagline, setTagline] = useState('')
   const [bio, setBio] = useState(initialBio ?? '')
   const [location, setLocation] = useState(initialLocation ?? '')
   const [experience, setExperience] = useState('')
-  const [phone, setPhone] = useState('')
+  const [phone, setPhone] = useState(initialPhone ?? '')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [saveError, setSaveError] = useState('')
 
@@ -293,13 +300,16 @@ function BasicInfoSection({
   useEffect(() => {
     if (initialLocation !== undefined) setLocation(initialLocation)
   }, [initialLocation])
+  useEffect(() => {
+    if (initialPhone !== undefined) setPhone(initialPhone)
+  }, [initialPhone])
 
   async function handleSave() {
     if (!onSave) return
     setSaveStatus('saving')
     setSaveError('')
     try {
-      await onSave(fullName, bio, location)
+      await onSave(fullName, bio, location, phone)
       setSaveStatus('saved')
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : 'Save failed')
@@ -1003,191 +1013,28 @@ function DangerZoneSection({ paused, setPaused }: { paused: boolean; setPaused: 
   )
 }
 
-// ── View mode ──────────────────────────────────────────────────────────────────
+// ── Page ───────────────────────────────────────────────────────────────────────
 
-function TrainerViewMode({ onEdit, fullName, location, sport }: { onEdit: () => void; fullName: string; location: string; sport: string }) {
-  const initials = getInitials(fullName)
-  const avgRating = (MOCK_REVIEWS.reduce((s, r) => s + r.rating, 0) / MOCK_REVIEWS.length).toFixed(1)
-  const reviewCount = MOCK_REVIEWS.length
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-      {/* Single unified profile card */}
-      <div
-        id="section-basic-info"
-        style={{
-          background: 'rgba(255,255,255,0.92)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderRadius: '16px',
-          border: '1px solid rgba(0,0,0,0.08)',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Header band */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(0,188,200,0.12) 0%, rgba(0,212,226,0.06) 100%)',
-          borderBottom: '1px solid rgba(0,188,200,0.12)',
-          padding: '28px 24px 20px',
-          display: 'flex', alignItems: 'flex-start',
-          justifyContent: 'space-between', gap: '16px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-            {/* Avatar */}
-            <div style={{
-              width: 72, height: 72, borderRadius: '999px', flexShrink: 0,
-              background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700, fontSize: '24px', color: '#FFFFFF',
-              boxShadow: '0 4px 12px rgba(0,188,200,0.3)',
-            }}>{initials}</div>
-
-            <div>
-              {/* Name */}
-              <div style={{
-                fontFamily: "'Archivo Black', 'Archivo', sans-serif",
-                fontWeight: 900, fontSize: '22px', color: '#111827',
-                lineHeight: 1.1, marginBottom: '4px',
-              }}>{fullName || 'Your Name'}</div>
-
-              {/* Location row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                     stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
-                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: '#6B7280' }}>
-                  {location || 'No location set'}
-                </span>
-              </div>
-
-              {/* Sport tag pill (trainer-appropriate, replaces verified badge position) */}
-              <div style={{
-                display: 'inline-block',
-                background: 'rgba(0,188,200,0.1)', color: T.cyan,
-                borderRadius: '6px', padding: '3px 10px',
-                fontSize: '12px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600,
-              }}>{sport || 'No sport set'}</div>
-            </div>
-          </div>
-
-          {/* Edit button */}
-          <button
-            onClick={onEdit}
-            style={{
-              flexShrink: 0,
-              border: '1.5px solid rgba(0,0,0,0.12)', color: '#6B7280',
-              background: 'rgba(255,255,255,0.80)', borderRadius: '10px',
-              padding: '7px 16px',
-              fontFamily: "'Archivo', sans-serif", fontWeight: 700,
-              fontSize: '13px', cursor: 'pointer',
-            }}
-          >Edit profile</button>
-        </div>
-
-        {/* Stat strip */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-          borderBottom: '1px solid rgba(0,0,0,0.07)',
-        }}>
-          {[
-            { value: avgRating, label: 'Rating' },
-            { value: String(reviewCount), label: reviewCount === 1 ? 'Review' : 'Reviews' },
-            { value: '—', label: 'Years' },
-          ].map((stat, i) => (
-            <div key={stat.label} style={{
-              padding: '14px 0', textAlign: 'center',
-              borderRight: i < 2 ? '1px solid rgba(0,0,0,0.07)' : 'none',
-            }}>
-              <div style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 800, fontSize: '22px', color: '#111827', lineHeight: 1,
-              }}>{stat.value}</div>
-              <div style={{
-                fontFamily: "'Hanken Grotesk', sans-serif",
-                fontSize: '11px', color: '#9CA3AF', marginTop: '3px',
-                textTransform: 'uppercase' as const, letterSpacing: '.08em', fontWeight: 600,
-              }}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Info rows: phone + bio */}
-        <div style={{ padding: '4px 0' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '12px',
-            padding: '12px 24px', borderBottom: '1px solid rgba(0,0,0,0.05)',
-          }}>
-            <span style={{ flexShrink: 0, display: 'flex' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                   stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 17z"/>
-              </svg>
-            </span>
-            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3, fontStyle: 'italic' }}>
-              No phone number
-            </span>
-          </div>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '12px',
-            padding: '12px 24px', borderBottom: '1px solid rgba(0,0,0,0.05)',
-          }}>
-            <span style={{ flexShrink: 0, display: 'flex' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                   stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-            </span>
-            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3, fontStyle: 'italic' }}>
-              No bio added yet
-            </span>
-          </div>
-        </div>
-
-        {/* Social & Media */}
-        <div id="section-social" style={{ padding: '20px 24px', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
-          <CardLabel>Social &amp; Media</CardLabel>
-          <p style={{ fontSize: '14px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontStyle: 'italic', margin: 0 }}>No social links added</p>
-        </div>
-
-        {/* Credentials */}
-        <div id="section-credentials" style={{ padding: '20px 24px', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
-          <CardLabel>Credentials</CardLabel>
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Certifications</div>
-            {INITIAL_CERTS.map((cert, i) => (
-              <div key={cert.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < INITIAL_CERTS.length - 1 ? '1px solid #E5E7EB' : 'none' }}>
-                <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>{cert.name}</div>
-                  <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{cert.org} · {cert.year}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div>
-            <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Affiliations</div>
-            {INITIAL_AFFS.map((aff, i) => (
-              <div key={aff.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < INITIAL_AFFS.length - 1 ? '1px solid #E5E7EB' : 'none' }}>
-                <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>{aff.name}</div>
-                  <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{aff.role} · {aff.years}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-    </div>
-  )
+interface TrainerBookingRow {
+  id: string
+  session_time: string
+  status: string
+  athleteName: string | null
 }
 
-// ── Page ───────────────────────────────────────────────────────────────────────
+interface TrainerReviewRow {
+  id: string
+  rating: number
+  body: string | null
+  parentName: string | null
+  session_time: string
+}
+
+const TRAINER_TABS = [
+  { key: 'activity', label: 'Activity' },
+  { key: 'bookings', label: 'Bookings' },
+  { key: 'reviews', label: 'Reviews' },
+]
 
 export default function TrainerProfilePage() {
   const [paused, setPaused] = useState(false)
@@ -1200,6 +1047,16 @@ export default function TrainerProfilePage() {
   const [initLocation, setInitLocation] = useState('')
   const [initRate, setInitRate] = useState('')
   const [initSpecialty, setInitSpecialty] = useState('')
+  const [initPhone, setInitPhone] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null)
+  const [verified, setVerified] = useState(false)
+  const [isCertified, setIsCertified] = useState(false)
+  const [themePreference, setThemePreference] = useState<ThemePreference>('dark')
+  const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>('full')
+  const [bookings, setBookings] = useState<TrainerBookingRow[]>([])
+  const [reviews, setReviews] = useState<TrainerReviewRow[]>([])
+  const [activeTab, setActiveTab] = useState('activity')
 
   useEffect(() => {
     async function load() {
@@ -1208,27 +1065,71 @@ export default function TrainerProfilePage() {
       if (!user) return
       setUserId(user.id)
       const [profileRes, trainerRes] = await Promise.all([
-        supabase.from('profiles').select('name').eq('id', user.id).single(),
-        supabase.from('trainers').select('specialty, bio, rate, location').eq('profile_id', user.id).single(),
+        supabase.from('profiles').select('name, avatar_url, banner_image_url, phone, verified, theme_preference, background_mode').eq('id', user.id).single(),
+        supabase.from('trainers').select('id, specialty, bio, rate, location, is_certified').eq('profile_id', user.id).single(),
       ])
       if (profileRes.data?.name) setInitName(profileRes.data.name)
+      setAvatarUrl(profileRes.data?.avatar_url ?? null)
+      setBannerImageUrl(profileRes.data?.banner_image_url ?? null)
+      setInitPhone(profileRes.data?.phone ?? '')
+      setVerified(profileRes.data?.verified ?? false)
+      setThemePreference((profileRes.data?.theme_preference as ThemePreference) ?? 'dark')
+      setBackgroundMode((profileRes.data?.background_mode as BackgroundMode) ?? 'full')
       if (trainerRes.data?.bio) setInitBio(trainerRes.data.bio)
       if (trainerRes.data?.location) setInitLocation(trainerRes.data.location)
       if (trainerRes.data?.rate != null) setInitRate(String(trainerRes.data.rate))
       if (trainerRes.data?.specialty) setInitSpecialty(trainerRes.data.specialty)
+      setIsCertified((trainerRes.data as any)?.is_certified ?? false)
+
+      const trainerRowId = trainerRes.data?.id
+      if (trainerRowId) {
+        const { data: bookingData } = await supabase
+          .from('bookings')
+          .select('id, session_time, status, athletes!athlete_id(name)')
+          .eq('trainer_id', trainerRowId)
+          .order('session_time', { ascending: false })
+          .limit(20)
+
+        setBookings(
+          (bookingData ?? []).map((b: any) => ({
+            id: b.id,
+            session_time: b.session_time,
+            status: b.status,
+            athleteName: b.athletes?.name ?? null,
+          }))
+        )
+
+        const { data: reviewData } = await supabase
+          .from('reviews')
+          .select('id, rating, body, bookings!booking_id(session_time, profiles!parent_id(name))')
+          .eq('trainer_id', trainerRowId)
+          .order('id', { ascending: false })
+          .limit(10)
+
+        setReviews(
+          (reviewData ?? []).map((r: any) => ({
+            id: r.id,
+            rating: r.rating,
+            body: r.body,
+            parentName: r.bookings?.profiles?.name ?? null,
+            session_time: r.bookings?.session_time ?? new Date().toISOString(),
+          }))
+        )
+      }
     }
     load()
   }, [])
 
-  async function saveBasicInfo(fullName: string, bio: string, location: string) {
+  async function saveBasicInfo(fullName: string, bio: string, location: string, phone: string) {
     if (!userId) throw new Error('Not authenticated')
     const supabase = createClient()
     const [profileRes, trainerRes] = await Promise.all([
-      supabase.from('profiles').update({ name: fullName }).eq('id', userId),
+      supabase.from('profiles').update({ name: fullName, phone }).eq('id', userId),
       supabase.from('trainers').update({ bio, location }).eq('profile_id', userId),
     ])
     if (profileRes.error) throw new Error(profileRes.error.message)
     if (trainerRes.error) throw new Error(trainerRes.error.message)
+    setInitPhone(phone)
   }
 
   async function saveRate(rate: string) {
@@ -1243,6 +1144,63 @@ export default function TrainerProfilePage() {
     const supabase = createClient()
     const { error } = await supabase.from('trainers').update({ specialty }).eq('profile_id', userId)
     if (error) throw new Error(error.message)
+  }
+
+  async function handleSaveAppearance(updates: { theme_preference?: ThemePreference; background_mode?: BackgroundMode }) {
+    if (!userId) throw new Error('Not authenticated')
+    const supabase = createClient()
+    const { error } = await supabase.from('profiles').update(updates).eq('id', userId)
+    if (error) throw new Error(error.message)
+    if (updates.theme_preference) setThemePreference(updates.theme_preference)
+    if (updates.background_mode) setBackgroundMode(updates.background_mode)
+  }
+
+  const location = initLocation
+  const sport = SPORTS.find((s) => s.toLowerCase() === primarySport) ?? primarySport
+  const cardTokens = getProfileCardTokens(themePreference)
+
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : '—'
+
+  const activityItems: ActivityItem[] = [
+    ...bookings.map((b) => ({
+      id: `b-${b.id}`,
+      title: `Session with ${b.athleteName ?? 'athlete'}`,
+      subtitle: b.status,
+      timestamp: b.session_time,
+    })),
+    ...reviews.map((r) => ({
+      id: `r-${r.id}`,
+      title: `New review from ${r.parentName ?? 'a parent'}`,
+      subtitle: r.body ? r.body.slice(0, 64) : `${r.rating} star${r.rating === 1 ? '' : 's'}`,
+      meta: '★'.repeat(r.rating),
+      timestamp: r.session_time,
+    })),
+  ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 8)
+
+  const bookingItems: ActivityItem[] = bookings.map((b) => ({
+    id: `bk-${b.id}`,
+    title: `Session with ${b.athleteName ?? 'athlete'}`,
+    meta: b.status,
+    timestamp: b.session_time,
+  }))
+
+  const reviewItems: ActivityItem[] = reviews.map((r) => ({
+    id: `rv-${r.id}`,
+    title: r.parentName ?? 'Parent',
+    subtitle: r.body ?? undefined,
+    meta: '★'.repeat(r.rating),
+    timestamp: r.session_time,
+  }))
+
+  let tabContent: React.ReactNode
+  if (activeTab === 'bookings') {
+    tabContent = <ActivityList items={bookingItems} tokens={cardTokens} emptyLabel="No sessions booked yet" />
+  } else if (activeTab === 'reviews') {
+    tabContent = <ActivityList items={reviewItems} tokens={cardTokens} emptyLabel="No reviews yet" />
+  } else {
+    tabContent = <ActivityList items={activityItems} tokens={cardTokens} emptyLabel="No recent activity" />
   }
 
   return (
@@ -1266,13 +1224,22 @@ export default function TrainerProfilePage() {
                 style={{ border: '1px solid rgba(0,0,0,0.12)', color: T.ink2, background: 'transparent', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px', flexShrink: 0 }}
               >← Done editing</button>
             </div>
-            <ProfilePhotoSection fullName={initName} sport={SPORTS.find((s) => s.toLowerCase() === primarySport) ?? primarySport} />
+            <ProfilePhotoSection fullName={initName} sport={sport} />
             <BasicInfoSection
               initialFullName={initName}
               initialBio={initBio}
               initialLocation={initLocation}
+              initialPhone={initPhone}
               onSave={saveBasicInfo}
             />
+            <div id="section-appearance">
+              <AppearanceSection
+                themePreference={themePreference}
+                backgroundMode={backgroundMode}
+                hasBannerImage={!!bannerImageUrl}
+                onSave={handleSaveAppearance}
+              />
+            </div>
             <SocialLinksSection />
             <IntroVideoSection />
             <SpecialtiesSection
@@ -1293,11 +1260,32 @@ export default function TrainerProfilePage() {
             <DangerZoneSection paused={paused} setPaused={setPaused} />
           </div>
         ) : (
-          <TrainerViewMode
-            onEdit={() => setIsEditing(true)}
-            fullName={initName}
-            location={initLocation}
-            sport={SPORTS.find((s) => s.toLowerCase() === primarySport) ?? primarySport}
+          <ProfileCard
+            themePreference={themePreference}
+            backgroundMode={backgroundMode}
+            bannerImageUrl={bannerImageUrl}
+            avatarUrl={avatarUrl}
+            name={initName || 'Your Name'}
+            verified={verified}
+            verifiedLabel="Verified"
+            metaLine={[location, isCertified ? 'Certified Trainer' : null, sport].filter(Boolean).join(' · ')}
+            stats={[
+              { value: avgRating, label: 'Rating' },
+              { value: String(reviews.length), label: reviews.length === 1 ? 'Review' : 'Reviews' },
+              { value: initRate ? `$${initRate}` : '—', label: 'Rate' },
+            ]}
+            contactRows={[
+              ...(initPhone ? [{ key: 'phone', icon: <Phone size={14} />, label: initPhone }] : []),
+            ]}
+            tabs={TRAINER_TABS}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            tabContent={tabContent}
+            onEditProfile={() => setIsEditing(true)}
+            onOpenSettings={() => {
+              setIsEditing(true)
+              setTimeout(() => document.getElementById('section-appearance')?.scrollIntoView({ behavior: 'smooth' }), 100)
+            }}
           />
         )}
       </motion.div>

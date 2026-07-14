@@ -4,10 +4,15 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { ChevronDown, CheckCircle, Circle, Camera } from 'lucide-react'
+import { ChevronDown, CheckCircle, Circle, Camera, Mail, Phone } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
 import { T } from '@/lib/theme'
+import { ProfileCard } from '@/components/profile/ProfileCard'
+import { AppearanceSection } from '@/components/profile/AppearanceSection'
+import { ActivityList } from '@/components/profile/ActivityList'
+import { getProfileCardTokens } from '@/components/profile/theme'
+import type { ActivityItem, BackgroundMode, ThemePreference } from '@/components/profile/types'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -304,20 +309,22 @@ function BasicInfoSection({
   firstName: initFirst,
   lastName: initLast,
   email: confirmedEmail,
+  phone: initPhone,
   userId,
   onSave,
 }: {
   firstName: string
   lastName: string
   email: string
+  phone: string
   userId: string
-  onSave: (updates: { firstName: string; lastName: string }) => void
+  onSave: (updates: { firstName: string; lastName: string; phone: string }) => void
 }) {
   const [firstName, setFirstName] = useState(initFirst)
   const [lastName, setLastName]   = useState(initLast)
   const [email, setEmail]         = useState(confirmedEmail)
-  const [phone, setPhone]         = useState('+1 (512) 555-0182')
-  const [location, setLocation]   = useState('Austin, TX')
+  const [phone, setPhone]         = useState(initPhone)
+  const [location, setLocation]   = useState('')
 
   const [saving, setSaving]           = useState(false)
   const [nameError, setNameError]     = useState<string | null>(null)
@@ -334,20 +341,21 @@ function BasicInfoSection({
 
     const supabase = createClient()
     const nameChanged  = firstName !== initFirst || lastName !== initLast
+    const phoneChanged = phone !== initPhone
     const emailChanged = email !== confirmedEmail
 
-    let nameOk = !nameChanged
+    let nameOk = !nameChanged && !phoneChanged
 
-    if (nameChanged) {
+    if (nameChanged || phoneChanged) {
       const fullName = `${firstName} ${lastName}`.trim()
       const { error } = await supabase
         .from('profiles')
-        .update({ name: fullName })
+        .update({ name: fullName, phone })
         .eq('id', userId)
       if (error) {
         setNameError(error.message)
       } else {
-        onSave({ firstName, lastName })
+        onSave({ firstName, lastName, phone })
         nameOk = true
       }
     }
@@ -943,260 +951,25 @@ function DangerZoneSection({ onLogOut }: { onLogOut: () => void }) {
   )
 }
 
-// ── View mode (public-facing profile) ─────────────────────────────────────────
-
-function ViewMode({
-  onEdit, name, location, email, athletes,
-}: {
-  onEdit: () => void; name: string; location: string; email: string; athletes: AthleteRow[]
-}) {
-  const initials = name.split(' ').map((n) => n[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?'
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-      {/* Profile card */}
-      <div style={{
-        background: 'rgba(255,255,255,0.92)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderRadius: '16px',
-        border: '1px solid rgba(0,0,0,0.08)',
-        overflow: 'hidden',
-      }}>
-        {/* Header band */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(0,188,200,0.12) 0%, rgba(0,212,226,0.06) 100%)',
-          borderBottom: '1px solid rgba(0,188,200,0.12)',
-          padding: '28px 24px 20px',
-          display: 'flex', alignItems: 'flex-start',
-          justifyContent: 'space-between', gap: '16px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-            {/* Avatar */}
-            <div style={{
-              width: 72, height: 72, borderRadius: '999px', flexShrink: 0,
-              background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: "'Barlow Condensed', sans-serif",
-              fontWeight: 700, fontSize: '24px', color: '#FFFFFF',
-              boxShadow: '0 4px 12px rgba(0,188,200,0.3)',
-            }}>{initials}</div>
-
-            <div>
-              <div style={{
-                fontFamily: "'Archivo Black', 'Archivo', sans-serif",
-                fontWeight: 900, fontSize: '22px', color: '#111827',
-                lineHeight: 1.1, marginBottom: '4px',
-              }}>{name}</div>
-
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px',
-              }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                     stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
-                <span style={{
-                  fontFamily: "'Hanken Grotesk', sans-serif",
-                  fontSize: '13px', color: '#6B7280',
-                }}>{location}</span>
-              </div>
-
-              {/* Verified badge */}
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: '5px',
-                padding: '3px 10px 3px 8px',
-                border: '1.5px solid #00BCC8', borderRadius: '999px',
-                background: 'rgba(0,188,200,0.07)',
-              }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-                     stroke="#00BCC8" strokeWidth={2.2}
-                     strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                <span style={{
-                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                  fontSize: '10.5px', letterSpacing: '.1em', textTransform: 'uppercase' as const,
-                  color: '#00838C',
-                }}>Verified Parent</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Edit button */}
-          <button
-            onClick={onEdit}
-            style={{
-              flexShrink: 0,
-              border: '1.5px solid rgba(0,0,0,0.12)', color: '#6B7280',
-              background: 'rgba(255,255,255,0.80)', borderRadius: '10px',
-              padding: '7px 16px',
-              fontFamily: "'Archivo', sans-serif", fontWeight: 700,
-              fontSize: '13px', cursor: 'pointer',
-            }}
-          >Edit profile</button>
-        </div>
-
-        {/* Stat strip */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-          borderBottom: '1px solid rgba(0,0,0,0.07)',
-        }}>
-          {[
-            { value: '3', label: 'Sessions' },
-            { value: String(athletes.length), label: athletes.length === 1 ? 'Athlete' : 'Athletes' },
-            { value: String(new Set(athletes.map((a) => a.sport).filter(Boolean)).size), label: 'Sports' },
-          ].map((stat, i) => (
-            <div key={stat.label} style={{
-              padding: '14px 0', textAlign: 'center',
-              borderRight: i < 2 ? '1px solid rgba(0,0,0,0.07)' : 'none',
-            }}>
-              <div style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 800, fontSize: '22px', color: '#111827', lineHeight: 1,
-              }}>{stat.value}</div>
-              <div style={{
-                fontFamily: "'Hanken Grotesk', sans-serif",
-                fontSize: '11px', color: '#9CA3AF', marginTop: '3px',
-                textTransform: 'uppercase' as const, letterSpacing: '.08em', fontWeight: 600,
-              }}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Info rows */}
-        <div style={{ padding: '4px 0' }}>
-          {[
-            {
-              icon: (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                     stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.08 6.08l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 17z"/>
-                </svg>
-              ),
-              label: '+1 (512) 555-0182',
-            },
-            {
-              icon: (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                     stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-              ),
-              label: email,
-            },
-            {
-              icon: (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                     stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-              ),
-              label: 'Member since June 2026',
-            },
-          ].map((row) => (
-            <div key={row.label} style={{
-              display: 'flex', alignItems: 'center', gap: '12px',
-              padding: '12px 24px',
-              borderBottom: '1px solid rgba(0,0,0,0.05)',
-            }}>
-              <span style={{ flexShrink: 0, display: 'flex' }}>{row.icon}</span>
-              <span style={{
-                fontFamily: "'Hanken Grotesk', sans-serif",
-                fontSize: '14px', color: '#374151',
-              }}>{row.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Athletes card */}
-      <div id="tour-profile-athletes">
-        <div style={{ display: 'inline-flex', marginBottom: '12px' }}>
-          <span style={{
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-            fontSize: '11px', letterSpacing: '.12em',
-            textTransform: 'uppercase' as const, color: '#FFFFFF',
-            background: 'rgba(0,0,0,0.38)',
-            backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-            padding: '3px 10px', borderRadius: '999px',
-          }}>Athletes</span>
-        </div>
-        <div style={{
-          background: 'rgba(255,255,255,0.92)',
-          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-          borderRadius: '16px', border: '1px solid rgba(0,0,0,0.08)',
-          padding: '0 24px',
-        }}>
-          {athletes.map((athlete, i) => (
-            <div key={athlete.id} style={{
-              display: 'flex', alignItems: 'center', gap: '14px',
-              padding: '16px 0',
-              borderBottom: i < athletes.length - 1
-                ? '1px solid rgba(0,0,0,0.07)' : 'none',
-            }}>
-              <div style={{
-                width: 46, height: 46, borderRadius: '999px', flexShrink: 0,
-                background: 'linear-gradient(140deg, rgba(0,188,200,0.15), rgba(0,212,226,0.08))',
-                border: '1.5px solid rgba(0,188,200,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 700, fontSize: '14px', color: '#00838C',
-              }}>{athlete.initials}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{
-                  fontFamily: "'Archivo', sans-serif",
-                  fontWeight: 700, fontSize: '15px', color: '#111827',
-                }}>{athlete.name}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
-                  <span style={{
-                    fontFamily: "'Hanken Grotesk', sans-serif",
-                    fontSize: '13px', color: '#6B7280',
-                  }}>Age {athlete.age}</span>
-                  <span style={{ color: '#D1D5DB', fontSize: '12px' }}>·</span>
-                  <span style={{
-                    fontFamily: "'Barlow Condensed', sans-serif",
-                    fontWeight: 700, fontSize: '12px',
-                    letterSpacing: '.08em', textTransform: 'uppercase' as const,
-                    color: '#00BCC8',
-                    background: 'rgba(0,188,200,0.08)',
-                    padding: '1px 8px', borderRadius: '999px',
-                  }}>{athlete.sport}</span>
-                </div>
-              </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                   stroke="#D1D5DB" strokeWidth={2}
-                   strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </div>
-          ))}
-        </div>
-      </div>
-
-    </div>
-  )
-}
-
 // ── Edit mode ──────────────────────────────────────────────────────────────────
 
 function EditMode({
-  onBack, firstName, lastName, email, userId, onProfileUpdate, athletes, onLogOut,
+  onBack, firstName, lastName, email, phone, userId, onProfileUpdate, athletes, onLogOut,
+  themePreference, backgroundMode, hasBannerImage, onSaveAppearance,
 }: {
   onBack: () => void
   firstName: string
   lastName: string
   email: string
+  phone: string
   userId: string
-  onProfileUpdate: (updates: { firstName: string; lastName: string }) => void
+  onProfileUpdate: (updates: { firstName: string; lastName: string; phone: string }) => void
   athletes: AthleteRow[]
   onLogOut: () => void
+  themePreference: ThemePreference
+  backgroundMode: BackgroundMode
+  hasBannerImage: boolean
+  onSaveAppearance: (updates: { theme_preference?: ThemePreference; background_mode?: BackgroundMode }) => Promise<void>
 }) {
   const initials = [firstName?.[0], lastName?.[0]].filter(Boolean).join('').toUpperCase() || '?'
 
@@ -1236,9 +1009,18 @@ function EditMode({
           firstName={firstName}
           lastName={lastName}
           email={email}
+          phone={phone}
           userId={userId}
           onSave={onProfileUpdate}
         />
+        <div id="section-appearance">
+          <AppearanceSection
+            themePreference={themePreference}
+            backgroundMode={backgroundMode}
+            hasBannerImage={hasBannerImage}
+            onSave={onSaveAppearance}
+          />
+        </div>
         <AthletesSection initialAthletes={athletes} />
         <NotificationsSection />
         <DangerZoneSection onLogOut={onLogOut} />
@@ -1253,7 +1035,35 @@ interface ProfileState {
   firstName: string
   lastName: string
   email: string
+  phone: string
+  avatarUrl: string | null
+  bannerImageUrl: string | null
+  verified: boolean
+  themePreference: ThemePreference
+  backgroundMode: BackgroundMode
 }
+
+interface BookingRow {
+  id: string
+  session_time: string
+  status: string
+  rate: number | null
+  trainerName: string | null
+  specialty: string | null
+}
+
+interface MessageRow {
+  id: string
+  body: string
+  sent_at: string
+  senderName: string | null
+}
+
+const PARENT_TABS = [
+  { key: 'activity', label: 'Activity' },
+  { key: 'athletes', label: 'Athletes' },
+  { key: 'payments', label: 'Payments' },
+]
 
 export default function ParentProfilePage() {
   const router = useRouter()
@@ -1262,6 +1072,9 @@ export default function ParentProfilePage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [profileLoading, setProfileLoading] = useState(true)
   const [athletes, setAthletes] = useState<AthleteRow[]>([])
+  const [bookings, setBookings] = useState<BookingRow[]>([])
+  const [messages, setMessages] = useState<MessageRow[]>([])
+  const [activeTab, setActiveTab] = useState('activity')
 
   useEffect(() => {
     async function loadProfile() {
@@ -1272,7 +1085,7 @@ export default function ParentProfilePage() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('name')
+        .select('name, avatar_url, banner_image_url, phone, verified, theme_preference, background_mode')
         .eq('id', user.id)
         .single()
 
@@ -1281,7 +1094,15 @@ export default function ParentProfilePage() {
       const firstName = spaceIdx >= 0 ? fullName.slice(0, spaceIdx) : fullName
       const lastName  = spaceIdx >= 0 ? fullName.slice(spaceIdx + 1) : ''
 
-      setProfile({ firstName, lastName, email: user.email ?? '' })
+      setProfile({
+        firstName, lastName, email: user.email ?? '',
+        phone: profileData?.phone ?? '',
+        avatarUrl: profileData?.avatar_url ?? null,
+        bannerImageUrl: profileData?.banner_image_url ?? null,
+        verified: profileData?.verified ?? false,
+        themePreference: (profileData?.theme_preference as ThemePreference) ?? 'dark',
+        backgroundMode: (profileData?.background_mode as BackgroundMode) ?? 'full',
+      })
 
       const { data: athleteData } = await supabase
         .from('athletes')
@@ -1299,13 +1120,69 @@ export default function ParentProfilePage() {
         }))
       )
 
+      const { data: bookingData } = await supabase
+        .from('bookings')
+        .select('id, session_time, status, rate, trainers!trainer_id(specialty, profiles(name))')
+        .eq('parent_id', user.id)
+        .order('session_time', { ascending: false })
+        .limit(20)
+
+      setBookings(
+        (bookingData ?? []).map((b: any) => ({
+          id: b.id,
+          session_time: b.session_time,
+          status: b.status,
+          rate: b.rate,
+          trainerName: b.trainers?.profiles?.name ?? null,
+          specialty: b.trainers?.specialty ?? null,
+        }))
+      )
+
+      const { data: messageData } = await supabase
+        .from('messages')
+        .select('id, sender_id, body, sent_at')
+        .eq('recipient_id', user.id)
+        .order('sent_at', { ascending: false })
+        .limit(10)
+
+      const senderIds = Array.from(new Set((messageData ?? []).map((m) => m.sender_id)))
+      let senderNames: Record<string, string> = {}
+      if (senderIds.length > 0) {
+        const { data: senderProfiles } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .in('id', senderIds)
+        senderNames = Object.fromEntries((senderProfiles ?? []).map((p) => [p.id, p.name]))
+      }
+
+      setMessages(
+        (messageData ?? []).map((m) => ({
+          id: m.id,
+          body: m.body,
+          sent_at: m.sent_at,
+          senderName: senderNames[m.sender_id] ?? null,
+        }))
+      )
+
       setProfileLoading(false)
     }
     loadProfile()
   }, [])
 
-  function handleProfileUpdate(updates: { firstName: string; lastName: string }) {
+  function handleProfileUpdate(updates: { firstName: string; lastName: string; phone: string }) {
     setProfile((p) => p ? { ...p, ...updates } : p)
+  }
+
+  async function handleSaveAppearance(updates: { theme_preference?: ThemePreference; background_mode?: BackgroundMode }) {
+    if (!userId) throw new Error('Not authenticated')
+    const supabase = createClient()
+    const { error } = await supabase.from('profiles').update(updates).eq('id', userId)
+    if (error) throw new Error(error.message)
+    setProfile((p) => p ? {
+      ...p,
+      themePreference: updates.theme_preference ?? p.themePreference,
+      backgroundMode: updates.background_mode ?? p.backgroundMode,
+    } : p)
   }
 
   async function handleLogOut() {
@@ -1349,6 +1226,67 @@ export default function ParentProfilePage() {
   }
 
   const displayName = `${profile.firstName} ${profile.lastName}`.trim()
+  const sportsCount = new Set(athletes.map((a) => a.sport).filter(Boolean)).size
+  const cardTokens = getProfileCardTokens(profile.themePreference)
+
+  const activityItems: ActivityItem[] = [
+    ...bookings.map((b) => ({
+      id: `b-${b.id}`,
+      title: `Session with ${b.trainerName ?? 'trainer'}`,
+      subtitle: [b.specialty, b.status].filter(Boolean).join(' · '),
+      timestamp: b.session_time,
+    })),
+    ...messages.map((m) => ({
+      id: `m-${m.id}`,
+      title: `Message from ${m.senderName ?? 'trainer'}`,
+      subtitle: m.body.slice(0, 64),
+      timestamp: m.sent_at,
+    })),
+  ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 8)
+
+  const paymentItems: ActivityItem[] = bookings
+    .filter((b) => b.status === 'completed' && b.rate != null)
+    .map((b) => ({
+      id: `p-${b.id}`,
+      title: `Session with ${b.trainerName ?? 'trainer'}`,
+      subtitle: new Date(b.session_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      meta: `$${b.rate}`,
+      timestamp: b.session_time,
+    }))
+
+  let tabContent: React.ReactNode
+  if (activeTab === 'athletes') {
+    tabContent = athletes.length === 0 ? (
+      <div style={{ padding: '28px 24px', textAlign: 'center', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: cardTokens.ink3 }}>
+        No athletes added yet
+      </div>
+    ) : (
+      <div style={{ padding: '4px 20px' }}>
+        {athletes.map((a, i) => (
+          <div key={a.id} style={{
+            display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 4px',
+            borderBottom: i < athletes.length - 1 ? `1px solid ${cardTokens.border}` : 'none',
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: '999px', flexShrink: 0,
+              background: cardTokens.surface2, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '13px', color: cardTokens.ink,
+            }}>{a.initials}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '14px', color: cardTokens.ink }}>{a.name}</div>
+              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: cardTokens.ink3, marginTop: '2px' }}>
+                {a.age != null ? `Age ${a.age}` : 'Age —'} · {a.sport}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  } else if (activeTab === 'payments') {
+    tabContent = <ActivityList items={paymentItems} tokens={cardTokens} emptyLabel="No completed sessions yet" />
+  } else {
+    tabContent = <ActivityList items={activityItems} tokens={cardTokens} emptyLabel="No recent activity" />
+  }
 
   return (
     <div style={{ position: 'relative', zIndex: 2 }}>
@@ -1365,18 +1303,42 @@ export default function ParentProfilePage() {
               firstName={profile.firstName}
               lastName={profile.lastName}
               email={profile.email}
+              phone={profile.phone}
               userId={userId}
               onProfileUpdate={handleProfileUpdate}
               athletes={athletes}
               onLogOut={handleLogOut}
+              themePreference={profile.themePreference}
+              backgroundMode={profile.backgroundMode}
+              hasBannerImage={!!profile.bannerImageUrl}
+              onSaveAppearance={handleSaveAppearance}
             />
           ) : (
-            <ViewMode
-              onEdit={() => setIsEditing(true)}
+            <ProfileCard
+              themePreference={profile.themePreference}
+              backgroundMode={profile.backgroundMode}
+              bannerImageUrl={profile.bannerImageUrl}
+              avatarUrl={profile.avatarUrl}
               name={displayName}
-              email={profile.email}
-              location="Austin, TX"
-              athletes={athletes}
+              verified={profile.verified}
+              verifiedLabel="Verified Parent"
+              stats={[
+                { value: String(athletes.length), label: athletes.length === 1 ? 'Athlete' : 'Athletes' },
+                { value: String(sportsCount), label: 'Sports' },
+              ]}
+              contactRows={[
+                ...(profile.phone ? [{ key: 'phone', icon: <Phone size={14} />, label: profile.phone }] : []),
+                { key: 'email', icon: <Mail size={14} />, label: profile.email },
+              ]}
+              tabs={PARENT_TABS}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              tabContent={tabContent}
+              onEditProfile={() => setIsEditing(true)}
+              onOpenSettings={() => {
+                setIsEditing(true)
+                setTimeout(() => document.getElementById('section-appearance')?.scrollIntoView({ behavior: 'smooth' }), 100)
+              }}
             />
           )}
         </motion.div>
