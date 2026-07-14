@@ -106,6 +106,7 @@ const IconX = () => (
 const NAV_ITEMS = [
   { key: 'home',     label: 'Home',     Icon: IconHome,      badge: false },
   { key: 'search',   label: 'Search',   Icon: IconSearch,    badge: false },
+  { key: 'calendar', label: 'Calendar', Icon: IconCalendar,  badge: false },
   { key: 'messages', label: 'Messages', Icon: MessageSquare, badge: true  },
   { key: 'profile',  label: 'Profile',  Icon: IconUser,      badge: false },
   { key: 'settings', label: 'Settings', Icon: IconSettings,  badge: false },
@@ -114,6 +115,7 @@ const NAV_ITEMS = [
 const NAV_HREFS: Record<string, string> = {
   home:     '/dashboard',
   search:   '/dashboard/search',
+  calendar: '/dashboard/calendar',
   messages: '/dashboard/messages',
   profile:  '/dashboard/profile',
   settings: '/dashboard/settings',
@@ -129,6 +131,10 @@ const PAGE_HELP: Record<string, { title: string; body: string }> = {
   '/dashboard/search': {
     title: 'Find a Trainer',
     body: 'Browse and filter trainers by sport, format, location, and price. Click any card to view their full profile, credentials, and availability before booking.',
+  },
+  '/dashboard/calendar': {
+    title: 'Calendar',
+    body: "See every session across all your athletes in one month view. Filter by athlete or by upcoming/past, and jump to a session's feedback once it's been reviewed.",
   },
   '/dashboard/messages': {
     title: 'Messages',
@@ -605,6 +611,7 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
   const getActiveNav = () => {
     if (pathname === '/dashboard') return 'home'
     if (pathname.startsWith('/dashboard/search')) return 'search'
+    if (pathname.startsWith('/dashboard/calendar')) return 'calendar'
     if (pathname.startsWith('/dashboard/messages')) return 'messages'
     if (pathname.startsWith('/dashboard/profile')) return 'profile'
     if (pathname.startsWith('/dashboard/settings')) return 'settings'
