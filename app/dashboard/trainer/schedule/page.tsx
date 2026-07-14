@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 
@@ -12,6 +12,14 @@ import { T } from '@/lib/theme'
 type AvailabilitySlot = {
   id: string
   day_of_week: number
+  start_time: string
+  end_time: string
+}
+
+type TrainerPreset = {
+  id: string
+  label: string
+  days: number[]
   start_time: string
   end_time: string
 }
@@ -51,6 +59,11 @@ function formatTime(t: string): string {
   const ampm = h >= 12 ? 'PM' : 'AM'
   const hour = h % 12 || 12
   return `${hour}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
+// Postgres `time` columns come back as "HH:MM:SS" — <input type="time"> wants "HH:MM".
+function toHHMM(t: string): string {
+  return t.slice(0, 5)
 }
 
 function normalizeFormat(format: string | null): string {
@@ -154,6 +167,29 @@ function WeeklyHoursPanel({
   const [quickError, setQuickError] = useState('')
   const [quickSaving, setQuickSaving] = useState(false)
 
+  // Trainer-saved custom presets (trainer_presets table)
+  const [customPresets, setCustomPresets] = useState<TrainerPreset[]>([])
+  const [showSavePresetForm, setShowSavePresetForm] = useState(false)
+  const [presetLabelInput, setPresetLabelInput] = useState('')
+  const [editingPresetId, setEditingPresetId] = useState<string | null>(null)
+  const [presetSaving, setPresetSaving] = useState(false)
+  const [presetError, setPresetError] = useState('')
+  const [presetDeleteErrors, setPresetDeleteErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (!trainerId) return
+    async function loadPresets() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('trainer_presets')
+        .select('id, label, days, start_time, end_time')
+        .eq('trainer_id', trainerId)
+        .order('created_at', { ascending: true })
+      setCustomPresets(data ?? [])
+    }
+    loadPresets()
+  }, [trainerId])
+
   function applyPreset(preset: HourPreset) {
     setQuickDays(new Set(preset.days))
     setQuickStart(preset.start ?? '')
@@ -170,6 +206,86 @@ function WeeklyHoursPanel({
       return next
     })
     setActivePreset(null)
+  }
+
+  function applyCustomPreset(preset: TrainerPreset) {
+    setQuickDays(new Set(preset.days))
+    setQuickStart(toHHMM(preset.start_time))
+    setQuickEnd(toHHMM(preset.end_time))
+    setActivePreset(`custom:${preset.id}`)
+    setQuickError('')
+  }
+
+  function startEditingPreset(preset: TrainerPreset) {
+    applyCustomPreset(preset)
+    setEditingPresetId(preset.id)
+    setPresetLabelInput(preset.label)
+    setShowSavePresetForm(true)
+    setPresetError('')
+  }
+
+  function cancelSavePreset() {
+    setShowSavePresetForm(false)
+    setPresetLabelInput('')
+    setEditingPresetId(null)
+    setPresetError('')
+  }
+
+  async function confirmSavePreset() {
+    if (!trainerId) return
+    if (quickDays.size === 0 || !quickStart || !quickEnd) return
+    if (!presetLabelInput.trim()) {
+      setPresetError('Please enter a label.')
+      return
+    }
+    setPresetError('')
+    setPresetSaving(true)
+    const supabase = createClient()
+    const days = Array.from(quickDays).sort((a, b) => a - b)
+
+    if (editingPresetId) {
+      const { data, error } = await supabase
+        .from('trainer_presets')
+        .update({ label: presetLabelInput.trim(), days, start_time: quickStart, end_time: quickEnd })
+        .eq('id', editingPresetId)
+        .select('id, label, days, start_time, end_time')
+        .single()
+      setPresetSaving(false)
+      if (error) {
+        setPresetError('Failed to update preset. Try again.')
+        return
+      }
+      setCustomPresets((prev) => prev.map((p) => (p.id === editingPresetId ? data : p)))
+    } else {
+      const { data, error } = await supabase
+        .from('trainer_presets')
+        .insert({ trainer_id: trainerId, label: presetLabelInput.trim(), days, start_time: quickStart, end_time: quickEnd })
+        .select('id, label, days, start_time, end_time')
+        .single()
+      setPresetSaving(false)
+      if (error) {
+        setPresetError('Failed to save preset. Try again.')
+        return
+      }
+      setCustomPresets((prev) => [...prev, data])
+      setActivePreset(`custom:${data.id}`)
+    }
+
+    setShowSavePresetForm(false)
+    setPresetLabelInput('')
+    setEditingPresetId(null)
+  }
+
+  async function deletePreset(id: string) {
+    const supabase = createClient()
+    const { error } = await supabase.from('trainer_presets').delete().eq('id', id)
+    if (error) {
+      setPresetDeleteErrors((prev) => ({ ...prev, [id]: 'Failed to delete. Try again.' }))
+      return
+    }
+    setPresetDeleteErrors((prev) => { const next = { ...prev }; delete next[id]; return next })
+    setCustomPresets((prev) => prev.filter((p) => p.id !== id))
+    if (editingPresetId === id) cancelSavePreset()
   }
 
   async function saveQuickHours() {
@@ -285,7 +401,7 @@ function WeeklyHoursPanel({
           Pick a preset to prefill the days and hours below, then review and save.
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: customPresets.length > 0 ? '10px' : '16px' }}>
           {HOUR_PRESETS.map((preset, i) => {
             const sel = activePreset === preset.key
             const isDefault = i === 0
@@ -304,6 +420,49 @@ function WeeklyHoursPanel({
             )
           })}
         </div>
+
+        {customPresets.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+            {customPresets.map((preset) => {
+              const sel = activePreset === `custom:${preset.id}`
+              return (
+                <div
+                  key={preset.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '2px',
+                    height: '38px', padding: '0 4px 0 16px', borderRadius: '999px',
+                    border: sel ? `1.5px solid ${T.cyan}` : `1px dashed ${T.border}`,
+                    background: sel ? 'rgba(0,188,200,0.12)' : 'transparent',
+                  }}
+                >
+                  <button
+                    onClick={() => applyCustomPreset(preset)}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '0 8px 0 0',
+                      fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600,
+                      color: sel ? T.cyan : T.ink2,
+                    }}
+                  >{preset.label}</button>
+                  <button
+                    onClick={() => startEditingPreset(preset)}
+                    title="Edit preset"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
+                  ><Pencil size={13} /></button>
+                  <button
+                    onClick={() => deletePreset(preset.id)}
+                    title="Delete preset"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
+                  ><Trash2 size={13} /></button>
+                  {presetDeleteErrors[preset.id] && (
+                    <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
+                      {presetDeleteErrors[preset.id]}
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600, marginBottom: '6px' }}>Days</div>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px' }}>
@@ -353,13 +512,57 @@ function WeeklyHoursPanel({
           </div>
         )}
 
-        <button
-          onClick={saveQuickHours}
-          disabled={quickSaving}
-          style={{ height: '40px', padding: '0 20px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 700, cursor: quickSaving ? 'default' : 'pointer', opacity: quickSaving ? 0.7 : 1 }}
-        >
-          {quickSaving ? 'Saving…' : 'Save hours'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          <button
+            onClick={saveQuickHours}
+            disabled={quickSaving}
+            style={{ height: '40px', padding: '0 20px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 700, cursor: quickSaving ? 'default' : 'pointer', opacity: quickSaving ? 0.7 : 1 }}
+          >
+            {quickSaving ? 'Saving…' : 'Save hours'}
+          </button>
+
+          {quickDays.size > 0 && quickStart && quickEnd && !showSavePresetForm && (
+            <button
+              onClick={() => { setShowSavePresetForm(true); setPresetError('') }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.cyan, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600 }}
+            >
+              {editingPresetId ? 'Update preset' : 'Save current selection as preset'}
+            </button>
+          )}
+        </div>
+
+        {showSavePresetForm && (
+          <div style={{ marginTop: '14px', padding: '14px', background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>
+              {editingPresetId ? 'Preset label' : 'Save this selection as a preset'}
+            </label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                value={presetLabelInput}
+                onChange={(e) => setPresetLabelInput(e.target.value)}
+                placeholder="e.g. Summer camp hours"
+                style={{ flex: 1, minWidth: '160px', height: '40px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '0 12px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+              />
+              <button
+                onClick={confirmSavePreset}
+                disabled={presetSaving}
+                style={{ height: '40px', padding: '0 16px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 700, cursor: presetSaving ? 'default' : 'pointer', opacity: presetSaving ? 0.7 : 1 }}
+              >
+                {presetSaving ? 'Saving…' : editingPresetId ? 'Update' : 'Save'}
+              </button>
+              <button
+                onClick={cancelSavePreset}
+                style={{ height: '40px', padding: '0 14px', background: 'none', border: `1px solid ${T.border}`, color: T.ink2, borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+            {presetError && (
+              <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px' }}>{presetError}</span>
+            )}
+          </div>
+        )}
       </div>
 
       {FULL_WEEK.map((day) => {
