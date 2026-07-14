@@ -110,6 +110,23 @@ const DAY_COLORS: Record<DayStatus, { bg: string; dot: string }> = {
   blocked:   { bg: '#F3F4F6',               dot: '#9CA3AF' },
 }
 
+type HourPreset = {
+  key: string
+  label: string
+  days: number[] // day_of_week values (Sun=0 .. Sat=6)
+  start: string | null
+  end: string | null
+}
+
+// Order matters — "After school" is the default/most prominent option.
+const HOUR_PRESETS: HourPreset[] = [
+  { key: 'after-school',     label: 'After school',         days: [1, 2, 3, 4, 5],       start: '15:00', end: '19:00' },
+  { key: 'weekday-standard', label: 'Weekday standard',     days: [1, 2, 3, 4, 5],       start: '09:00', end: '17:00' },
+  { key: 'mornings',         label: 'Mornings',             days: [1, 2, 3, 4, 5],       start: '06:00', end: '10:00' },
+  { key: 'weekend-only',     label: 'Weekend only',         days: [6, 0],                start: '08:00', end: '14:00' },
+  { key: 'same-every-day',   label: 'Same hours every day', days: [0, 1, 2, 3, 4, 5, 6], start: null,    end: null },
+]
+
 // ── Weekly hours panel (unchanged recurring-availability logic) ────────────────
 
 function WeeklyHoursPanel({
@@ -127,6 +144,79 @@ function WeeklyHoursPanel({
   const [avFormError, setAvFormError] = useState('')
   const [avSaving, setAvSaving] = useState(false)
   const [avDeleteErrors, setAvDeleteErrors] = useState<Record<string, string>>({})
+
+  // Quick-add-with-presets — prefills day checkboxes + start/end below, then
+  // reuses the exact same `availability` insert call, once per checked day.
+  const [quickDays, setQuickDays] = useState<Set<number>>(new Set())
+  const [quickStart, setQuickStart] = useState('')
+  const [quickEnd, setQuickEnd] = useState('')
+  const [activePreset, setActivePreset] = useState<string | null>(null)
+  const [quickError, setQuickError] = useState('')
+  const [quickSaving, setQuickSaving] = useState(false)
+
+  function applyPreset(preset: HourPreset) {
+    setQuickDays(new Set(preset.days))
+    setQuickStart(preset.start ?? '')
+    setQuickEnd(preset.end ?? '')
+    setActivePreset(preset.key)
+    setQuickError('')
+  }
+
+  function toggleQuickDay(day: number) {
+    setQuickDays((prev) => {
+      const next = new Set(prev)
+      if (next.has(day)) next.delete(day)
+      else next.add(day)
+      return next
+    })
+    setActivePreset(null)
+  }
+
+  async function saveQuickHours() {
+    if (!trainerId) return
+    if (quickDays.size === 0) {
+      setQuickError('Select at least one day.')
+      return
+    }
+    if (!quickStart || !quickEnd) {
+      setQuickError('Please set both start and end times.')
+      return
+    }
+    if (quickStart >= quickEnd) {
+      setQuickError('Start time must be before end time.')
+      return
+    }
+    setQuickError('')
+    setQuickSaving(true)
+    const supabase = createClient()
+    const days = Array.from(quickDays)
+    const results = await Promise.all(
+      days.map((day) =>
+        supabase
+          .from('availability')
+          .insert({ trainer_id: trainerId, day_of_week: day, start_time: quickStart, end_time: quickEnd })
+          .select('id, day_of_week, start_time, end_time')
+          .single()
+      )
+    )
+    setQuickSaving(false)
+
+    const newSlots = results.filter((r) => !r.error && r.data).map((r) => r.data as AvailabilitySlot)
+    if (newSlots.length > 0) {
+      setAvailabilitySlots((prev) => [...prev, ...newSlots])
+    }
+
+    const failedCount = results.filter((r) => r.error).length
+    if (failedCount > 0) {
+      setQuickError(`Saved ${newSlots.length} of ${days.length} day${days.length > 1 ? 's' : ''} — ${failedCount} failed. Try again.`)
+      return
+    }
+
+    setQuickDays(new Set())
+    setQuickStart('')
+    setQuickEnd('')
+    setActivePreset(null)
+  }
 
   async function addAvailability() {
     if (!trainerId || !showAddForm) return
@@ -185,6 +275,93 @@ function WeeklyHoursPanel({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+      {/* Quick add with presets */}
+      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink, marginBottom: '4px' }}>
+          Quick add with a preset
+        </div>
+        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', color: T.ink2, marginBottom: '14px' }}>
+          Pick a preset to prefill the days and hours below, then review and save.
+        </div>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+          {HOUR_PRESETS.map((preset, i) => {
+            const sel = activePreset === preset.key
+            const isDefault = i === 0
+            return (
+              <button
+                key={preset.key}
+                onClick={() => applyPreset(preset)}
+                style={{
+                  height: '38px', padding: '0 16px', borderRadius: '999px', cursor: 'pointer',
+                  fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600,
+                  border: sel ? `1.5px solid ${T.cyan}` : isDefault ? `1.5px solid ${T.cyanBorder}` : `1px solid ${T.border}`,
+                  background: sel ? 'rgba(0,188,200,0.12)' : isDefault ? T.cyanDim : 'transparent',
+                  color: (sel || isDefault) ? T.cyan : T.ink2,
+                }}
+              >{preset.label}</button>
+            )
+          })}
+        </div>
+
+        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600, marginBottom: '6px' }}>Days</div>
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px' }}>
+          {FULL_WEEK.map((day) => {
+            const dayNum = DAY_MAP[day]
+            const checked = quickDays.has(dayNum)
+            return (
+              <button
+                key={day}
+                onClick={() => toggleQuickDay(dayNum)}
+                style={{
+                  width: '44px', height: '36px', borderRadius: '8px', cursor: 'pointer',
+                  fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', fontWeight: 600,
+                  border: checked ? `1.5px solid ${T.cyan}` : `1px solid ${T.border}`,
+                  background: checked ? 'rgba(0,188,200,0.1)' : 'transparent',
+                  color: checked ? T.cyan : T.ink2,
+                }}
+              >{day}</button>
+            )
+          })}
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>Start</label>
+            <input
+              type="time"
+              value={quickStart}
+              onChange={(e) => { setQuickStart(e.target.value); setActivePreset(null) }}
+              style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>End</label>
+            <input
+              type="time"
+              value={quickEnd}
+              onChange={(e) => { setQuickEnd(e.target.value); setActivePreset(null) }}
+              style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+            />
+          </div>
+        </div>
+
+        {quickError && (
+          <div style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', marginBottom: '10px' }}>
+            {quickError}
+          </div>
+        )}
+
+        <button
+          onClick={saveQuickHours}
+          disabled={quickSaving}
+          style={{ height: '40px', padding: '0 20px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 700, cursor: quickSaving ? 'default' : 'pointer', opacity: quickSaving ? 0.7 : 1 }}
+        >
+          {quickSaving ? 'Saving…' : 'Save hours'}
+        </button>
+      </div>
+
       {FULL_WEEK.map((day) => {
         const daySlots = slotsByDay[day] || []
         const formOpen = showAddForm === day
