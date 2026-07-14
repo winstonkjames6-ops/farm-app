@@ -13,9 +13,20 @@ create table public.availability_exceptions (
 
 alter table public.availability_exceptions enable row level security;
 
--- RLS policies intentionally left unfilled here.
--- Run the query below against `availability` and mirror its exact policy
--- shape (roles, USING/WITH CHECK expressions, per-command vs ALL) before
--- filling this in — do not invent a different shape.
---
---   select * from pg_policies where schemaname = 'public' and tablename = 'availability';
+-- Mirrors the ownership pattern already on public.availability.
+-- Applied manually via the Supabase SQL editor and confirmed against
+-- pg_policies + a live write test; recorded here so this migration
+-- reproduces the current DB state.
+
+create policy "availability_exceptions is public"
+on public.availability_exceptions
+for select
+to public
+using (true);
+
+create policy "trainers manage own availability_exceptions"
+on public.availability_exceptions
+for all
+to public
+using (trainer_id in (select trainers.id from trainers where trainers.profile_id = auth.uid()))
+with check (trainer_id in (select trainers.id from trainers where trainers.profile_id = auth.uid()));
