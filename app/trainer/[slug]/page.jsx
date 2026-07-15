@@ -28,6 +28,33 @@ function buildSlotISO(isoDate, startTime) {
   return new Date(year, month - 1, day, parts[0], parts[1], 0).toISOString()
 }
 
+function timeToMinutes(t) {
+  const [h, m] = t.split(':').map(Number)
+  return h * 60 + m
+}
+
+function minutesToTimeStr(mins) {
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+// Steps from start_time by (session_length_minutes + break_minutes), stopping once
+// a session starting at that point would run past end_time.
+function generateSlotsForPreset(preset) {
+  if (!preset) return []
+  const step = preset.session_length_minutes + preset.break_minutes
+  const startMin = timeToMinutes(preset.start_time)
+  const endMin = timeToMinutes(preset.end_time)
+  const slots = []
+  let cursor = startMin
+  while (cursor + preset.session_length_minutes <= endMin) {
+    slots.push(minutesToTimeStr(cursor))
+    cursor += step
+  }
+  return slots
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function TrainerProfile({ params: { slug } }) {
@@ -38,7 +65,8 @@ export default function TrainerProfile({ params: { slug } }) {
   const [selectedDate, setSelectedDate] = useState(0)
   const [selectedTime, setSelectedTime] = useState(null)
   const [selectedFormat, setSelectedFormat] = useState('In-Person')
-  const [availability, setAvailability] = useState([])
+  const [activePreset, setActivePreset] = useState(null)
+  const [exceptions, setExceptions] = useState([])
   const [existingBookings, setExistingBookings] = useState([])
 
   const DATES = useMemo(() => {
@@ -57,11 +85,22 @@ export default function TrainerProfile({ params: { slug } }) {
     return result
   }, [])
 
+  const exceptionByDate = useMemo(() => {
+    const map = {}
+    exceptions.forEach(e => { map[e.exception_date] = e.status })
+    return map
+  }, [exceptions])
+
   const daySlots = useMemo(() => {
-    if (!DATES[selectedDate]) return []
-    const dow = new Date(DATES[selectedDate].isoDate + 'T00:00:00').getDay()
-    return availability.filter(a => a.day_of_week === dow)
-  }, [availability, selectedDate, DATES])
+    if (!activePreset) return []
+    const iso = DATES[selectedDate]?.isoDate
+    if (!iso) return []
+    // A blocked exception on this exact date wins regardless of the preset's days.
+    if (exceptionByDate[iso] === 'blocked') return []
+    const dow = new Date(iso + 'T00:00:00').getDay()
+    if (!activePreset.days.includes(dow)) return []
+    return generateSlotsForPreset(activePreset).map(start_time => ({ start_time }))
+  }, [activePreset, exceptionByDate, selectedDate, DATES])
 
   const bookedSet = useMemo(() => new Set(existingBookings.map(b => new Date(b.session_time).getTime())), [existingBookings])
 
@@ -76,19 +115,27 @@ export default function TrainerProfile({ params: { slug } }) {
       const supabase = createClient()
       const { data } = await supabase
         .from('trainers')
-        .select('id, profile_id, specialty, bio, rate, location, profiles(name)')
+        .select('id, profile_id, specialty, bio, rate, location, active_preset_id, profiles(name)')
         .eq('profile_id', slug)
         .single()
       if (!data) {
         setNotFound(true)
-      } else {
-        setTrainer(data)
-        const { data: avail } = await supabase
-          .from('availability')
-          .select('day_of_week, start_time, end_time')
-          .eq('trainer_id', data.id)
-        setAvailability(avail || [])
+        setLoading(false)
+        return
       }
+      setTrainer(data)
+
+      if (data.active_preset_id) {
+        const { data: preset } = await supabase
+          .from('trainer_presets')
+          .select('days, start_time, end_time, session_length_minutes, break_minutes')
+          .eq('id', data.active_preset_id)
+          .single()
+        setActivePreset(preset || null)
+      } else {
+        setActivePreset(null)
+      }
+
       setLoading(false)
     }
     load()
@@ -107,6 +154,24 @@ export default function TrainerProfile({ params: { slug } }) {
     }
     fetchBookings()
   }, [trainer?.id])
+
+  useEffect(() => {
+    if (!trainer?.id) return
+    async function fetchExceptions() {
+      const supabase = createClient()
+      const startDate = DATES[0]?.isoDate
+      const endDate = DATES[DATES.length - 1]?.isoDate
+      if (!startDate || !endDate) return
+      const { data } = await supabase
+        .from('availability_exceptions')
+        .select('exception_date, status')
+        .eq('trainer_id', trainer.id)
+        .gte('exception_date', startDate)
+        .lte('exception_date', endDate)
+      setExceptions(data || [])
+    }
+    fetchExceptions()
+  }, [trainer?.id, DATES])
 
   const card = {
     background: 'var(--surface)',
@@ -423,7 +488,9 @@ export default function TrainerProfile({ params: { slug } }) {
               {/* Time slots */}
               <div style={{ marginBottom: '18px' }}>
                 <div style={labelCaps}>Time</div>
-                {daySlots.length === 0 ? (
+                {!activePreset ? (
+                  <div style={{ fontSize: '13.5px', color: 'var(--ink-3)', padding: '8px 0' }}>This trainer hasn&apos;t set their availability yet</div>
+                ) : daySlots.length === 0 ? (
                   <div style={{ fontSize: '13.5px', color: 'var(--ink-3)', padding: '8px 0' }}>No availability this day</div>
                 ) : (
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Pencil, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Trash2, Star } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 
@@ -176,19 +176,47 @@ function WeeklyHoursPanel({
   const [presetError, setPresetError] = useState('')
   const [presetDeleteErrors, setPresetDeleteErrors] = useState<Record<string, string>>({})
 
+  // Which trainer_presets row is live on the public booking page (trainers.active_preset_id) —
+  // distinct from `activePreset` above, which is just which preset is loaded into the form.
+  const [liveActivePresetId, setLiveActivePresetId] = useState<string | null>(null)
+  const [activePresetSaving, setActivePresetSaving] = useState(false)
+  const [activePresetError, setActivePresetError] = useState('')
+
   useEffect(() => {
     if (!trainerId) return
     async function loadPresets() {
       const supabase = createClient()
-      const { data } = await supabase
-        .from('trainer_presets')
-        .select('id, label, days, start_time, end_time')
-        .eq('trainer_id', trainerId)
-        .order('created_at', { ascending: true })
-      setCustomPresets(data ?? [])
+      const [presetsRes, trainerRes] = await Promise.all([
+        supabase
+          .from('trainer_presets')
+          .select('id, label, days, start_time, end_time')
+          .eq('trainer_id', trainerId)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('trainers')
+          .select('active_preset_id')
+          .eq('id', trainerId)
+          .single(),
+      ])
+      setCustomPresets(presetsRes.data ?? [])
+      setLiveActivePresetId(trainerRes.data?.active_preset_id ?? null)
     }
     loadPresets()
   }, [trainerId])
+
+  async function markPresetActive(id: string) {
+    if (!trainerId) return
+    setActivePresetError('')
+    setActivePresetSaving(true)
+    const supabase = createClient()
+    const { error } = await supabase.from('trainers').update({ active_preset_id: id }).eq('id', trainerId)
+    setActivePresetSaving(false)
+    if (error) {
+      setActivePresetError('Failed to set active preset. Try again.')
+      return
+    }
+    setLiveActivePresetId(id)
+  }
 
   function applyPreset(preset: HourPreset) {
     setQuickDays(new Set(preset.days))
@@ -277,6 +305,10 @@ function WeeklyHoursPanel({
   }
 
   async function deletePreset(id: string) {
+    if (id === liveActivePresetId) {
+      setPresetDeleteErrors((prev) => ({ ...prev, [id]: "Can't delete the active preset — set another preset active first." }))
+      return
+    }
     const supabase = createClient()
     const { error } = await supabase.from('trainer_presets').delete().eq('id', id)
     if (error) {
@@ -422,46 +454,72 @@ function WeeklyHoursPanel({
         </div>
 
         {customPresets.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
-            {customPresets.map((preset) => {
-              const sel = activePreset === `custom:${preset.id}`
-              return (
-                <div
-                  key={preset.id}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '2px',
-                    height: '38px', padding: '0 4px 0 16px', borderRadius: '999px',
-                    border: sel ? `1.5px solid ${T.cyan}` : `1px dashed ${T.border}`,
-                    background: sel ? 'rgba(0,188,200,0.12)' : 'transparent',
-                  }}
-                >
-                  <button
-                    onClick={() => applyCustomPreset(preset)}
+          <>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+              {customPresets.map((preset) => {
+                const sel = activePreset === `custom:${preset.id}`
+                const isLive = preset.id === liveActivePresetId
+                return (
+                  <div
+                    key={preset.id}
                     style={{
-                      background: 'none', border: 'none', cursor: 'pointer', padding: '0 8px 0 0',
-                      fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600,
-                      color: sel ? T.cyan : T.ink2,
+                      display: 'flex', alignItems: 'center', gap: '2px',
+                      height: '38px', padding: '0 4px 0 16px', borderRadius: '999px',
+                      border: sel ? `1.5px solid ${T.cyan}` : isLive ? `1px solid ${T.cyan}` : `1px dashed ${T.border}`,
+                      background: sel ? 'rgba(0,188,200,0.12)' : 'transparent',
                     }}
-                  >{preset.label}</button>
-                  <button
-                    onClick={() => startEditingPreset(preset)}
-                    title="Edit preset"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
-                  ><Pencil size={13} /></button>
-                  <button
-                    onClick={() => deletePreset(preset.id)}
-                    title="Delete preset"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
-                  ><Trash2 size={13} /></button>
-                  {presetDeleteErrors[preset.id] && (
-                    <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
-                      {presetDeleteErrors[preset.id]}
-                    </span>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+                  >
+                    <button
+                      onClick={() => applyCustomPreset(preset)}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer', padding: '0 8px 0 0',
+                        fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600,
+                        color: sel ? T.cyan : T.ink2,
+                      }}
+                    >{preset.label}</button>
+                    {isLive ? (
+                      <span
+                        title="This preset is live on your public booking page"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '3px', padding: '3px 8px 3px 6px', borderRadius: '999px',
+                          background: 'rgba(0,188,200,0.15)', color: T.cyan,
+                          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '10px',
+                          letterSpacing: '.06em', textTransform: 'uppercase' as const, marginRight: '2px',
+                        }}
+                      ><Star size={10} fill={T.cyan} /> Active</span>
+                    ) : (
+                      <button
+                        onClick={() => markPresetActive(preset.id)}
+                        disabled={activePresetSaving}
+                        title="Set as active"
+                        style={{ background: 'none', border: 'none', cursor: activePresetSaving ? 'default' : 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
+                      ><Star size={13} /></button>
+                    )}
+                    <button
+                      onClick={() => startEditingPreset(preset)}
+                      title="Edit preset"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
+                    ><Pencil size={13} /></button>
+                    <button
+                      onClick={() => deletePreset(preset.id)}
+                      title="Delete preset"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
+                    ><Trash2 size={13} /></button>
+                    {presetDeleteErrors[preset.id] && (
+                      <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
+                        {presetDeleteErrors[preset.id]}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            {activePresetError && (
+              <div style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', marginBottom: '8px' }}>
+                {activePresetError}
+              </div>
+            )}
+          </>
         )}
 
         <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600, marginBottom: '6px' }}>Days</div>
