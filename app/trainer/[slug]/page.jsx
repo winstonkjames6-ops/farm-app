@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
+import { generateSlotsForPreset, buildSlotISO } from '@/lib/scheduling'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -20,39 +21,6 @@ function formatTime12h(timeStr) {
   const period = h >= 12 ? 'PM' : 'AM'
   const hour = h % 12 || 12
   return `${hour}:${String(m).padStart(2, '0')} ${period}`
-}
-
-function buildSlotISO(isoDate, startTime) {
-  const parts = startTime.split(':').map(Number)
-  const [year, month, day] = isoDate.split('-').map(Number)
-  return new Date(year, month - 1, day, parts[0], parts[1], 0).toISOString()
-}
-
-function timeToMinutes(t) {
-  const [h, m] = t.split(':').map(Number)
-  return h * 60 + m
-}
-
-function minutesToTimeStr(mins) {
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-}
-
-// Steps from start_time by (session_length_minutes + break_minutes), stopping once
-// a session starting at that point would run past end_time.
-function generateSlotsForPreset(preset) {
-  if (!preset) return []
-  const step = preset.session_length_minutes + preset.break_minutes
-  const startMin = timeToMinutes(preset.start_time)
-  const endMin = timeToMinutes(preset.end_time)
-  const slots = []
-  let cursor = startMin
-  while (cursor + preset.session_length_minutes <= endMin) {
-    slots.push(minutesToTimeStr(cursor))
-    cursor += step
-  }
-  return slots
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────
