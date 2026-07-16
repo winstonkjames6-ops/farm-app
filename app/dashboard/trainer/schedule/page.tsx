@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Pencil, Trash2, Star } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
+import { generateSlotsForPreset, buildSlotISO } from '@/lib/scheduling'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,23 @@ type TrainerPreset = {
   start_time: string
   end_time: string
 }
+
+// Config for the trainer's active preset — the same shape the public booking
+// page reads, so slot generation can call the exact same generateSlotsForPreset().
+type ActivePresetConfig = {
+  days: number[]
+  start_time: string
+  end_time: string
+  session_length_minutes: number
+  break_minutes: number
+}
+
+type GeneratedSlot = {
+  start_time: string
+  booking: BookingRow | null
+}
+
+type ScheduleView = 'day' | 'week' | 'month'
 
 type BookingRow = {
   id: string
@@ -73,6 +91,15 @@ function normalizeFormat(format: string | null): string {
 
 function dateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function addDays(d: Date, n: number): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)
+}
+
+function startOfWeek(d: Date): Date {
+  const dow = (d.getDay() + 6) % 7 // Mon=0 .. Sun=6, matching buildMonthCells
+  return addDays(d, -dow)
 }
 
 function formatSessionDate(sessionTime: string): string {
@@ -740,8 +767,12 @@ function WeeklyHoursPanel({
 export default function TrainerSchedulePage() {
   const today = new Date()
   const [trainerId, setTrainerId] = useState<string | null>(null)
+  const [view, setView] = useState<ScheduleView>('month')
   const [monthCursor, setMonthCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
+  const [weekCursor, setWeekCursor] = useState(startOfWeek(today))
+  const [dayCursor, setDayCursor] = useState(today)
   const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([])
+  const [activePreset, setActivePreset] = useState<ActivePresetConfig | null>(null)
   const [exceptions, setExceptions] = useState<Record<string, 'available' | 'blocked'>>({})
   const [bookings, setBookings] = useState<BookingRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -750,11 +781,34 @@ export default function TrainerSchedulePage() {
   const [pendingChanges, setPendingChanges] = useState<Record<string, 'available' | 'blocked'>>({})
   const [confirmSaving, setConfirmSaving] = useState(false)
 
-  // Switching months discards any unsaved pending changes rather than carrying
-  // or silently saving them — the batch never writes without an explicit confirm click.
+  // Moving the browsed date range (in any view) discards unsaved pending changes
+  // rather than carrying or silently saving them — the batch never writes without
+  // an explicit confirm click. Switching view tabs alone does not trigger this.
   useEffect(() => {
     setPendingChanges({})
-  }, [monthCursor])
+  }, [monthCursor, weekCursor, dayCursor])
+
+  // Load the trainer's active preset (same config shape + same generateSlotsForPreset
+  // the public booking page uses) so Week/Day views generate the exact same slots.
+  useEffect(() => {
+    if (!trainerId) return
+    async function loadActivePreset() {
+      const supabase = createClient()
+      const { data: trainerRow } = await supabase
+        .from('trainers')
+        .select('active_preset_id')
+        .eq('id', trainerId)
+        .single()
+      if (!trainerRow?.active_preset_id) { setActivePreset(null); return }
+      const { data: preset } = await supabase
+        .from('trainer_presets')
+        .select('days, start_time, end_time, session_length_minutes, break_minutes')
+        .eq('id', trainerRow.active_preset_id)
+        .single()
+      setActivePreset(preset ?? null)
+    }
+    loadActivePreset()
+  }, [trainerId])
 
   // Load trainer id + recurring availability once
   useEffect(() => {
@@ -781,16 +835,29 @@ export default function TrainerSchedulePage() {
     loadTrainer()
   }, [])
 
-  // Load bookings + exceptions for the visible month. Called on trainerId/monthCursor
-  // change and again after a batch of pending changes is confirmed.
-  async function loadMonthData() {
+  // Load bookings + exceptions covering the union of the current month (so the
+  // "Booked sessions this month" list below always has full-month data, regardless
+  // of the active view) and the active view's own visible window (so Week/Day cells
+  // are covered even when they fall in a different month than monthCursor).
+  async function loadRangeData() {
     if (!trainerId) return
     setLoading(true)
     const supabase = createClient()
-    const year = monthCursor.getFullYear()
-    const month = monthCursor.getMonth()
-    const rangeStart = new Date(year, month, 1)
-    const rangeEnd = new Date(year, month + 1, 1)
+
+    const monthStart = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1)
+    const monthEnd = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1)
+    let viewStart: Date = monthStart
+    let viewEnd: Date = monthEnd
+    if (view === 'week') {
+      viewStart = weekCursor
+      viewEnd = addDays(weekCursor, 7)
+    } else if (view === 'day') {
+      viewStart = dayCursor
+      viewEnd = addDays(dayCursor, 1)
+    }
+
+    const rangeStart = viewStart < monthStart ? viewStart : monthStart
+    const rangeEnd = viewEnd > monthEnd ? viewEnd : monthEnd
 
     const { data: bookingData } = await supabase
       .from('bookings')
@@ -824,7 +891,7 @@ export default function TrainerSchedulePage() {
     )
 
     const startKey = dateKey(rangeStart)
-    const endKey = dateKey(new Date(year, month + 1, 0))
+    const endKey = dateKey(addDays(rangeEnd, -1))
     const { data: exceptionData } = await supabase
       .from('availability_exceptions')
       .select('exception_date, status')
@@ -840,13 +907,8 @@ export default function TrainerSchedulePage() {
   }
 
   useEffect(() => {
-    loadMonthData()
-  }, [trainerId, monthCursor])
-
-  const recurringWeekdays = useMemo(
-    () => new Set(availabilitySlots.map((s) => s.day_of_week)),
-    [availabilitySlots]
-  )
+    loadRangeData()
+  }, [trainerId, view, monthCursor, weekCursor, dayCursor])
 
   const bookedDateKeys = useMemo(() => {
     const set = new Set<string>()
@@ -858,12 +920,37 @@ export default function TrainerSchedulePage() {
     return set
   }, [bookings])
 
+  // Same booking rows Month view already loads, indexed by exact slot start time
+  // so Week/Day views can label each generated slot Open vs Booked (+ client name).
+  const bookingsByTime = useMemo(() => {
+    const map = new Map<number, BookingRow>()
+    for (const b of bookings) {
+      if (b.status === 'confirmed' || b.status === 'pending') {
+        map.set(new Date(b.session_time).getTime(), b)
+      }
+    }
+    return map
+  }, [bookings])
+
   function resolveStatus(d: Date): DayStatus {
     const key = dateKey(d)
     if (bookedDateKeys.has(key)) return 'booked'
     const exception = exceptions[key]
     if (exception) return exception
-    return recurringWeekdays.has(d.getDay()) ? 'available' : 'blocked'
+    return activePreset?.days.includes(d.getDay()) ? 'available' : 'blocked'
+  }
+
+  // Same generateSlotsForPreset() the public booking page uses, fed by the trainer's
+  // active preset + the same exceptions loaded above — one source of truth for Week/Day.
+  function slotsForDay(d: Date): GeneratedSlot[] {
+    if (!activePreset) return []
+    const iso = dateKey(d)
+    if (exceptions[iso] === 'blocked') return []
+    if (!activePreset.days.includes(d.getDay())) return []
+    return generateSlotsForPreset(activePreset).map((start_time) => {
+      const slotISO = buildSlotISO(iso, start_time)
+      return { start_time, booking: bookingsByTime.get(new Date(slotISO).getTime()) ?? null }
+    })
   }
 
   const [bookingActionErrors, setBookingActionErrors] = useState<Record<string, string>>({})
@@ -944,22 +1031,60 @@ export default function TrainerSchedulePage() {
     }
 
     setPendingChanges({})
-    await loadMonthData()
+    await loadRangeData()
   }
 
-  function goMonth(delta: number) {
-    setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1))
+  // Navigation adapts to the active view: day-by-day, week-by-week, or month-by-month.
+  function goPrev() {
+    if (view === 'week') setWeekCursor((prev) => addDays(prev, -7))
+    else if (view === 'day') setDayCursor((prev) => addDays(prev, -1))
+    else setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
   }
+
+  function goNext() {
+    if (view === 'week') setWeekCursor((prev) => addDays(prev, 7))
+    else if (view === 'day') setDayCursor((prev) => addDays(prev, 1))
+    else setMonthCursor((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
+  }
+
+  const headerLabel = useMemo(() => {
+    if (view === 'week') {
+      const end = addDays(weekCursor, 6)
+      const startLabel = `${MONTH_NAMES[weekCursor.getMonth()].slice(0, 3)} ${weekCursor.getDate()}`
+      const endLabel = weekCursor.getMonth() === end.getMonth()
+        ? `${end.getDate()}`
+        : `${MONTH_NAMES[end.getMonth()].slice(0, 3)} ${end.getDate()}`
+      return `${startLabel}–${endLabel}, ${end.getFullYear()}`
+    }
+    if (view === 'day') {
+      return `${DAY_NAMES[dayCursor.getDay()]}, ${MONTH_NAMES[dayCursor.getMonth()].slice(0, 3)} ${dayCursor.getDate()}`
+    }
+    return `${MONTH_NAMES[monthCursor.getMonth()]} ${monthCursor.getFullYear()}`
+  }, [view, weekCursor, dayCursor, monthCursor])
+
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => addDays(weekCursor, i)),
+    [weekCursor]
+  )
 
   const monthCells = useMemo(
     () => buildMonthCells(monthCursor.getFullYear(), monthCursor.getMonth()),
     [monthCursor]
   )
 
-  const sortedBookings = useMemo(
-    () => [...bookings].sort((a, b) => new Date(a.session_time).getTime() - new Date(b.session_time).getTime()),
-    [bookings]
-  )
+  // "Booked sessions this month" always reflects monthCursor's month specifically —
+  // `bookings` itself may span a wider range when Week/Day view is active (see
+  // loadRangeData), so this filters back down before the list renders.
+  const sortedBookings = useMemo(() => {
+    const monthStart = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1).getTime()
+    const monthEnd = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1).getTime()
+    return bookings
+      .filter((b) => {
+        const t = new Date(b.session_time).getTime()
+        return t >= monthStart && t < monthEnd
+      })
+      .sort((a, b) => new Date(a.session_time).getTime() - new Date(b.session_time).getTime())
+  }, [bookings, monthCursor])
 
   return (
     <motion.div
@@ -973,21 +1098,39 @@ export default function TrainerSchedulePage() {
           background: '#FFFFFF', borderRadius: '20px', border: `1px solid ${T.border}`, overflow: 'hidden',
         }}>
 
-          {/* Month header */}
+          {/* Calendar header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px 4px' }}>
             <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '20px', color: T.ink }}>
-              {MONTH_NAMES[monthCursor.getMonth()]} {monthCursor.getFullYear()}
+              {headerLabel}
             </span>
             <div style={{ display: 'flex', gap: '6px' }}>
               <button
-                onClick={() => goMonth(-1)}
+                onClick={goPrev}
                 style={{ width: '32px', height: '32px', borderRadius: '8px', border: `1px solid ${T.border}`, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.ink2 }}
               ><ChevronLeft size={16} /></button>
               <button
-                onClick={() => goMonth(1)}
+                onClick={goNext}
                 style={{ width: '32px', height: '32px', borderRadius: '8px', border: `1px solid ${T.border}`, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.ink2 }}
               ><ChevronRight size={16} /></button>
             </div>
+          </div>
+
+          {/* Day / Week / Month toggle */}
+          <div style={{ display: 'flex', gap: '4px', padding: '10px 20px 0' }}>
+            {(['day', 'week', 'month'] as ScheduleView[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                style={{
+                  flex: 1, height: '30px', borderRadius: '8px', cursor: 'pointer',
+                  fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', fontWeight: 600,
+                  textTransform: 'capitalize' as const,
+                  border: view === v ? `1.5px solid ${T.cyan}` : `1px solid ${T.border}`,
+                  background: view === v ? 'rgba(0,188,200,0.1)' : 'transparent',
+                  color: view === v ? T.cyan : T.ink2,
+                }}
+              >{v}</button>
+            ))}
           </div>
 
           {/* Legend */}
@@ -1002,53 +1145,187 @@ export default function TrainerSchedulePage() {
             ))}
           </div>
 
-          {/* Weekday header */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', padding: '12px 12px 0' }}>
-            {WEEKDAY_LABELS.map((d) => (
-              <div key={d} style={{ textAlign: 'center', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', fontWeight: 600, color: T.ink3, textTransform: 'uppercase' as const, letterSpacing: '.04em', padding: '4px 0' }}>{d}</div>
-            ))}
-          </div>
+          {view === 'month' && (
+            <>
+              {/* Weekday header */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', padding: '12px 12px 0' }}>
+                {WEEKDAY_LABELS.map((d) => (
+                  <div key={d} style={{ textAlign: 'center', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', fontWeight: 600, color: T.ink3, textTransform: 'uppercase' as const, letterSpacing: '.04em', padding: '4px 0' }}>{d}</div>
+                ))}
+              </div>
 
-          {/* Month grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', padding: '0 12px 8px', gap: '3px' }}>
-            {monthCells.map((cellDate, i) => {
-              if (!cellDate) return <div key={i} />
-              const status = resolveStatus(cellDate)
-              const isToday = dateKey(cellDate) === dateKey(today)
-              const clickable = status !== 'booked'
-              const cellKey = dateKey(cellDate)
-              const pendingTarget = pendingChanges[cellKey]
-              const isPending = pendingTarget !== undefined
-              const colors = DAY_COLORS[isPending ? pendingTarget : status]
-              return (
+              {/* Month grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', padding: '0 12px 8px', gap: '3px' }}>
+                {monthCells.map((cellDate, i) => {
+                  if (!cellDate) return <div key={i} />
+                  const status = resolveStatus(cellDate)
+                  const isToday = dateKey(cellDate) === dateKey(today)
+                  const clickable = status !== 'booked'
+                  const cellKey = dateKey(cellDate)
+                  const pendingTarget = pendingChanges[cellKey]
+                  const isPending = pendingTarget !== undefined
+                  const colors = DAY_COLORS[isPending ? pendingTarget : status]
+                  return (
+                    <div
+                      key={i}
+                      onClick={clickable ? () => toggleDayPending(cellDate) : undefined}
+                      style={{
+                        minHeight: '52px', borderRadius: '10px', background: isPending ? '#FFFBEB' : colors.bg,
+                        border: isPending ? '1.5px dashed #F59E0B' : isToday ? `1.5px solid ${T.cyan}` : '1px solid transparent',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        gap: '4px', cursor: clickable ? 'pointer' : 'default', userSelect: 'none' as const,
+                      }}
+                    >
+                      <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: isToday ? 700 : 500, color: T.ink }}>
+                        {cellDate.getDate()}
+                      </span>
+                      {isPending ? (
+                        <span style={{
+                          fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '8.5px', fontWeight: 700,
+                          textTransform: 'uppercase' as const, letterSpacing: '.03em',
+                          color: pendingTarget === 'blocked' ? '#B45309' : '#00838C',
+                        }}>
+                          {pendingTarget === 'blocked' ? 'Block' : 'Open'}
+                        </span>
+                      ) : (
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: colors.dot }} />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+
+          {view === 'week' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 20px 8px' }}>
+              {weekDays.map((d) => {
+                const status = resolveStatus(d)
+                const isToday = dateKey(d) === dateKey(today)
+                const clickable = status !== 'booked'
+                const cellKey = dateKey(d)
+                const pendingTarget = pendingChanges[cellKey]
+                const isPending = pendingTarget !== undefined
+                const displayStatus = isPending ? pendingTarget : status
+                const daySlots = slotsForDay(d)
+                return (
+                  <div
+                    key={cellKey}
+                    onClick={clickable ? () => toggleDayPending(d) : undefined}
+                    style={{
+                      borderRadius: '12px', padding: '12px 14px',
+                      background: isPending ? '#FFFBEB' : DAY_COLORS[displayStatus].bg,
+                      border: isPending ? '1.5px dashed #F59E0B' : isToday ? `1.5px solid ${T.cyan}` : `1px solid ${T.border}`,
+                      cursor: clickable ? 'pointer' : 'default', userSelect: 'none' as const,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: daySlots.length > 0 ? '8px' : '0' }}>
+                      <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13.5px', fontWeight: 700, color: T.ink }}>
+                        {DAY_NAMES[d.getDay()].slice(0, 3)} {d.getDate()}
+                      </span>
+                      {isPending ? (
+                        <span style={{
+                          fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '10px', fontWeight: 700,
+                          textTransform: 'uppercase' as const, letterSpacing: '.03em',
+                          color: pendingTarget === 'blocked' ? '#B45309' : '#00838C',
+                        }}>
+                          {pendingTarget === 'blocked' ? 'Will block' : 'Will open'}
+                        </span>
+                      ) : (
+                        <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3 }}>
+                          {status === 'booked' ? 'Booked' : status === 'blocked' ? 'Blocked' : `${daySlots.length} slot${daySlots.length !== 1 ? 's' : ''}`}
+                        </span>
+                      )}
+                    </div>
+                    {daySlots.length > 0 && (
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {daySlots.map((slot) => (
+                          <span
+                            key={slot.start_time}
+                            style={{
+                              padding: '4px 9px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 600,
+                              background: slot.booking ? 'rgba(99,102,241,0.12)' : 'rgba(0,188,200,0.10)',
+                              color: slot.booking ? '#4F46E5' : '#00838C',
+                            }}
+                          >
+                            {formatTime(slot.start_time)}{slot.booking ? ' · Booked' : ''}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {view === 'day' && (() => {
+            const status = resolveStatus(dayCursor)
+            const cellKey = dateKey(dayCursor)
+            const pendingTarget = pendingChanges[cellKey]
+            const isPending = pendingTarget !== undefined
+            const displayStatus = isPending ? pendingTarget : status
+            const clickable = status !== 'booked'
+            const daySlots = slotsForDay(dayCursor)
+            return (
+              <div style={{ padding: '12px 20px 8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div
-                  key={i}
-                  onClick={clickable ? () => toggleDayPending(cellDate) : undefined}
+                  onClick={clickable ? () => toggleDayPending(dayCursor) : undefined}
                   style={{
-                    minHeight: '52px', borderRadius: '10px', background: isPending ? '#FFFBEB' : colors.bg,
-                    border: isPending ? '1.5px dashed #F59E0B' : isToday ? `1.5px solid ${T.cyan}` : '1px solid transparent',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    gap: '4px', cursor: clickable ? 'pointer' : 'default', userSelect: 'none' as const,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    borderRadius: '12px', padding: '12px 14px',
+                    background: isPending ? '#FFFBEB' : DAY_COLORS[displayStatus].bg,
+                    border: isPending ? '1.5px dashed #F59E0B' : `1px solid ${T.border}`,
+                    cursor: clickable ? 'pointer' : 'default', userSelect: 'none' as const,
                   }}
                 >
-                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: isToday ? 700 : 500, color: T.ink }}>
-                    {cellDate.getDate()}
+                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600, color: T.ink }}>
+                    {displayStatus === 'booked' ? 'This day has bookings' : displayStatus === 'blocked' ? 'This day is blocked' : 'This day is open'}
                   </span>
                   {isPending ? (
                     <span style={{
-                      fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '8.5px', fontWeight: 700,
+                      fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '10px', fontWeight: 700,
                       textTransform: 'uppercase' as const, letterSpacing: '.03em',
                       color: pendingTarget === 'blocked' ? '#B45309' : '#00838C',
                     }}>
-                      {pendingTarget === 'blocked' ? 'Block' : 'Open'}
+                      {pendingTarget === 'blocked' ? 'Will block' : 'Will open'}
                     </span>
-                  ) : (
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: colors.dot }} />
-                  )}
+                  ) : clickable ? (
+                    <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11.5px', color: T.cyan, fontWeight: 600 }}>
+                      {status === 'available' ? 'Tap to block' : 'Tap to open'}
+                    </span>
+                  ) : null}
                 </div>
-              )
-            })}
-          </div>
+
+                {daySlots.length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink3 }}>
+                    {activePreset ? 'No bookable slots this day' : 'No active preset set — set one below to generate slots'}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {daySlots.map((slot) => (
+                      <div
+                        key={slot.start_time}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '10px 14px', borderRadius: '10px',
+                          background: slot.booking ? 'rgba(99,102,241,0.08)' : 'rgba(0,188,200,0.06)',
+                          border: `1px solid ${slot.booking ? 'rgba(99,102,241,0.25)' : T.cyanBorder}`,
+                        }}
+                      >
+                        <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13.5px', fontWeight: 600, color: T.ink }}>
+                          {formatTime(slot.start_time)}
+                        </span>
+                        <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', fontWeight: 600, color: slot.booking ? '#4F46E5' : '#00838C' }}>
+                          {slot.booking ? `Booked · ${slot.booking.athleteName}` : 'Open'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {toggleError && (
             <div style={{ padding: '0 20px 12px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px' }}>
