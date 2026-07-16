@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Pencil, Trash2, Star, Check, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Trash2, Star } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 
@@ -78,10 +78,6 @@ function dateKey(d: Date): string {
 function formatSessionDate(sessionTime: string): string {
   const dt = new Date(sessionTime)
   return `${DAY_NAMES[dt.getDay()].slice(0, 3)}, ${MONTH_NAMES[dt.getMonth()].slice(0, 3)} ${dt.getDate()}`
-}
-
-function shortDayLabel(d: Date): string {
-  return `${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getDate()}`
 }
 
 function formatSessionTime(sessionTime: string): string {
@@ -751,19 +747,14 @@ export default function TrainerSchedulePage() {
   const [loading, setLoading] = useState(true)
   const [weeklyHoursOpen, setWeeklyHoursOpen] = useState(false)
   const [toggleError, setToggleError] = useState<string | null>(null)
-  const [pendingDay, setPendingDay] = useState<string | null>(null)
-  const pendingCellRef = useRef<HTMLDivElement | null>(null)
+  const [pendingChanges, setPendingChanges] = useState<Record<string, 'available' | 'blocked'>>({})
+  const [confirmSaving, setConfirmSaving] = useState(false)
 
-  // Cancel a pending confirmation if the user clicks anywhere outside that day's cell.
+  // Switching months discards any unsaved pending changes rather than carrying
+  // or silently saving them — the batch never writes without an explicit confirm click.
   useEffect(() => {
-    if (!pendingDay) return
-    function handleOutsideClick(e: MouseEvent) {
-      if (pendingCellRef.current && pendingCellRef.current.contains(e.target as Node)) return
-      setPendingDay(null)
-    }
-    document.addEventListener('mousedown', handleOutsideClick)
-    return () => document.removeEventListener('mousedown', handleOutsideClick)
-  }, [pendingDay])
+    setPendingChanges({})
+  }, [monthCursor])
 
   // Load trainer id + recurring availability once
   useEffect(() => {
@@ -790,64 +781,66 @@ export default function TrainerSchedulePage() {
     loadTrainer()
   }, [])
 
-  // Load bookings + exceptions for the visible month whenever trainerId or monthCursor changes
-  useEffect(() => {
+  // Load bookings + exceptions for the visible month. Called on trainerId/monthCursor
+  // change and again after a batch of pending changes is confirmed.
+  async function loadMonthData() {
     if (!trainerId) return
-    async function loadMonth() {
-      setLoading(true)
-      const supabase = createClient()
-      const year = monthCursor.getFullYear()
-      const month = monthCursor.getMonth()
-      const rangeStart = new Date(year, month, 1)
-      const rangeEnd = new Date(year, month + 1, 1)
+    setLoading(true)
+    const supabase = createClient()
+    const year = monthCursor.getFullYear()
+    const month = monthCursor.getMonth()
+    const rangeStart = new Date(year, month, 1)
+    const rangeEnd = new Date(year, month + 1, 1)
 
-      const { data: bookingData } = await supabase
-        .from('bookings')
-        .select('id, session_time, status, format, parent_id, athletes!athlete_id(name), profiles!parent_id(name)')
-        .eq('trainer_id', trainerId)
-        .gte('session_time', rangeStart.toISOString())
-        .lt('session_time', rangeEnd.toISOString())
-        .order('session_time', { ascending: true })
+    const { data: bookingData } = await supabase
+      .from('bookings')
+      .select('id, session_time, status, format, parent_id, athletes!athlete_id(name), profiles!parent_id(name)')
+      .eq('trainer_id', trainerId)
+      .gte('session_time', rangeStart.toISOString())
+      .lt('session_time', rangeEnd.toISOString())
+      .order('session_time', { ascending: true })
 
-      const bookingIds = (bookingData ?? []).map((b: any) => b.id)
-      let feedbackIds = new Set<string>()
-      if (bookingIds.length > 0) {
-        const { data: reviewData } = await supabase
-          .from('reviews')
-          .select('booking_id')
-          .in('booking_id', bookingIds)
-        feedbackIds = new Set((reviewData ?? []).map((r) => r.booking_id as string))
-      }
-
-      setBookings(
-        (bookingData ?? []).map((b: any) => ({
-          id: b.id,
-          session_time: b.session_time,
-          status: b.status,
-          format: b.format,
-          athleteName: b.athletes?.name ?? 'Athlete',
-          parentName: b.profiles?.name ?? 'Parent',
-          parentProfileId: b.parent_id ?? '',
-          hasFeedback: feedbackIds.has(b.id),
-        }))
-      )
-
-      const startKey = dateKey(rangeStart)
-      const endKey = dateKey(new Date(year, month + 1, 0))
-      const { data: exceptionData } = await supabase
-        .from('availability_exceptions')
-        .select('exception_date, status')
-        .eq('trainer_id', trainerId)
-        .gte('exception_date', startKey)
-        .lte('exception_date', endKey)
-
-      setExceptions(
-        Object.fromEntries((exceptionData ?? []).map((e: any) => [e.exception_date, e.status]))
-      )
-
-      setLoading(false)
+    const bookingIds = (bookingData ?? []).map((b: any) => b.id)
+    let feedbackIds = new Set<string>()
+    if (bookingIds.length > 0) {
+      const { data: reviewData } = await supabase
+        .from('reviews')
+        .select('booking_id')
+        .in('booking_id', bookingIds)
+      feedbackIds = new Set((reviewData ?? []).map((r) => r.booking_id as string))
     }
-    loadMonth()
+
+    setBookings(
+      (bookingData ?? []).map((b: any) => ({
+        id: b.id,
+        session_time: b.session_time,
+        status: b.status,
+        format: b.format,
+        athleteName: b.athletes?.name ?? 'Athlete',
+        parentName: b.profiles?.name ?? 'Parent',
+        parentProfileId: b.parent_id ?? '',
+        hasFeedback: feedbackIds.has(b.id),
+      }))
+    )
+
+    const startKey = dateKey(rangeStart)
+    const endKey = dateKey(new Date(year, month + 1, 0))
+    const { data: exceptionData } = await supabase
+      .from('availability_exceptions')
+      .select('exception_date, status')
+      .eq('trainer_id', trainerId)
+      .gte('exception_date', startKey)
+      .lte('exception_date', endKey)
+
+    setExceptions(
+      Object.fromEntries((exceptionData ?? []).map((e: any) => [e.exception_date, e.status]))
+    )
+
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    loadMonthData()
   }, [trainerId, monthCursor])
 
   const recurringWeekdays = useMemo(
@@ -897,36 +890,61 @@ export default function TrainerSchedulePage() {
     setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: 'declined' } : b))
   }
 
-  function requestDayToggle(d: Date) {
-    if (!trainerId) return
-    if (resolveStatus(d) === 'booked') return
-    setPendingDay(dateKey(d))
-  }
-
-  async function confirmDayToggle(d: Date) {
+  // Toggling a day only edits local pending-change state — no write happens until
+  // "Confirm changes" is clicked. Clicking an already-pending day un-marks it.
+  function toggleDayPending(d: Date) {
     if (!trainerId) return
     const current = resolveStatus(d)
-    setPendingDay(null)
     if (current === 'booked') return
-    const previous: 'available' | 'blocked' = current
-    const next: 'available' | 'blocked' = current === 'available' ? 'blocked' : 'available'
     const key = dateKey(d)
+    setPendingChanges((prev) => {
+      if (key in prev) {
+        const next = { ...prev }
+        delete next[key]
+        return next
+      }
+      return { ...prev, [key]: current === 'available' ? 'blocked' : 'available' }
+    })
+  }
 
-    setExceptions((prev) => ({ ...prev, [key]: next })) // optimistic
+  function cancelPendingChanges() {
+    setPendingChanges({})
+  }
+
+  async function confirmPendingChanges() {
+    if (!trainerId) return
+    const entries = Object.entries(pendingChanges)
+    if (entries.length === 0) return
+
+    setConfirmSaving(true)
     setToggleError(null)
-
     const supabase = createClient()
-    const { error } = await supabase
-      .from('availability_exceptions')
-      .upsert(
-        { trainer_id: trainerId, exception_date: key, status: next },
-        { onConflict: 'trainer_id,exception_date' }
-      )
+    const results = await Promise.all(
+      entries.map(async ([exceptionDate, status]) => {
+        const { error } = await supabase
+          .from('availability_exceptions')
+          .upsert(
+            { trainer_id: trainerId, exception_date: exceptionDate, status },
+            { onConflict: 'trainer_id,exception_date' }
+          )
+        return { exceptionDate, error }
+      })
+    )
+    setConfirmSaving(false)
 
-    if (error) {
-      setExceptions((prev) => ({ ...prev, [key]: previous }))
-      setToggleError('Failed to save that change. Try again.')
+    const failedKeys = results.filter((r) => r.error).map((r) => r.exceptionDate)
+    if (failedKeys.length > 0) {
+      setPendingChanges((prev) => {
+        const next: Record<string, 'available' | 'blocked'> = {}
+        failedKeys.forEach((k) => { next[k] = prev[k] })
+        return next
+      })
+      setToggleError(`Failed to save ${failedKeys.length} of ${entries.length} change${entries.length > 1 ? 's' : ''}. Try again.`)
+      return
     }
+
+    setPendingChanges({})
+    await loadMonthData()
   }
 
   function goMonth(delta: number) {
@@ -997,59 +1015,35 @@ export default function TrainerSchedulePage() {
               if (!cellDate) return <div key={i} />
               const status = resolveStatus(cellDate)
               const isToday = dateKey(cellDate) === dateKey(today)
-              const colors = DAY_COLORS[status]
               const clickable = status !== 'booked'
               const cellKey = dateKey(cellDate)
-              const isPending = pendingDay === cellKey
+              const pendingTarget = pendingChanges[cellKey]
+              const isPending = pendingTarget !== undefined
+              const colors = DAY_COLORS[isPending ? pendingTarget : status]
               return (
                 <div
                   key={i}
-                  ref={isPending ? pendingCellRef : undefined}
-                  onClick={clickable && !isPending ? () => requestDayToggle(cellDate) : undefined}
+                  onClick={clickable ? () => toggleDayPending(cellDate) : undefined}
                   style={{
-                    minHeight: '52px', borderRadius: '10px', background: isPending ? '#FFF7ED' : colors.bg,
-                    border: isPending ? '1.5px solid #F59E0B' : isToday ? `1.5px solid ${T.cyan}` : '1px solid transparent',
+                    minHeight: '52px', borderRadius: '10px', background: isPending ? '#FFFBEB' : colors.bg,
+                    border: isPending ? '1.5px dashed #F59E0B' : isToday ? `1.5px solid ${T.cyan}` : '1px solid transparent',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    gap: '4px', cursor: clickable && !isPending ? 'pointer' : 'default', userSelect: 'none' as const,
-                    padding: '2px',
+                    gap: '4px', cursor: clickable ? 'pointer' : 'default', userSelect: 'none' as const,
                   }}
                 >
+                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: isToday ? 700 : 500, color: T.ink }}>
+                    {cellDate.getDate()}
+                  </span>
                   {isPending ? (
-                    <>
-                      <span style={{
-                        fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '10px', fontWeight: 600,
-                        color: '#92400E', textAlign: 'center', lineHeight: 1.2,
-                      }}>
-                        {status === 'available' ? 'Block' : 'Open'} {shortDayLabel(cellDate)}?
-                      </span>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); confirmDayToggle(cellDate) }}
-                          title="Confirm"
-                          style={{
-                            width: '20px', height: '20px', borderRadius: '5px', border: 'none',
-                            background: '#10B981', color: '#FFFFFF', display: 'flex',
-                            alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                          }}
-                        ><Check size={12} /></button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setPendingDay(null) }}
-                          title="Cancel"
-                          style={{
-                            width: '20px', height: '20px', borderRadius: '5px', border: 'none',
-                            background: '#E5E7EB', color: '#4B5563', display: 'flex',
-                            alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                          }}
-                        ><X size={12} /></button>
-                      </div>
-                    </>
+                    <span style={{
+                      fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '8.5px', fontWeight: 700,
+                      textTransform: 'uppercase' as const, letterSpacing: '.03em',
+                      color: pendingTarget === 'blocked' ? '#B45309' : '#00838C',
+                    }}>
+                      {pendingTarget === 'blocked' ? 'Block' : 'Open'}
+                    </span>
                   ) : (
-                    <>
-                      <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: isToday ? 700 : 500, color: T.ink }}>
-                        {cellDate.getDate()}
-                      </span>
-                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: colors.dot }} />
-                    </>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: colors.dot }} />
                   )}
                 </div>
               )
@@ -1096,6 +1090,43 @@ export default function TrainerSchedulePage() {
             </AnimatePresence>
           </div>
         </div>
+
+        {Object.keys(pendingChanges).length > 0 && (
+          <div style={{
+            position: 'sticky', bottom: '16px', zIndex: 10,
+            background: '#111827', borderRadius: '14px', padding: '12px 16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+          }}>
+            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600, color: '#FFFFFF' }}>
+              {Object.keys(pendingChanges).length} day{Object.keys(pendingChanges).length > 1 ? 's' : ''} will change
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={cancelPendingChanges}
+                disabled={confirmSaving}
+                style={{
+                  height: '34px', padding: '0 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.25)',
+                  color: '#FFFFFF', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px',
+                  cursor: confirmSaving ? 'default' : 'pointer', opacity: confirmSaving ? 0.6 : 1,
+                }}
+              >
+                Cancel all
+              </button>
+              <button
+                onClick={confirmPendingChanges}
+                disabled={confirmSaving}
+                style={{
+                  height: '34px', padding: '0 16px', background: T.cyan, border: 'none', color: '#FFFFFF',
+                  borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 700,
+                  cursor: confirmSaving ? 'default' : 'pointer', opacity: confirmSaving ? 0.7 : 1,
+                }}
+              >
+                {confirmSaving ? 'Saving…' : 'Confirm changes'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Booked sessions this month */}
         <div style={{ background: '#FFFFFF', borderRadius: '20px', border: `1px solid ${T.border}`, overflow: 'hidden' }}>
