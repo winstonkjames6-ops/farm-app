@@ -209,6 +209,14 @@ function WeeklyHoursPanel({
   const [activePresetSaving, setActivePresetSaving] = useState(false)
   const [activePresetError, setActivePresetError] = useState('')
 
+  // Built-in presets a trainer has chosen to hide from their own quick-add row
+  // (trainers.hidden_builtin_presets) — scoped to this trainer's row only.
+  const [hiddenBuiltinPresets, setHiddenBuiltinPresets] = useState<string[]>([])
+  const [builtinHideErrors, setBuiltinHideErrors] = useState<Record<string, string>>({})
+  const [showRestoreBuiltins, setShowRestoreBuiltins] = useState(false)
+  const [restoreSaving, setRestoreSaving] = useState<string | null>(null)
+  const [restoreError, setRestoreError] = useState('')
+
   useEffect(() => {
     if (!trainerId) return
     async function loadPresets() {
@@ -221,15 +229,45 @@ function WeeklyHoursPanel({
           .order('created_at', { ascending: true }),
         supabase
           .from('trainers')
-          .select('active_preset_id')
+          .select('active_preset_id, hidden_builtin_presets')
           .eq('id', trainerId)
           .single(),
       ])
       setCustomPresets(presetsRes.data ?? [])
       setLiveActivePresetId(trainerRes.data?.active_preset_id ?? null)
+      setHiddenBuiltinPresets(trainerRes.data?.hidden_builtin_presets ?? [])
     }
     loadPresets()
   }, [trainerId])
+
+  async function hideBuiltinPreset(key: string) {
+    if (!trainerId) return
+    setBuiltinHideErrors((prev) => { const next = { ...prev }; delete next[key]; return next })
+    const nextHidden = hiddenBuiltinPresets.includes(key) ? hiddenBuiltinPresets : [...hiddenBuiltinPresets, key]
+    const supabase = createClient()
+    const { error } = await supabase.from('trainers').update({ hidden_builtin_presets: nextHidden }).eq('id', trainerId)
+    if (error) {
+      setBuiltinHideErrors((prev) => ({ ...prev, [key]: 'Failed to hide. Try again.' }))
+      return
+    }
+    setHiddenBuiltinPresets(nextHidden)
+    if (activePreset === key) setActivePreset(null)
+  }
+
+  async function restoreBuiltinPreset(key: string) {
+    if (!trainerId) return
+    setRestoreError('')
+    setRestoreSaving(key)
+    const nextHidden = hiddenBuiltinPresets.filter((k) => k !== key)
+    const supabase = createClient()
+    const { error } = await supabase.from('trainers').update({ hidden_builtin_presets: nextHidden }).eq('id', trainerId)
+    setRestoreSaving(null)
+    if (error) {
+      setRestoreError('Failed to restore. Try again.')
+      return
+    }
+    setHiddenBuiltinPresets(nextHidden)
+  }
 
   async function markPresetActive(id: string) {
     if (!trainerId) return
@@ -461,24 +499,87 @@ function WeeklyHoursPanel({
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: customPresets.length > 0 ? '10px' : '16px' }}>
-          {HOUR_PRESETS.map((preset, i) => {
+          {HOUR_PRESETS.filter((preset) => !hiddenBuiltinPresets.includes(preset.key)).map((preset) => {
             const sel = activePreset === preset.key
-            const isDefault = i === 0
+            const isDefault = preset.key === HOUR_PRESETS[0].key
             return (
-              <button
+              <div
                 key={preset.key}
-                onClick={() => applyPreset(preset)}
                 style={{
-                  height: '38px', padding: '0 16px', borderRadius: '999px', cursor: 'pointer',
-                  fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600,
+                  display: 'flex', alignItems: 'center', gap: '2px',
+                  height: '38px', padding: '0 4px 0 16px', borderRadius: '999px',
                   border: sel ? `1.5px solid ${T.cyan}` : isDefault ? `1.5px solid ${T.cyanBorder}` : `1px solid ${T.border}`,
                   background: sel ? 'rgba(0,188,200,0.12)' : isDefault ? T.cyanDim : 'transparent',
-                  color: (sel || isDefault) ? T.cyan : T.ink2,
                 }}
-              >{preset.label}</button>
+              >
+                <button
+                  onClick={() => applyPreset(preset)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer', padding: '0 8px 0 0',
+                    fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600,
+                    color: (sel || isDefault) ? T.cyan : T.ink2,
+                  }}
+                >{preset.label}</button>
+                <button
+                  onClick={() => hideBuiltinPreset(preset.key)}
+                  title="Hide preset"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
+                ><Trash2 size={13} /></button>
+                {builtinHideErrors[preset.key] && (
+                  <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
+                    {builtinHideErrors[preset.key]}
+                  </span>
+                )}
+              </div>
             )
           })}
         </div>
+
+        {hiddenBuiltinPresets.length > 0 && (
+          <div style={{ marginBottom: customPresets.length > 0 ? '10px' : '16px' }}>
+            <button
+              onClick={() => setShowRestoreBuiltins((v) => !v)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 600, padding: 0 }}
+            >
+              {showRestoreBuiltins ? 'Hide restore options' : `Restore hidden presets (${hiddenBuiltinPresets.length})`}
+            </button>
+            {showRestoreBuiltins && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                {hiddenBuiltinPresets.map((key) => {
+                  const preset = HOUR_PRESETS.find((p) => p.key === key)
+                  return (
+                    <div
+                      key={key}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        height: '32px', padding: '0 6px 0 12px', borderRadius: '999px',
+                        border: `1px dashed ${T.border}`,
+                      }}
+                    >
+                      <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', color: T.ink2 }}>
+                        {preset?.label ?? key}
+                      </span>
+                      <button
+                        onClick={() => restoreBuiltinPreset(key)}
+                        disabled={restoreSaving === key}
+                        style={{
+                          background: 'none', border: 'none', cursor: restoreSaving === key ? 'default' : 'pointer',
+                          color: T.cyan, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 700,
+                          padding: '4px 6px',
+                        }}
+                      >{restoreSaving === key ? 'Adding…' : '+ Add back'}</button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            {restoreError && (
+              <div style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', marginTop: '6px' }}>
+                {restoreError}
+              </div>
+            )}
+          </div>
+        )}
 
         {customPresets.length > 0 && (
           <>
