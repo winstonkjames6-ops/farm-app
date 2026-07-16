@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Pencil, Trash2, Star } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Trash2, Star, Check, X } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 
@@ -78,6 +78,10 @@ function dateKey(d: Date): string {
 function formatSessionDate(sessionTime: string): string {
   const dt = new Date(sessionTime)
   return `${DAY_NAMES[dt.getDay()].slice(0, 3)}, ${MONTH_NAMES[dt.getMonth()].slice(0, 3)} ${dt.getDate()}`
+}
+
+function shortDayLabel(d: Date): string {
+  return `${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getDate()}`
 }
 
 function formatSessionTime(sessionTime: string): string {
@@ -747,6 +751,19 @@ export default function TrainerSchedulePage() {
   const [loading, setLoading] = useState(true)
   const [weeklyHoursOpen, setWeeklyHoursOpen] = useState(false)
   const [toggleError, setToggleError] = useState<string | null>(null)
+  const [pendingDay, setPendingDay] = useState<string | null>(null)
+  const pendingCellRef = useRef<HTMLDivElement | null>(null)
+
+  // Cancel a pending confirmation if the user clicks anywhere outside that day's cell.
+  useEffect(() => {
+    if (!pendingDay) return
+    function handleOutsideClick(e: MouseEvent) {
+      if (pendingCellRef.current && pendingCellRef.current.contains(e.target as Node)) return
+      setPendingDay(null)
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [pendingDay])
 
   // Load trainer id + recurring availability once
   useEffect(() => {
@@ -880,9 +897,16 @@ export default function TrainerSchedulePage() {
     setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: 'declined' } : b))
   }
 
-  async function handleDayClick(d: Date) {
+  function requestDayToggle(d: Date) {
+    if (!trainerId) return
+    if (resolveStatus(d) === 'booked') return
+    setPendingDay(dateKey(d))
+  }
+
+  async function confirmDayToggle(d: Date) {
     if (!trainerId) return
     const current = resolveStatus(d)
+    setPendingDay(null)
     if (current === 'booked') return
     const previous: 'available' | 'blocked' = current
     const next: 'available' | 'blocked' = current === 'available' ? 'blocked' : 'available'
@@ -975,21 +999,58 @@ export default function TrainerSchedulePage() {
               const isToday = dateKey(cellDate) === dateKey(today)
               const colors = DAY_COLORS[status]
               const clickable = status !== 'booked'
+              const cellKey = dateKey(cellDate)
+              const isPending = pendingDay === cellKey
               return (
                 <div
                   key={i}
-                  onClick={clickable ? () => handleDayClick(cellDate) : undefined}
+                  ref={isPending ? pendingCellRef : undefined}
+                  onClick={clickable && !isPending ? () => requestDayToggle(cellDate) : undefined}
                   style={{
-                    minHeight: '52px', borderRadius: '10px', background: colors.bg,
-                    border: isToday ? `1.5px solid ${T.cyan}` : '1px solid transparent',
+                    minHeight: '52px', borderRadius: '10px', background: isPending ? '#FFF7ED' : colors.bg,
+                    border: isPending ? '1.5px solid #F59E0B' : isToday ? `1.5px solid ${T.cyan}` : '1px solid transparent',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    gap: '4px', cursor: clickable ? 'pointer' : 'default', userSelect: 'none' as const,
+                    gap: '4px', cursor: clickable && !isPending ? 'pointer' : 'default', userSelect: 'none' as const,
+                    padding: '2px',
                   }}
                 >
-                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: isToday ? 700 : 500, color: T.ink }}>
-                    {cellDate.getDate()}
-                  </span>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: colors.dot }} />
+                  {isPending ? (
+                    <>
+                      <span style={{
+                        fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '10px', fontWeight: 600,
+                        color: '#92400E', textAlign: 'center', lineHeight: 1.2,
+                      }}>
+                        {status === 'available' ? 'Block' : 'Open'} {shortDayLabel(cellDate)}?
+                      </span>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); confirmDayToggle(cellDate) }}
+                          title="Confirm"
+                          style={{
+                            width: '20px', height: '20px', borderRadius: '5px', border: 'none',
+                            background: '#10B981', color: '#FFFFFF', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                          }}
+                        ><Check size={12} /></button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setPendingDay(null) }}
+                          title="Cancel"
+                          style={{
+                            width: '20px', height: '20px', borderRadius: '5px', border: 'none',
+                            background: '#E5E7EB', color: '#4B5563', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                          }}
+                        ><X size={12} /></button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: isToday ? 700 : 500, color: T.ink }}>
+                        {cellDate.getDate()}
+                      </span>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: colors.dot }} />
+                    </>
+                  )}
                 </div>
               )
             })}
