@@ -47,9 +47,9 @@ const selectStyle = {
 }
 
 const labelStyle = {
-  display: 'block', fontFamily: barlow, fontWeight: 700,
-  fontSize: '11px', letterSpacing: '.14em', textTransform: 'uppercase',
-  color: '#9A9A9A', marginBottom: '8px',
+  display: 'block', fontFamily: barlow, fontWeight: 800,
+  fontSize: '11.5px', letterSpacing: '.16em', textTransform: 'uppercase',
+  color: '#6B6B6B', marginBottom: '8px',
 }
 
 const divider = { height: '1px', background: 'rgba(0,0,0,0.08)' }
@@ -118,23 +118,38 @@ function TrainerCard({ trainer, index }) {
             </div>
           </div>
 
-          {/* New trainer badge */}
-          <div>
-            <span style={{
-              fontFamily: hanken, fontSize: '12px', fontWeight: 600,
-              padding: '4px 10px',
-              background: 'rgba(0,188,200,0.08)',
-              border: '1px solid rgba(0,188,200,0.20)',
-              color: '#00838C',
-            }}>New trainer</span>
-          </div>
-
-          {/* Availability placeholder */}
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            <span style={{
-              fontFamily: hanken, fontSize: '12px', fontWeight: 600, padding: '4px 10px',
-              border: '1px solid rgba(0,0,0,0.10)', color: '#4A4A4A',
-            }}>Contact for availability</span>
+          {/* Verified badge + availability status */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {trainer.isCertified && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                fontFamily: barlow, fontSize: '11px', fontWeight: 700,
+                letterSpacing: '.08em', textTransform: 'uppercase',
+                padding: '4px 10px 4px 8px',
+                background: 'rgba(0,188,200,0.08)',
+                border: '1px solid rgba(0,188,200,0.20)',
+                color: '#00838C',
+              }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#00838C" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Verified
+              </span>
+            )}
+            {trainer.hasActivePreset ? (
+              <span style={{
+                fontFamily: hanken, fontSize: '12px', fontWeight: 600,
+                padding: '4px 10px',
+                background: 'rgba(0,188,200,0.08)',
+                border: '1px solid rgba(0,188,200,0.20)',
+                color: '#00838C',
+              }}>Open slots this week</span>
+            ) : (
+              <span style={{
+                fontFamily: hanken, fontSize: '12px', fontWeight: 600, padding: '4px 10px',
+                border: '1px solid rgba(0,0,0,0.10)', color: '#9A9A9A',
+              }}>Availability not set</span>
+            )}
           </div>
 
           {/* Bio */}
@@ -182,7 +197,7 @@ export default function SearchPage() {
     const supabase = createClient()
     supabase
       .from('trainers')
-      .select('profile_id, specialty, bio, rate, location, profiles(name)')
+      .select('profile_id, specialty, bio, rate, location, is_certified, active_preset_id, profiles(name)')
       .then(({ data }) => {
         if (data) {
           setTrainers(data.map((row) => ({
@@ -193,6 +208,8 @@ export default function SearchPage() {
             location: row.location ?? '',
             rate: row.rate ?? 0,
             bio: row.bio ?? null,
+            isCertified: !!row.is_certified,
+            hasActivePreset: !!row.active_preset_id,
             initials: getInitials(row.profiles?.name ?? ''),
           })))
         }
@@ -320,10 +337,10 @@ export default function SearchPage() {
       {/* Page header */}
       <div style={{ maxWidth: '1240px', margin: '0 auto', padding: '40px 24px 0' }}>
         <h1 style={{
-          fontFamily: barlow, fontWeight: 800,
-          fontSize: 'clamp(36px, 5vw, 56px)',
-          letterSpacing: '.02em', textTransform: 'uppercase',
-          margin: '0 0 6px', color: '#1A1A1A', lineHeight: 1,
+          fontFamily: barlow, fontWeight: 900,
+          fontSize: 'clamp(38px, 5.5vw, 64px)',
+          letterSpacing: '0em', textTransform: 'uppercase',
+          margin: '0 0 6px', color: '#1A1A1A', lineHeight: 0.98,
         }}>
           Find a trainer
         </h1>
@@ -380,7 +397,7 @@ export default function SearchPage() {
       {mobileFiltersOpen && (
         <div className="mobile-only" style={{
           maxWidth: '1240px', margin: '12px 24px 0',
-          background: '#F8F8F6', border: '1px solid rgba(0,0,0,0.08)', padding: '24px',
+          background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', padding: '24px',
         }}>
           {sidebar}
         </div>
@@ -396,7 +413,7 @@ export default function SearchPage() {
       >
         {/* Sidebar — desktop only */}
         <div className="desktop-sidebar" style={{
-          background: '#F8F8F6', border: '1px solid rgba(0,0,0,0.08)',
+          background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px',
           padding: '24px', position: 'sticky', top: '72px',
         }}>
           {sidebar}
@@ -455,7 +472,7 @@ export default function SearchPage() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
               {filtered.map((trainer, i) => <TrainerCard key={trainer.id} trainer={trainer} index={i} />)}
             </div>
           )}
