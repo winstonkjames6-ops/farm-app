@@ -737,6 +737,10 @@ function BookingPageInner() {
   const [athletesLoading, setAthletesLoading] = useState(true)
   const [trainerRowId, setTrainerRowId] = useState(null)
   const [effectiveRate, setEffectiveRate] = useState(rate)
+  // Flips true after the first render where searchParams has actually been read —
+  // guards against redirecting on a transient render where trainerId briefly reads
+  // as absent before it's genuinely resolved, which would kick users out mid-booking.
+  const [paramsReady, setParamsReady] = useState(false)
 
   const trainer = {
     id: trainerId,
@@ -747,8 +751,12 @@ function BookingPageInner() {
   }
 
   useEffect(() => {
-    if (!trainerId) router.push('/search')
-  }, [trainerId, router])
+    setParamsReady(true)
+  }, [])
+
+  useEffect(() => {
+    if (paramsReady && !trainerId) router.push('/search')
+  }, [paramsReady, trainerId, router])
 
   useEffect(() => {
     if (!trainerId) return
