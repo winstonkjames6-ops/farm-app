@@ -10,13 +10,6 @@ import { generateSlotsForPreset, buildSlotISO } from '@/lib/scheduling'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type AvailabilitySlot = {
-  id: string
-  day_of_week: number
-  start_time: string
-  end_time: string
-}
-
 type TrainerPreset = {
   id: string
   label: string
@@ -167,26 +160,15 @@ const HOUR_PRESETS: HourPreset[] = [
   { key: 'same-every-day',   label: 'Same hours every day', days: [0, 1, 2, 3, 4, 5, 6], start: null,    end: null },
 ]
 
-// ── Weekly hours panel (unchanged recurring-availability logic) ────────────────
+// ── Weekly hours panel ──────────────────────────────────────────────────────────
 
 function WeeklyHoursPanel({
   trainerId,
-  availabilitySlots,
-  setAvailabilitySlots,
 }: {
   trainerId: string | null
-  availabilitySlots: AvailabilitySlot[]
-  setAvailabilitySlots: React.Dispatch<React.SetStateAction<AvailabilitySlot[]>>
 }) {
-  const [showAddForm, setShowAddForm] = useState<string | null>(null)
-  const [avFormStart, setAvFormStart] = useState('')
-  const [avFormEnd, setAvFormEnd] = useState('')
-  const [avFormError, setAvFormError] = useState('')
-  const [avSaving, setAvSaving] = useState(false)
-  const [avDeleteErrors, setAvDeleteErrors] = useState<Record<string, string>>({})
-
-  // Quick-add-with-presets — prefills day checkboxes + start/end below, then
-  // reuses the exact same `availability` insert call, once per checked day.
+  // Quick-add-with-presets — prefills day checkboxes + start/end below; "Save hours"
+  // writes this straight into the active trainer_presets row (see saveHours()).
   const [quickDays, setQuickDays] = useState<Set<number>>(new Set())
   const [quickStart, setQuickStart] = useState('')
   const [quickEnd, setQuickEnd] = useState('')
@@ -385,7 +367,11 @@ function WeeklyHoursPanel({
     if (editingPresetId === id) cancelSavePreset()
   }
 
-  async function saveQuickHours() {
+  // "Save hours" writes straight through the preset system — this IS the trainer's
+  // live schedule, not a staging area. With no active preset yet, this creates and
+  // activates a default "My hours" preset in one step; otherwise it updates the
+  // active preset's days/start_time/end_time in place (label untouched).
+  async function saveHours() {
     if (!trainerId) return
     if (quickDays.size === 0) {
       setQuickError('Select at least one day.')
@@ -402,89 +388,49 @@ function WeeklyHoursPanel({
     setQuickError('')
     setQuickSaving(true)
     const supabase = createClient()
-    const days = Array.from(quickDays)
-    const results = await Promise.all(
-      days.map((day) =>
-        supabase
-          .from('availability')
-          .insert({ trainer_id: trainerId, day_of_week: day, start_time: quickStart, end_time: quickEnd })
-          .select('id, day_of_week, start_time, end_time')
-          .single()
-      )
-    )
-    setQuickSaving(false)
+    const days = Array.from(quickDays).sort((a, b) => a - b)
 
-    const newSlots = results.filter((r) => !r.error && r.data).map((r) => r.data as AvailabilitySlot)
-    if (newSlots.length > 0) {
-      setAvailabilitySlots((prev) => [...prev, ...newSlots])
-    }
-
-    const failedCount = results.filter((r) => r.error).length
-    if (failedCount > 0) {
-      setQuickError(`Saved ${newSlots.length} of ${days.length} day${days.length > 1 ? 's' : ''} — ${failedCount} failed. Try again.`)
+    if (liveActivePresetId) {
+      const { data, error } = await supabase
+        .from('trainer_presets')
+        .update({ days, start_time: quickStart, end_time: quickEnd })
+        .eq('id', liveActivePresetId)
+        .select('id, label, days, start_time, end_time')
+        .single()
+      setQuickSaving(false)
+      if (error) {
+        setQuickError('Failed to save. Try again.')
+        return
+      }
+      setCustomPresets((prev) => prev.map((p) => (p.id === liveActivePresetId ? data : p)))
+      setActivePreset(`custom:${liveActivePresetId}`)
       return
     }
 
-    setQuickDays(new Set())
-    setQuickStart('')
-    setQuickEnd('')
-    setActivePreset(null)
-  }
-
-  async function addAvailability() {
-    if (!trainerId || !showAddForm) return
-    if (!avFormStart || !avFormEnd) {
-      setAvFormError('Please set both start and end times.')
-      return
-    }
-    if (avFormStart >= avFormEnd) {
-      setAvFormError('Start time must be before end time.')
-      return
-    }
-    setAvFormError('')
-    setAvSaving(true)
-    const supabase = createClient()
     const { data, error } = await supabase
-      .from('availability')
-      .insert({ trainer_id: trainerId, day_of_week: DAY_MAP[showAddForm], start_time: avFormStart, end_time: avFormEnd })
-      .select('id, day_of_week, start_time, end_time')
+      .from('trainer_presets')
+      .insert({ trainer_id: trainerId, label: 'My hours', days, start_time: quickStart, end_time: quickEnd })
+      .select('id, label, days, start_time, end_time')
       .single()
-    setAvSaving(false)
     if (error) {
-      setAvFormError('Failed to save. Try again.')
+      setQuickSaving(false)
+      setQuickError('Failed to save. Try again.')
       return
     }
-    setAvailabilitySlots((prev) => [...prev, data])
-    setShowAddForm(null)
-    setAvFormStart('')
-    setAvFormEnd('')
-  }
 
-  async function deleteAvailability(id: string) {
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('availability')
-      .delete()
-      .eq('id', id)
-    if (error) {
-      setAvDeleteErrors((prev) => ({ ...prev, [id]: 'Failed to delete. Try again.' }))
+    const { error: activateError } = await supabase
+      .from('trainers')
+      .update({ active_preset_id: data.id })
+      .eq('id', trainerId)
+    setQuickSaving(false)
+    setCustomPresets((prev) => [...prev, data])
+    if (activateError) {
+      setQuickError('Saved, but failed to set as active. Try again.')
       return
     }
-    setAvDeleteErrors((prev) => { const next = { ...prev }; delete next[id]; return next })
-    setAvailabilitySlots((prev) => prev.filter((s) => s.id !== id))
+    setLiveActivePresetId(data.id)
+    setActivePreset(`custom:${data.id}`)
   }
-
-  function openForm(day: string) {
-    setShowAddForm(day)
-    setAvFormError('')
-    setAvFormStart('')
-    setAvFormEnd('')
-  }
-
-  const slotsByDay: Record<string, AvailabilitySlot[]> = {}
-  FULL_WEEK.forEach((day) => {
-    slotsByDay[day] = availabilitySlots.filter((s) => s.day_of_week === DAY_MAP[day])
-  })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -495,7 +441,7 @@ function WeeklyHoursPanel({
           Quick add with a preset
         </div>
         <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', color: T.ink2, marginBottom: '14px' }}>
-          Pick a preset to prefill the days and hours below, then review and save.
+          This is your live schedule — pick a preset or set days and hours below, then save to update what's bookable.
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: customPresets.length > 0 ? '10px' : '16px' }}>
@@ -706,7 +652,7 @@ function WeeklyHoursPanel({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
           <button
-            onClick={saveQuickHours}
+            onClick={saveHours}
             disabled={quickSaving}
             style={{ height: '40px', padding: '0 20px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 700, cursor: quickSaving ? 'default' : 'pointer', opacity: quickSaving ? 0.7 : 1 }}
           >
@@ -756,109 +702,6 @@ function WeeklyHoursPanel({
           </div>
         )}
       </div>
-
-      {FULL_WEEK.map((day) => {
-        const daySlots = slotsByDay[day] || []
-        const formOpen = showAddForm === day
-
-        return (
-          <div key={day} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: (daySlots.length > 0 || formOpen) ? '16px' : '0' }}>
-              <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink }}>{day}</span>
-              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink3 }}>
-                {daySlots.length > 0 ? `${daySlots.length} slot${daySlots.length > 1 ? 's' : ''}` : 'No hours set'}
-              </span>
-            </div>
-
-            {daySlots.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {daySlots.map((slot) => (
-                  <div key={slot.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: T.cyanDim, border: `1px solid ${T.cyanBorder}`, borderRadius: '8px' }}>
-                    <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, flex: 1 }}>
-                      {formatTime(slot.start_time)} – {formatTime(slot.end_time)}
-                    </span>
-                    {avDeleteErrors[slot.id] && (
-                      <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
-                        {avDeleteErrors[slot.id]}
-                      </span>
-                    )}
-                    <button
-                      onClick={() => deleteAvailability(slot.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: '12px', padding: '2px 6px', borderRadius: '6px', fontFamily: "'Hanken Grotesk', sans-serif" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = '#EF4444' }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = T.ink3 }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {formOpen && (
-              <div style={{ marginTop: daySlots.length > 0 ? '12px' : '0', padding: '14px', background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>Start</label>
-                    <input
-                      type="time"
-                      value={avFormStart}
-                      onChange={(e) => setAvFormStart(e.target.value)}
-                      style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>End</label>
-                    <input
-                      type="time"
-                      value={avFormEnd}
-                      onChange={(e) => setAvFormEnd(e.target.value)}
-                      style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
-                    />
-                  </div>
-                </div>
-                {avFormError && (
-                  <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px' }}>
-                    {avFormError}
-                  </span>
-                )}
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    onClick={addAvailability}
-                    disabled={avSaving}
-                    style={{ background: T.cyan, color: '#FFFFFF', border: 'none', cursor: avSaving ? 'default' : 'pointer', padding: '7px 16px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 700, opacity: avSaving ? 0.7 : 1 }}
-                  >
-                    {avSaving ? 'Saving…' : 'Save'}
-                  </button>
-                  <button
-                    onClick={() => { setShowAddForm(null); setAvFormError(''); setAvFormStart(''); setAvFormEnd('') }}
-                    style={{ background: 'none', border: `1px solid ${T.border}`, color: T.ink2, cursor: 'pointer', padding: '7px 14px', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px' }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {!formOpen && daySlots.length === 0 && (
-              <div
-                onClick={() => openForm(day)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '44px', border: '1px dashed rgba(0,0,0,0.10)', borderRadius: '10px', fontSize: '13px', color: T.ink3, cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif" }}
-              >
-                + Add availability
-              </div>
-            )}
-            {!formOpen && daySlots.length > 0 && (
-              <div
-                onClick={() => openForm(day)}
-                style={{ marginTop: '10px', fontSize: '12px', color: T.ink3, cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif", textAlign: 'center' }}
-              >
-                + Add availability
-              </div>
-            )}
-          </div>
-        )
-      })}
     </div>
   )
 }
@@ -872,7 +715,6 @@ export default function TrainerSchedulePage() {
   const [monthCursor, setMonthCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [weekCursor, setWeekCursor] = useState(startOfWeek(today))
   const [dayCursor, setDayCursor] = useState(today)
-  const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([])
   const [activePreset, setActivePreset] = useState<ActivePresetConfig | null>(null)
   const [exceptions, setExceptions] = useState<Record<string, 'available' | 'blocked'>>({})
   const [bookings, setBookings] = useState<BookingRow[]>([])
@@ -911,7 +753,7 @@ export default function TrainerSchedulePage() {
     loadActivePreset()
   }, [trainerId])
 
-  // Load trainer id + recurring availability once
+  // Load trainer id once
   useEffect(() => {
     async function loadTrainer() {
       const supabase = createClient()
@@ -925,13 +767,6 @@ export default function TrainerSchedulePage() {
         .single()
       if (!trainerRow) { setLoading(false); return }
       setTrainerId(trainerRow.id)
-
-      const { data: avData } = await supabase
-        .from('availability')
-        .select('id, day_of_week, start_time, end_time')
-        .eq('trainer_id', trainerRow.id)
-        .order('day_of_week')
-      setAvailabilitySlots(avData ?? [])
     }
     loadTrainer()
   }, [])
@@ -1459,8 +1294,6 @@ export default function TrainerSchedulePage() {
                   <div style={{ paddingTop: '16px' }}>
                     <WeeklyHoursPanel
                       trainerId={trainerId}
-                      availabilitySlots={availabilitySlots}
-                      setAvailabilitySlots={setAvailabilitySlots}
                     />
                   </div>
                 </motion.div>
