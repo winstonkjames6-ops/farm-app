@@ -138,10 +138,9 @@ export default function TrainerProfile({ params: { slug } }) {
     async function fetchBookings() {
       const supabase = createClient()
       const { data } = await supabase
-        .from('bookings')
+        .from('trainer_booked_slots')
         .select('session_time')
         .eq('trainer_id', trainer.id)
-        .not('status', 'in', '(cancelled,declined)')
       setExistingBookings(data || [])
     }
     fetchBookings()
