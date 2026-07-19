@@ -199,6 +199,10 @@ function WeeklyHoursPanel({
   const [restoreSaving, setRestoreSaving] = useState<string | null>(null)
   const [restoreError, setRestoreError] = useState('')
 
+  // Collapsed-by-default section housing built-in presets + other saved schedules —
+  // the live schedule card above is the only thing shown expanded on open.
+  const [showOtherSchedules, setShowOtherSchedules] = useState(false)
+
   useEffect(() => {
     if (!trainerId) return
     async function loadPresets() {
@@ -215,9 +219,21 @@ function WeeklyHoursPanel({
           .eq('id', trainerId)
           .single(),
       ])
-      setCustomPresets(presetsRes.data ?? [])
-      setLiveActivePresetId(trainerRes.data?.active_preset_id ?? null)
+      const presets = presetsRes.data ?? []
+      const activeId = trainerRes.data?.active_preset_id ?? null
+      setCustomPresets(presets)
+      setLiveActivePresetId(activeId)
       setHiddenBuiltinPresets(trainerRes.data?.hidden_builtin_presets ?? [])
+
+      // Prefill the live-schedule card with whichever preset is actually active,
+      // so it shows real days/hours on load instead of an empty form.
+      const livePreset = activeId ? presets.find((p) => p.id === activeId) : null
+      if (livePreset) {
+        setQuickDays(new Set(livePreset.days))
+        setQuickStart(toHHMM(livePreset.start_time))
+        setQuickEnd(toHHMM(livePreset.end_time))
+        setActivePreset(`custom:${livePreset.id}`)
+      }
     }
     loadPresets()
   }, [trainerId])
@@ -289,6 +305,13 @@ function WeeklyHoursPanel({
     setQuickEnd(toHHMM(preset.end_time))
     setActivePreset(`custom:${preset.id}`)
     setQuickError('')
+  }
+
+  // Picking a saved schedule from the collapsed list loads it into the live-schedule
+  // card above and makes it active in one step — no separate "set as active" click.
+  function selectCustomPreset(preset: TrainerPreset) {
+    applyCustomPreset(preset)
+    markPresetActive(preset.id)
   }
 
   function startEditingPreset(preset: TrainerPreset) {
@@ -432,169 +455,34 @@ function WeeklyHoursPanel({
     setActivePreset(`custom:${data.id}`)
   }
 
+  const livePresetLabel = liveActivePresetId
+    ? customPresets.find((p) => p.id === liveActivePresetId)?.label ?? null
+    : null
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-      {/* Quick add with presets */}
-      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink, marginBottom: '4px' }}>
-          Quick add with a preset
+      {/* Your live schedule — the primary, always-visible card. Whatever's shown
+          here (via quickDays/quickStart/quickEnd) is what's bookable right now. */}
+      <div style={{ background: T.card, border: `1.5px solid ${T.cyanBorder}`, borderRadius: '14px', padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink }}>
+            Your live schedule
+          </span>
+          {livePresetLabel && (
+            <span style={{
+              display: 'flex', alignItems: 'center', gap: '3px', padding: '3px 8px 3px 6px', borderRadius: '999px',
+              background: 'rgba(0,188,200,0.15)', color: T.cyan,
+              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '10px',
+              letterSpacing: '.06em', textTransform: 'uppercase' as const,
+            }}>
+              <Star size={10} fill={T.cyan} /> {livePresetLabel}
+            </span>
+          )}
         </div>
         <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', color: T.ink2, marginBottom: '14px' }}>
-          This is your live schedule — pick a preset or set days and hours below, then save to update what's bookable.
+          This is what's bookable on your public page. Edit the days and hours below, then save.
         </div>
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: customPresets.length > 0 ? '10px' : '16px' }}>
-          {HOUR_PRESETS.filter((preset) => !hiddenBuiltinPresets.includes(preset.key)).map((preset) => {
-            const sel = activePreset === preset.key
-            const isDefault = preset.key === HOUR_PRESETS[0].key
-            return (
-              <div
-                key={preset.key}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '2px',
-                  height: '38px', padding: '0 4px 0 16px', borderRadius: '999px',
-                  border: sel ? `1.5px solid ${T.cyan}` : isDefault ? `1.5px solid ${T.cyanBorder}` : `1px solid ${T.border}`,
-                  background: sel ? 'rgba(0,188,200,0.12)' : isDefault ? T.cyanDim : 'transparent',
-                }}
-              >
-                <button
-                  onClick={() => applyPreset(preset)}
-                  style={{
-                    background: 'none', border: 'none', cursor: 'pointer', padding: '0 8px 0 0',
-                    fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600,
-                    color: (sel || isDefault) ? T.cyan : T.ink2,
-                  }}
-                >{preset.label}</button>
-                <button
-                  onClick={() => hideBuiltinPreset(preset.key)}
-                  title="Hide preset"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
-                ><Trash2 size={13} /></button>
-                {builtinHideErrors[preset.key] && (
-                  <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
-                    {builtinHideErrors[preset.key]}
-                  </span>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {hiddenBuiltinPresets.length > 0 && (
-          <div style={{ marginBottom: customPresets.length > 0 ? '10px' : '16px' }}>
-            <button
-              onClick={() => setShowRestoreBuiltins((v) => !v)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 600, padding: 0 }}
-            >
-              {showRestoreBuiltins ? 'Hide restore options' : `Restore hidden presets (${hiddenBuiltinPresets.length})`}
-            </button>
-            {showRestoreBuiltins && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-                {hiddenBuiltinPresets.map((key) => {
-                  const preset = HOUR_PRESETS.find((p) => p.key === key)
-                  return (
-                    <div
-                      key={key}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '8px',
-                        height: '32px', padding: '0 6px 0 12px', borderRadius: '999px',
-                        border: `1px dashed ${T.border}`,
-                      }}
-                    >
-                      <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', color: T.ink2 }}>
-                        {preset?.label ?? key}
-                      </span>
-                      <button
-                        onClick={() => restoreBuiltinPreset(key)}
-                        disabled={restoreSaving === key}
-                        style={{
-                          background: 'none', border: 'none', cursor: restoreSaving === key ? 'default' : 'pointer',
-                          color: T.cyan, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 700,
-                          padding: '4px 6px',
-                        }}
-                      >{restoreSaving === key ? 'Adding…' : '+ Add back'}</button>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-            {restoreError && (
-              <div style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', marginTop: '6px' }}>
-                {restoreError}
-              </div>
-            )}
-          </div>
-        )}
-
-        {customPresets.length > 0 && (
-          <>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-              {customPresets.map((preset) => {
-                const sel = activePreset === `custom:${preset.id}`
-                const isLive = preset.id === liveActivePresetId
-                return (
-                  <div
-                    key={preset.id}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '2px',
-                      height: '38px', padding: '0 4px 0 16px', borderRadius: '999px',
-                      border: sel ? `1.5px solid ${T.cyan}` : isLive ? `1px solid ${T.cyan}` : `1px dashed ${T.border}`,
-                      background: sel ? 'rgba(0,188,200,0.12)' : 'transparent',
-                    }}
-                  >
-                    <button
-                      onClick={() => applyCustomPreset(preset)}
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer', padding: '0 8px 0 0',
-                        fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600,
-                        color: sel ? T.cyan : T.ink2,
-                      }}
-                    >{preset.label}</button>
-                    {isLive ? (
-                      <span
-                        title="This preset is live on your public booking page"
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: '3px', padding: '3px 8px 3px 6px', borderRadius: '999px',
-                          background: 'rgba(0,188,200,0.15)', color: T.cyan,
-                          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '10px',
-                          letterSpacing: '.06em', textTransform: 'uppercase' as const, marginRight: '2px',
-                        }}
-                      ><Star size={10} fill={T.cyan} /> Active</span>
-                    ) : (
-                      <button
-                        onClick={() => markPresetActive(preset.id)}
-                        disabled={activePresetSaving}
-                        title="Set as active"
-                        style={{ background: 'none', border: 'none', cursor: activePresetSaving ? 'default' : 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
-                      ><Star size={13} /></button>
-                    )}
-                    <button
-                      onClick={() => startEditingPreset(preset)}
-                      title="Edit preset"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
-                    ><Pencil size={13} /></button>
-                    <button
-                      onClick={() => deletePreset(preset.id)}
-                      title="Delete preset"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
-                    ><Trash2 size={13} /></button>
-                    {presetDeleteErrors[preset.id] && (
-                      <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
-                        {presetDeleteErrors[preset.id]}
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-            {activePresetError && (
-              <div style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', marginBottom: '8px' }}>
-                {activePresetError}
-              </div>
-            )}
-          </>
-        )}
 
         <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600, marginBottom: '6px' }}>Days</div>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px' }}>
@@ -698,6 +586,178 @@ function WeeklyHoursPanel({
             </div>
             {presetError && (
               <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px' }}>{presetError}</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Everything else — built-in presets + other saved schedules — collapsed by
+          default so the live schedule above stays the primary, uncluttered focus. */}
+      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '4px 20px' }}>
+        <button
+          onClick={() => setShowOtherSchedules((v) => !v)}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: 'none', border: 'none', cursor: 'pointer', padding: '14px 0',
+            fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: T.ink,
+          }}
+        >
+          Use a different schedule
+          <span style={{ transform: showOtherSchedules ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', color: T.ink3 }}>⌄</span>
+        </button>
+
+        {showOtherSchedules && (
+          <div style={{ paddingBottom: '18px' }}>
+            <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600, marginBottom: '8px' }}>
+              Built-in presets
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+              {HOUR_PRESETS.filter((preset) => !hiddenBuiltinPresets.includes(preset.key)).map((preset) => {
+                const sel = activePreset === preset.key
+                const isDefault = preset.key === HOUR_PRESETS[0].key
+                return (
+                  <div
+                    key={preset.key}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '2px',
+                      height: '38px', padding: '0 4px 0 16px', borderRadius: '999px',
+                      border: sel ? `1.5px solid ${T.cyan}` : isDefault ? `1.5px solid ${T.cyanBorder}` : `1px solid ${T.border}`,
+                      background: sel ? 'rgba(0,188,200,0.12)' : isDefault ? T.cyanDim : 'transparent',
+                    }}
+                  >
+                    <button
+                      onClick={() => applyPreset(preset)}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer', padding: '0 8px 0 0',
+                        fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600,
+                        color: (sel || isDefault) ? T.cyan : T.ink2,
+                      }}
+                    >{preset.label}</button>
+                    <button
+                      onClick={() => hideBuiltinPreset(preset.key)}
+                      title="Hide preset"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
+                    ><Trash2 size={13} /></button>
+                    {builtinHideErrors[preset.key] && (
+                      <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
+                        {builtinHideErrors[preset.key]}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {hiddenBuiltinPresets.length > 0 && (
+              <div style={{ marginBottom: '10px' }}>
+                <button
+                  onClick={() => setShowRestoreBuiltins((v) => !v)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 600, padding: 0 }}
+                >
+                  {showRestoreBuiltins ? 'Hide restore options' : `Restore hidden presets (${hiddenBuiltinPresets.length})`}
+                </button>
+                {showRestoreBuiltins && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                    {hiddenBuiltinPresets.map((key) => {
+                      const preset = HOUR_PRESETS.find((p) => p.key === key)
+                      return (
+                        <div
+                          key={key}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            height: '32px', padding: '0 6px 0 12px', borderRadius: '999px',
+                            border: `1px dashed ${T.border}`,
+                          }}
+                        >
+                          <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', color: T.ink2 }}>
+                            {preset?.label ?? key}
+                          </span>
+                          <button
+                            onClick={() => restoreBuiltinPreset(key)}
+                            disabled={restoreSaving === key}
+                            style={{
+                              background: 'none', border: 'none', cursor: restoreSaving === key ? 'default' : 'pointer',
+                              color: T.cyan, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 700,
+                              padding: '4px 6px',
+                            }}
+                          >{restoreSaving === key ? 'Adding…' : '+ Add back'}</button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+                {restoreError && (
+                  <div style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', marginTop: '6px' }}>
+                    {restoreError}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {customPresets.length > 0 && (
+              <>
+                <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600, margin: '10px 0 8px' }}>
+                  Saved schedules
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                  {customPresets.map((preset) => {
+                    const sel = activePreset === `custom:${preset.id}`
+                    const isLive = preset.id === liveActivePresetId
+                    return (
+                      <div
+                        key={preset.id}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '2px',
+                          height: '38px', padding: '0 4px 0 16px', borderRadius: '999px',
+                          border: sel ? `1.5px solid ${T.cyan}` : isLive ? `1px solid ${T.cyan}` : `1px dashed ${T.border}`,
+                          background: sel ? 'rgba(0,188,200,0.12)' : 'transparent',
+                        }}
+                      >
+                        <button
+                          onClick={() => selectCustomPreset(preset)}
+                          disabled={activePresetSaving}
+                          style={{
+                            background: 'none', border: 'none', cursor: activePresetSaving ? 'default' : 'pointer', padding: '0 8px 0 0',
+                            fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600,
+                            color: sel ? T.cyan : T.ink2,
+                          }}
+                        >{preset.label}</button>
+                        {isLive && (
+                          <span
+                            title="This is your live schedule"
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '3px', padding: '3px 8px 3px 6px', borderRadius: '999px',
+                              background: 'rgba(0,188,200,0.15)', color: T.cyan,
+                              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '10px',
+                              letterSpacing: '.06em', textTransform: 'uppercase' as const, marginRight: '2px',
+                            }}
+                          ><Star size={10} fill={T.cyan} /> Active</span>
+                        )}
+                        <button
+                          onClick={() => startEditingPreset(preset)}
+                          title="Edit preset"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
+                        ><Pencil size={13} /></button>
+                        <button
+                          onClick={() => deletePreset(preset.id)}
+                          title="Delete preset"
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
+                        ><Trash2 size={13} /></button>
+                        {presetDeleteErrors[preset.id] && (
+                          <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px' }}>
+                            {presetDeleteErrors[preset.id]}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {activePresetError && (
+                  <div style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', marginBottom: '8px' }}>
+                    {activePresetError}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
