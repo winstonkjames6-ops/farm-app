@@ -1160,7 +1160,12 @@ export default function TrainerSchedulePage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
     >
-      <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '672px', margin: '0 auto' }}>
+      <style>{`
+        @media (max-width: 860px) {
+          .trainer-schedule-shell { padding: 16px !important; }
+        }
+      `}</style>
+      <div className="trainer-schedule-shell" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: 'min(960px, 100%)', margin: '0 auto' }}>
 
         <div style={{
           background: '#FFFFFF', borderRadius: '20px', border: `1px solid ${T.border}`, overflow: 'hidden',
