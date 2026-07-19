@@ -307,9 +307,10 @@ function WeeklyHoursPanel({
     setQuickError('')
   }
 
-  // Picking a saved schedule from the collapsed list loads it into the live-schedule
-  // card above and makes it active in one step — no separate "set as active" click.
-  function selectCustomPreset(preset: TrainerPreset) {
+  // Explicit "Set as active" for a saved schedule — mirrors it into the live-schedule
+  // card above (its own stored days/hours, not whatever's currently in the form) and
+  // flips trainers.active_preset_id. Separate from clicking the label, which only previews.
+  function activateCustomPreset(preset: TrainerPreset) {
     applyCustomPreset(preset)
     markPresetActive(preset.id)
   }
@@ -390,6 +391,39 @@ function WeeklyHoursPanel({
     if (editingPresetId === id) cancelSavePreset()
   }
 
+  // Shared by saveHours' "no active preset yet" branch and activateBuiltinPreset:
+  // inserts a new trainer_presets row and immediately activates it. Always inserts —
+  // never updates an already-active preset in place — so picking a different
+  // schedule can never silently overwrite the one currently live.
+  async function createAndActivatePreset(label: string, days: number[], start: string, end: string) {
+    if (!trainerId) return null
+    setQuickSaving(true)
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('trainer_presets')
+      .insert({ trainer_id: trainerId, label, days, start_time: start, end_time: end })
+      .select('id, label, days, start_time, end_time')
+      .single()
+    if (error) {
+      setQuickSaving(false)
+      setQuickError('Failed to save. Try again.')
+      return null
+    }
+
+    const { error: activateError } = await supabase
+      .from('trainers')
+      .update({ active_preset_id: data.id })
+      .eq('id', trainerId)
+    setQuickSaving(false)
+    setCustomPresets((prev) => [...prev, data])
+    if (activateError) {
+      setQuickError('Saved, but failed to set as active. Try again.')
+      return null
+    }
+    setLiveActivePresetId(data.id)
+    return data
+  }
+
   // "Save hours" writes straight through the preset system — this IS the trainer's
   // live schedule, not a staging area. With no active preset yet, this creates and
   // activates a default "My hours" preset in one step; otherwise it updates the
@@ -409,11 +443,11 @@ function WeeklyHoursPanel({
       return
     }
     setQuickError('')
-    setQuickSaving(true)
-    const supabase = createClient()
     const days = Array.from(quickDays).sort((a, b) => a - b)
 
     if (liveActivePresetId) {
+      setQuickSaving(true)
+      const supabase = createClient()
       const { data, error } = await supabase
         .from('trainer_presets')
         .update({ days, start_time: quickStart, end_time: quickEnd })
@@ -430,28 +464,34 @@ function WeeklyHoursPanel({
       return
     }
 
-    const { data, error } = await supabase
-      .from('trainer_presets')
-      .insert({ trainer_id: trainerId, label: 'My hours', days, start_time: quickStart, end_time: quickEnd })
-      .select('id, label, days, start_time, end_time')
-      .single()
-    if (error) {
-      setQuickSaving(false)
-      setQuickError('Failed to save. Try again.')
-      return
-    }
+    const data = await createAndActivatePreset('My hours', days, quickStart, quickEnd)
+    if (data) setActivePreset(`custom:${data.id}`)
+  }
 
-    const { error: activateError } = await supabase
-      .from('trainers')
-      .update({ active_preset_id: data.id })
-      .eq('id', trainerId)
-    setQuickSaving(false)
-    setCustomPresets((prev) => [...prev, data])
-    if (activateError) {
-      setQuickError('Saved, but failed to set as active. Try again.')
+  // Built-in presets have no backing trainer_presets row yet — "Set as active" must
+  // create one and activate it in a single action rather than routing through "Save
+  // hours" (which would instead update whichever preset is currently active in place).
+  // Uses the built-in's own days/hours so it doesn't depend on click order, falling
+  // back to the live form's start/end for "Same hours every day" (no fixed times).
+  async function activateBuiltinPreset(preset: HourPreset) {
+    if (!trainerId) return
+    const days = preset.days.slice().sort((a, b) => a - b)
+    const start = preset.start ?? quickStart
+    const end = preset.end ?? quickEnd
+    if (!start || !end) {
+      setQuickError('Please set both start and end times.')
       return
     }
-    setLiveActivePresetId(data.id)
+    if (start >= end) {
+      setQuickError('Start time must be before end time.')
+      return
+    }
+    setQuickError('')
+    const data = await createAndActivatePreset(preset.label, days, start, end)
+    if (!data) return
+    setQuickDays(new Set(days))
+    setQuickStart(start)
+    setQuickEnd(end)
     setActivePreset(`custom:${data.id}`)
   }
 
@@ -634,6 +674,17 @@ function WeeklyHoursPanel({
                       }}
                     >{preset.label}</button>
                     <button
+                      onClick={() => activateBuiltinPreset(preset)}
+                      disabled={quickSaving}
+                      title="Set as active"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        background: 'none', border: 'none', cursor: quickSaving ? 'default' : 'pointer',
+                        color: T.cyan, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 700,
+                        padding: '4px 8px 4px 4px',
+                      }}
+                    ><Star size={12} /> Set as active</button>
+                    <button
                       onClick={() => hideBuiltinPreset(preset.key)}
                       title="Hide preset"
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', padding: '6px' }}
@@ -714,15 +765,14 @@ function WeeklyHoursPanel({
                         }}
                       >
                         <button
-                          onClick={() => selectCustomPreset(preset)}
-                          disabled={activePresetSaving}
+                          onClick={() => applyCustomPreset(preset)}
                           style={{
-                            background: 'none', border: 'none', cursor: activePresetSaving ? 'default' : 'pointer', padding: '0 8px 0 0',
+                            background: 'none', border: 'none', cursor: 'pointer', padding: '0 8px 0 0',
                             fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600,
                             color: sel ? T.cyan : T.ink2,
                           }}
                         >{preset.label}</button>
-                        {isLive && (
+                        {isLive ? (
                           <span
                             title="This is your live schedule"
                             style={{
@@ -732,6 +782,18 @@ function WeeklyHoursPanel({
                               letterSpacing: '.06em', textTransform: 'uppercase' as const, marginRight: '2px',
                             }}
                           ><Star size={10} fill={T.cyan} /> Active</span>
+                        ) : (
+                          <button
+                            onClick={() => activateCustomPreset(preset)}
+                            disabled={activePresetSaving}
+                            title="Set as active"
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '4px',
+                              background: 'none', border: 'none', cursor: activePresetSaving ? 'default' : 'pointer',
+                              color: T.cyan, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 700,
+                              padding: '4px 8px 4px 4px',
+                            }}
+                          ><Star size={12} /> Set as active</button>
                         )}
                         <button
                           onClick={() => startEditingPreset(preset)}
