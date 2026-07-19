@@ -178,10 +178,10 @@ const HOUR_PRESETS: HourPreset[] = [
 
 function WeeklyHoursPanel({
   trainerId,
-  onActivePresetChanged,
+  onScheduleChanged,
 }: {
   trainerId: string | null
-  onActivePresetChanged: () => void
+  onScheduleChanged: () => void
 }) {
   // Quick-add-with-presets — prefills day checkboxes + start/end below; "Save hours"
   // writes this straight into the active trainer_presets row (see saveHours()).
@@ -319,7 +319,7 @@ function WeeklyHoursPanel({
       return
     }
     setLiveActivePresetId(id)
-    onActivePresetChanged()
+    onScheduleChanged()
   }
 
   function applyPreset(preset: HourPreset) {
@@ -529,14 +529,14 @@ function WeeklyHoursPanel({
       }
       setCustomPresets((prev) => prev.map((p) => (p.id === liveActivePresetId ? data : p)))
       setActivePreset(`custom:${liveActivePresetId}`)
-      onActivePresetChanged()
+      onScheduleChanged()
       return
     }
 
     const data = await createAndActivatePreset('My hours', days, quickStart, quickEnd, sessionLength, breakMinutes)
     if (data) {
       setActivePreset(`custom:${data.id}`)
-      onActivePresetChanged()
+      onScheduleChanged()
     }
   }
 
@@ -622,7 +622,7 @@ function WeeklyHoursPanel({
       return
     }
     setStandingDaysOff(next)
-    onActivePresetChanged()
+    onScheduleChanged()
   }
 
   const livePresetLabel = liveActivePresetId
@@ -1122,8 +1122,9 @@ export default function TrainerSchedulePage() {
 
   // Load the trainer's active preset (same config shape + same generateSlotsForPreset
   // the public booking page uses) so Week/Day views generate the exact same slots.
-  // Also re-run this on demand (see onActivePresetChanged below) whenever the panel
-  // activates or edits a preset, so Week/Day don't keep showing a stale schedule.
+  // Also re-run this on demand (see onScheduleChanged below) whenever the panel
+  // activates/edits a preset or toggles a standing day off, so the currently visible
+  // Month/Week/Day view re-evaluates immediately without navigating away and back.
   async function refreshActivePreset() {
     if (!trainerId) return
     const supabase = createClient()
@@ -1762,7 +1763,7 @@ export default function TrainerSchedulePage() {
                   <div style={{ paddingTop: '16px' }}>
                     <WeeklyHoursPanel
                       trainerId={trainerId}
-                      onActivePresetChanged={refreshActivePreset}
+                      onScheduleChanged={refreshActivePreset}
                     />
                   </div>
                 </motion.div>
