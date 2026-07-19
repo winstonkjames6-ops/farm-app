@@ -23,6 +23,11 @@ function formatTime12h(timeStr) {
   return `${hour}:${String(m).padStart(2, '0')} ${period}`
 }
 
+function isSameLocalDate(dateObj, isoDateStr) {
+  const [y, m, d] = isoDateStr.split('-').map(Number)
+  return dateObj.getFullYear() === y && dateObj.getMonth() === m - 1 && dateObj.getDate() === d
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function TrainerProfile({ params: { slug } }) {
@@ -37,21 +42,27 @@ export default function TrainerProfile({ params: { slug } }) {
   const [exceptions, setExceptions] = useState([])
   const [existingBookings, setExistingBookings] = useState([])
 
+  // Caps how far out the picker offers dates — max_advance_days=3 means only
+  // tomorrow..+3 days show up, never the full 5-day window past that point.
   const DATES = useMemo(() => {
     const result = []
     const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const maxAdvanceDays = trainer?.max_advance_days ?? null
     const d = new Date()
     d.setDate(d.getDate() + 1)
+    let daysFromToday = 1
     while (result.length < 5) {
+      if (maxAdvanceDays != null && daysFromToday > maxAdvanceDays) break
       result.push({
         day: DAYS[d.getDay()],
         num: String(d.getDate()),
         isoDate: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
       })
       d.setDate(d.getDate() + 1)
+      daysFromToday++
     }
     return result
-  }, [])
+  }, [trainer?.max_advance_days])
 
   const exceptionByDate = useMemo(() => {
     const map = {}
@@ -67,8 +78,21 @@ export default function TrainerProfile({ params: { slug } }) {
     if (exceptionByDate[iso] === 'blocked') return []
     const dow = new Date(iso + 'T00:00:00').getDay()
     if (!activePreset.days.includes(dow)) return []
-    return generateSlotsForPreset(activePreset).map(start_time => ({ start_time }))
-  }, [activePreset, exceptionByDate, selectedDate, DATES])
+
+    // Once this date already has max_sessions_per_day non-cancelled bookings,
+    // the day is full — hide every slot rather than imply specific times are free.
+    const maxSessionsPerDay = trainer?.max_sessions_per_day ?? null
+    if (maxSessionsPerDay != null) {
+      const bookedCountForDate = existingBookings.filter(b => isSameLocalDate(new Date(b.session_time), iso)).length
+      if (bookedCountForDate >= maxSessionsPerDay) return []
+    }
+
+    const minNoticeHours = trainer?.min_notice_hours ?? 0
+    const noticeCutoff = Date.now() + minNoticeHours * 60 * 60 * 1000
+    return generateSlotsForPreset(activePreset)
+      .map(start_time => ({ start_time }))
+      .filter(slot => new Date(buildSlotISO(iso, slot.start_time)).getTime() >= noticeCutoff)
+  }, [activePreset, exceptionByDate, selectedDate, DATES, existingBookings, trainer?.max_sessions_per_day, trainer?.min_notice_hours])
 
   const bookedSet = useMemo(() => new Set(existingBookings.map(b => new Date(b.session_time).getTime())), [existingBookings])
 
@@ -83,7 +107,7 @@ export default function TrainerProfile({ params: { slug } }) {
       const supabase = createClient()
       const { data } = await supabase
         .from('trainers')
-        .select('id, profile_id, specialty, bio, rate, location, active_preset_id, profiles(name)')
+        .select('id, profile_id, specialty, bio, rate, location, active_preset_id, max_sessions_per_day, min_notice_hours, max_advance_days, profiles(name)')
         .eq('profile_id', slug)
         .single()
       if (!data) {
@@ -433,7 +457,7 @@ export default function TrainerProfile({ params: { slug } }) {
               {/* Date picker */}
               <div style={{ marginBottom: '18px' }}>
                 <div style={labelCaps}>Select a date</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: `repeat(${DATES.length || 1}, 1fr)`, gap: '6px' }}>
                   {DATES.map((d, i) => (
                     <button
                       key={i}

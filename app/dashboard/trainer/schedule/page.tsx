@@ -16,6 +16,8 @@ type TrainerPreset = {
   days: number[]
   start_time: string
   end_time: string
+  session_length_minutes: number
+  break_minutes: number
 }
 
 // Config for the trainer's active preset — the same shape the public booking
@@ -75,6 +77,16 @@ function formatTime(t: string): string {
 // Postgres `time` columns come back as "HH:MM:SS" — <input type="time"> wants "HH:MM".
 function toHHMM(t: string): string {
   return t.slice(0, 5)
+}
+
+function parseSessionLength(value: string): number | null {
+  const n = parseInt(value, 10)
+  return Number.isNaN(n) || n <= 0 ? null : n
+}
+
+function parseBreakMinutes(value: string): number | null {
+  const n = parseInt(value, 10)
+  return Number.isNaN(n) || n < 0 ? null : n
 }
 
 function normalizeFormat(format: string | null): string {
@@ -174,9 +186,21 @@ function WeeklyHoursPanel({
   const [quickDays, setQuickDays] = useState<Set<number>>(new Set())
   const [quickStart, setQuickStart] = useState('')
   const [quickEnd, setQuickEnd] = useState('')
+  // Defaults match the trainer_presets column defaults (60/15) so an untouched
+  // form still saves the same values it used to get implicitly from the DB.
+  const [quickSessionLength, setQuickSessionLength] = useState('60')
+  const [quickBreak, setQuickBreak] = useState('15')
   const [activePreset, setActivePreset] = useState<string | null>(null)
   const [quickError, setQuickError] = useState('')
   const [quickSaving, setQuickSaving] = useState(false)
+
+  // Optional per-trainer booking guardrails (trainers columns) — all blank = no limit.
+  const [maxSessionsPerDay, setMaxSessionsPerDay] = useState('')
+  const [minNoticeHours, setMinNoticeHours] = useState('')
+  const [maxAdvanceDays, setMaxAdvanceDays] = useState('')
+  const [bookingRulesSaving, setBookingRulesSaving] = useState(false)
+  const [bookingRulesError, setBookingRulesError] = useState('')
+  const [bookingRulesSaved, setBookingRulesSaved] = useState(false)
 
   // Trainer-saved custom presets (trainer_presets table)
   const [customPresets, setCustomPresets] = useState<TrainerPreset[]>([])
@@ -212,12 +236,12 @@ function WeeklyHoursPanel({
       const [presetsRes, trainerRes] = await Promise.all([
         supabase
           .from('trainer_presets')
-          .select('id, label, days, start_time, end_time')
+          .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes')
           .eq('trainer_id', trainerId)
           .order('created_at', { ascending: true }),
         supabase
           .from('trainers')
-          .select('active_preset_id, hidden_builtin_presets')
+          .select('active_preset_id, hidden_builtin_presets, max_sessions_per_day, min_notice_hours, max_advance_days')
           .eq('id', trainerId)
           .single(),
       ])
@@ -226,6 +250,9 @@ function WeeklyHoursPanel({
       setCustomPresets(presets)
       setLiveActivePresetId(activeId)
       setHiddenBuiltinPresets(trainerRes.data?.hidden_builtin_presets ?? [])
+      setMaxSessionsPerDay(trainerRes.data?.max_sessions_per_day != null ? String(trainerRes.data.max_sessions_per_day) : '')
+      setMinNoticeHours(trainerRes.data?.min_notice_hours ? String(trainerRes.data.min_notice_hours) : '')
+      setMaxAdvanceDays(trainerRes.data?.max_advance_days != null ? String(trainerRes.data.max_advance_days) : '')
 
       // Prefill the live-schedule card with whichever preset is actually active,
       // so it shows real days/hours on load instead of an empty form.
@@ -234,6 +261,8 @@ function WeeklyHoursPanel({
         setQuickDays(new Set(livePreset.days))
         setQuickStart(toHHMM(livePreset.start_time))
         setQuickEnd(toHHMM(livePreset.end_time))
+        setQuickSessionLength(String(livePreset.session_length_minutes))
+        setQuickBreak(String(livePreset.break_minutes))
         setActivePreset(`custom:${livePreset.id}`)
       }
     }
@@ -306,6 +335,8 @@ function WeeklyHoursPanel({
     setQuickDays(new Set(preset.days))
     setQuickStart(toHHMM(preset.start_time))
     setQuickEnd(toHHMM(preset.end_time))
+    setQuickSessionLength(String(preset.session_length_minutes))
+    setQuickBreak(String(preset.break_minutes))
     setActivePreset(`custom:${preset.id}`)
     setQuickError('')
   }
@@ -340,6 +371,12 @@ function WeeklyHoursPanel({
       setPresetError('Please enter a label.')
       return
     }
+    const sessionLength = parseSessionLength(quickSessionLength)
+    const breakMinutes = parseBreakMinutes(quickBreak)
+    if (sessionLength === null || breakMinutes === null) {
+      setPresetError('Please enter a valid session length and buffer.')
+      return
+    }
     setPresetError('')
     setPresetSaving(true)
     const supabase = createClient()
@@ -348,9 +385,9 @@ function WeeklyHoursPanel({
     if (editingPresetId) {
       const { data, error } = await supabase
         .from('trainer_presets')
-        .update({ label: presetLabelInput.trim(), days, start_time: quickStart, end_time: quickEnd })
+        .update({ label: presetLabelInput.trim(), days, start_time: quickStart, end_time: quickEnd, session_length_minutes: sessionLength, break_minutes: breakMinutes })
         .eq('id', editingPresetId)
-        .select('id, label, days, start_time, end_time')
+        .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes')
         .single()
       setPresetSaving(false)
       if (error) {
@@ -361,8 +398,8 @@ function WeeklyHoursPanel({
     } else {
       const { data, error } = await supabase
         .from('trainer_presets')
-        .insert({ trainer_id: trainerId, label: presetLabelInput.trim(), days, start_time: quickStart, end_time: quickEnd })
-        .select('id, label, days, start_time, end_time')
+        .insert({ trainer_id: trainerId, label: presetLabelInput.trim(), days, start_time: quickStart, end_time: quickEnd, session_length_minutes: sessionLength, break_minutes: breakMinutes })
+        .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes')
         .single()
       setPresetSaving(false)
       if (error) {
@@ -398,14 +435,24 @@ function WeeklyHoursPanel({
   // inserts a new trainer_presets row and immediately activates it. Always inserts —
   // never updates an already-active preset in place — so picking a different
   // schedule can never silently overwrite the one currently live.
-  async function createAndActivatePreset(label: string, days: number[], start: string, end: string) {
+  async function createAndActivatePreset(
+    label: string,
+    days: number[],
+    start: string,
+    end: string,
+    sessionLength: number,
+    breakMinutes: number
+  ) {
     if (!trainerId) return null
     setQuickSaving(true)
     const supabase = createClient()
     const { data, error } = await supabase
       .from('trainer_presets')
-      .insert({ trainer_id: trainerId, label, days, start_time: start, end_time: end })
-      .select('id, label, days, start_time, end_time')
+      .insert({
+        trainer_id: trainerId, label, days, start_time: start, end_time: end,
+        session_length_minutes: sessionLength, break_minutes: breakMinutes,
+      })
+      .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes')
       .single()
     if (error) {
       setQuickSaving(false)
@@ -445,6 +492,12 @@ function WeeklyHoursPanel({
       setQuickError('Start time must be before end time.')
       return
     }
+    const sessionLength = parseSessionLength(quickSessionLength)
+    const breakMinutes = parseBreakMinutes(quickBreak)
+    if (sessionLength === null || breakMinutes === null) {
+      setQuickError('Please enter a valid session length and buffer.')
+      return
+    }
     setQuickError('')
     const days = Array.from(quickDays).sort((a, b) => a - b)
 
@@ -453,9 +506,12 @@ function WeeklyHoursPanel({
       const supabase = createClient()
       const { data, error } = await supabase
         .from('trainer_presets')
-        .update({ days, start_time: quickStart, end_time: quickEnd })
+        .update({
+          days, start_time: quickStart, end_time: quickEnd,
+          session_length_minutes: sessionLength, break_minutes: breakMinutes,
+        })
         .eq('id', liveActivePresetId)
-        .select('id, label, days, start_time, end_time')
+        .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes')
         .single()
       setQuickSaving(false)
       if (error) {
@@ -468,7 +524,7 @@ function WeeklyHoursPanel({
       return
     }
 
-    const data = await createAndActivatePreset('My hours', days, quickStart, quickEnd)
+    const data = await createAndActivatePreset('My hours', days, quickStart, quickEnd, sessionLength, breakMinutes)
     if (data) {
       setActivePreset(`custom:${data.id}`)
       onActivePresetChanged()
@@ -493,13 +549,51 @@ function WeeklyHoursPanel({
       setQuickError('Start time must be before end time.')
       return
     }
+    const sessionLength = parseSessionLength(quickSessionLength)
+    const breakMinutes = parseBreakMinutes(quickBreak)
+    if (sessionLength === null || breakMinutes === null) {
+      setQuickError('Please enter a valid session length and buffer.')
+      return
+    }
     setQuickError('')
-    const data = await createAndActivatePreset(preset.label, days, start, end)
+    const data = await createAndActivatePreset(preset.label, days, start, end, sessionLength, breakMinutes)
     if (!data) return
     setQuickDays(new Set(days))
     setQuickStart(start)
     setQuickEnd(end)
     setActivePreset(`custom:${data.id}`)
+  }
+
+  // Optional booking guardrails enforced on the public booking page — blank fields
+  // mean "no limit" (max_sessions_per_day/max_advance_days are nullable; blank
+  // min_notice_hours writes 0, its NOT NULL column's own "no limit" value).
+  async function saveBookingRules() {
+    if (!trainerId) return
+    const maxSessions = maxSessionsPerDay.trim() === '' ? null : parseInt(maxSessionsPerDay, 10)
+    const minNotice = minNoticeHours.trim() === '' ? 0 : parseInt(minNoticeHours, 10)
+    const maxAdvance = maxAdvanceDays.trim() === '' ? null : parseInt(maxAdvanceDays, 10)
+    if (
+      (maxSessions !== null && (Number.isNaN(maxSessions) || maxSessions <= 0)) ||
+      Number.isNaN(minNotice) || minNotice < 0 ||
+      (maxAdvance !== null && (Number.isNaN(maxAdvance) || maxAdvance <= 0))
+    ) {
+      setBookingRulesError('Please enter valid numbers (or leave blank for no limit).')
+      return
+    }
+    setBookingRulesError('')
+    setBookingRulesSaved(false)
+    setBookingRulesSaving(true)
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('trainers')
+      .update({ max_sessions_per_day: maxSessions, min_notice_hours: minNotice, max_advance_days: maxAdvance })
+      .eq('id', trainerId)
+    setBookingRulesSaving(false)
+    if (error) {
+      setBookingRulesError('Failed to save. Try again.')
+      return
+    }
+    setBookingRulesSaved(true)
   }
 
   const livePresetLabel = liveActivePresetId
@@ -571,6 +665,28 @@ function WeeklyHoursPanel({
               style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
             />
           </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>Session length (minutes)</label>
+            <input
+              type="number"
+              min={5}
+              step={5}
+              value={quickSessionLength}
+              onChange={(e) => setQuickSessionLength(e.target.value)}
+              style={{ width: '90px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>Buffer between sessions (minutes)</label>
+            <input
+              type="number"
+              min={0}
+              step={5}
+              value={quickBreak}
+              onChange={(e) => setQuickBreak(e.target.value)}
+              style={{ width: '90px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+            />
+          </div>
         </div>
 
         {quickDays.size > 0 && (!quickStart || !quickEnd) && !showSavePresetForm && (
@@ -636,6 +752,72 @@ function WeeklyHoursPanel({
             )}
           </div>
         )}
+      </div>
+
+      {/* Booking rules — optional guardrails enforced on the public booking page
+          (see app/trainer/[slug]/page.jsx). Blank inputs mean "no limit". */}
+      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink, marginBottom: '4px' }}>
+          Booking rules
+        </div>
+        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', color: T.ink2, marginBottom: '14px' }}>
+          Optional limits enforced on your public booking page. Leave a field blank for no limit.
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>Max sessions per day</label>
+            <input
+              type="number"
+              min={1}
+              placeholder="No limit"
+              value={maxSessionsPerDay}
+              onChange={(e) => { setMaxSessionsPerDay(e.target.value); setBookingRulesSaved(false) }}
+              style={{ width: '110px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>Minimum notice (hours)</label>
+            <input
+              type="number"
+              min={0}
+              placeholder="No limit"
+              value={minNoticeHours}
+              onChange={(e) => { setMinNoticeHours(e.target.value); setBookingRulesSaved(false) }}
+              style={{ width: '110px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>Max booking window (days)</label>
+            <input
+              type="number"
+              min={1}
+              placeholder="No limit"
+              value={maxAdvanceDays}
+              onChange={(e) => { setMaxAdvanceDays(e.target.value); setBookingRulesSaved(false) }}
+              style={{ width: '110px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+            />
+          </div>
+        </div>
+
+        {bookingRulesError && (
+          <div style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', marginBottom: '10px' }}>
+            {bookingRulesError}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          <button
+            onClick={saveBookingRules}
+            disabled={bookingRulesSaving}
+            style={{ height: '40px', padding: '0 20px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 700, cursor: bookingRulesSaving ? 'default' : 'pointer', opacity: bookingRulesSaving ? 0.7 : 1 }}
+          >
+            {bookingRulesSaving ? 'Saving…' : 'Save booking rules'}
+          </button>
+          {bookingRulesSaved && !bookingRulesSaving && (
+            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600, color: T.cyan }}>Saved</span>
+          )}
+        </div>
       </div>
 
       {/* Everything else — built-in presets + other saved schedules — collapsed by
