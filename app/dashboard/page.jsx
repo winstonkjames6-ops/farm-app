@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
+import { notifyWaitlistOfOpening } from '@/lib/waitlist'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -322,7 +323,7 @@ export default function DashboardPage() {
 
       supabase
         .from('bookings')
-        .select('id, format, session_time, status, rate, trainers!trainer_id(specialty, profile_id, profiles(name)), reviews(rating)')
+        .select('id, format, session_time, status, rate, trainer_id, trainers!trainer_id(specialty, profile_id, profiles(name)), reviews(rating)')
         .eq('parent_id', user.id)
         .then(({ data, error }) => {
           if (error) {
@@ -334,6 +335,8 @@ export default function DashboardPage() {
             const trainerName = b.trainers?.profiles?.name ?? ''
             return {
               id: b.id,
+              trainerId: b.trainer_id ?? null,
+              sessionTime: b.session_time,
               trainerName,
               trainerInitials: computeInitials(trainerName),
               trainerProfileId: b.trainers?.profile_id ?? null,
@@ -357,8 +360,14 @@ export default function DashboardPage() {
 
   async function cancelBooking(id) {
     const supabase = createClient()
+    const cancelled = bookings.find((b) => b.id === id)
     const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', id)
-    if (!error) setBookings((prev) => prev.filter((b) => b.id !== id))
+    if (!error) {
+      setBookings((prev) => prev.filter((b) => b.id !== id))
+      if (cancelled?.trainerId) {
+        notifyWaitlistOfOpening(cancelled.trainerId, cancelled.sessionTime)
+      }
+    }
   }
 
   const sportsSet = new Set(bookings.map((b) => b.sport))

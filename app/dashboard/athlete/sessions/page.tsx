@@ -5,11 +5,14 @@ import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 
 import { T } from '@/lib/theme'
+import { notifyWaitlistOfOpening } from '@/lib/waitlist'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 type UpcomingSession = {
   id: string
+  trainerId: string | null
+  sessionTimeRaw: string
   date: string
   trainer: string
   sport: string
@@ -87,7 +90,7 @@ export default function SessionsPage() {
 
       const { data: bookings, error: bookingErr } = await supabase
         .from('bookings')
-        .select('id, format, session_time, status, trainers!trainer_id(profiles(name))')
+        .select('id, format, session_time, status, trainer_id, trainers!trainer_id(profiles(name))')
         .eq('athlete_id', athleteId)
         .order('session_time', { ascending: false })
 
@@ -113,6 +116,8 @@ export default function SessionsPage() {
         const dt = new Date(b.session_time)
         return {
           id: b.id,
+          trainerId: b.trainer_id ?? null,
+          sessionTimeRaw: b.session_time,
           date: dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
           trainer: b.trainers?.profiles?.name ?? 'Trainer',
           sport,
@@ -137,6 +142,7 @@ export default function SessionsPage() {
   }, [])
 
   async function cancelSession(id: string) {
+    const cancelled = upcoming.find((s) => s.id === id)
     const supabase = createClient()
     const { error } = await supabase
       .from('bookings')
@@ -147,6 +153,9 @@ export default function SessionsPage() {
       return
     }
     setUpcoming((prev) => prev.filter((s) => s.id !== id))
+    if (cancelled?.trainerId) {
+      notifyWaitlistOfOpening(cancelled.trainerId, cancelled.sessionTimeRaw)
+    }
   }
 
   return (

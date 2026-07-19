@@ -42,6 +42,15 @@ export default function TrainerProfile({ params: { slug } }) {
   const [exceptions, setExceptions] = useState([])
   const [existingBookings, setExistingBookings] = useState([])
 
+  // Waitlist for slots that are already booked — keyed by the exact slot ISO
+  // datetime so joining is scoped to one specific session_time per trainer.
+  const [waitlistedSlots, setWaitlistedSlots] = useState(() => new Set())
+  const [joiningSlotISO, setJoiningSlotISO] = useState(null)
+  const [waitlistError, setWaitlistError] = useState('')
+
+  // Per-athlete rate override preview (trainer_athlete_rates) — null when none applies.
+  const [overrideRate, setOverrideRate] = useState(null)
+
   // Caps how far out the picker offers dates — max_advance_days=3 means only
   // tomorrow..+3 days show up, never the full 5-day window past that point.
   const DATES = useMemo(() => {
@@ -103,6 +112,31 @@ export default function TrainerProfile({ params: { slug } }) {
     const firstAvailable = daySlots.find(slot => !bookedSet.has(new Date(buildSlotISO(isoDate, slot.start_time)).getTime()))
     setSelectedTime(firstAvailable ? formatTime12h(firstAvailable.start_time) : null)
   }, [daySlots, bookedSet, DATES, selectedDate])
+
+  async function joinWaitlist(slotISO) {
+    setWaitlistError('')
+    setJoiningSlotISO(slotISO)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setJoiningSlotISO(null)
+      setWaitlistError('Please log in as a parent to join the waitlist.')
+      return
+    }
+    const { error } = await supabase.from('booking_waitlist').insert({
+      trainer_id: trainer.id,
+      parent_id: user.id,
+      session_time: slotISO,
+    })
+    setJoiningSlotISO(null)
+    // 23505 = unique_violation (trainer_id, parent_id, session_time) — already on
+    // the waitlist for this exact slot; treat that as a successful join, not an error.
+    if (error && error.code !== '23505') {
+      setWaitlistError('Failed to join waitlist. Try again.')
+      return
+    }
+    setWaitlistedSlots(prev => new Set(prev).add(slotISO))
+  }
 
   useEffect(() => {
     async function load() {
@@ -166,6 +200,31 @@ export default function TrainerProfile({ params: { slug } }) {
     fetchExceptions()
   }, [trainer?.id, DATES])
 
+  // Best-effort rate preview for a logged-in parent with exactly one athlete — this
+  // page has no athlete selector, so a parent with multiple children instead gets
+  // their definitive per-athlete rate resolved on /booking once they pick who it's for.
+  useEffect(() => {
+    if (!trainer?.id) return
+    async function loadRateOverride() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setOverrideRate(null); return }
+      const { data: athletes } = await supabase
+        .from('athletes')
+        .select('id')
+        .eq('parent_id', user.id)
+      if (!athletes || athletes.length !== 1) { setOverrideRate(null); return }
+      const { data: rateRow } = await supabase
+        .from('trainer_athlete_rates')
+        .select('rate')
+        .eq('trainer_id', trainer.id)
+        .eq('athlete_id', athletes[0].id)
+        .maybeSingle()
+      setOverrideRate(rateRow?.rate ?? null)
+    }
+    loadRateOverride()
+  }, [trainer?.id])
+
   const card = {
     background: 'var(--surface)',
     border: '1px solid var(--line)',
@@ -194,9 +253,10 @@ export default function TrainerProfile({ params: { slug } }) {
   // Derive name safely
   const name = trainer?.profiles?.name ?? ''
   const { profile_id, specialty, bio, rate, location } = trainer ?? {}
+  const displayRate = overrideRate ?? rate
 
   const bookingHref = trainer && selectedTime
-    ? `/booking?trainerId=${profile_id}&name=${encodeURIComponent(name)}&specialty=${encodeURIComponent(specialty ?? '')}&rate=${rate ?? ''}&date=${encodeURIComponent(DATES[selectedDate]?.isoDate ?? '')}&time=${encodeURIComponent(selectedTime)}&format=${encodeURIComponent(selectedFormat)}`
+    ? `/booking?trainerId=${profile_id}&name=${encodeURIComponent(name)}&specialty=${encodeURIComponent(specialty ?? '')}&rate=${displayRate ?? ''}&date=${encodeURIComponent(DATES[selectedDate]?.isoDate ?? '')}&time=${encodeURIComponent(selectedTime)}&format=${encodeURIComponent(selectedFormat)}`
     : '/booking'
 
   if (loading) {
@@ -414,7 +474,7 @@ export default function TrainerProfile({ params: { slug } }) {
             <div style={{ ...card, display: 'inline-block' }}>
               <h2 style={sectionHeading}>Rate</h2>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '6px' }}>
-                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '34px', color: 'var(--ink)', lineHeight: 1 }}>${rate}</span>
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '34px', color: 'var(--ink)', lineHeight: 1 }}>${displayRate}</span>
                 <span style={{ color: 'var(--ink-3)', fontSize: '15px' }}>/hr</span>
               </div>
               <p style={{ color: 'var(--ink-3)', fontSize: '13px', margin: 0, lineHeight: 1.45 }}>No subscription.<br />Pay per session.</p>
@@ -450,7 +510,7 @@ export default function TrainerProfile({ params: { slug } }) {
                   )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '24px', color: 'var(--ink)', lineHeight: 1 }}>${rate}</div>
+                  <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '24px', color: 'var(--ink)', lineHeight: 1 }}>${displayRate}</div>
                   <div style={{ fontSize: '12px', color: 'var(--ink-3)', marginTop: '3px' }}>per hour</div>
                 </div>
               </div>
@@ -491,24 +551,48 @@ export default function TrainerProfile({ params: { slug } }) {
                       const label = formatTime12h(slot.start_time)
                       const slotISO = buildSlotISO(DATES[selectedDate]?.isoDate ?? '', slot.start_time)
                       const isBooked = bookedSet.has(new Date(slotISO).getTime())
+
+                      if (isBooked) {
+                        const isWaitlisted = waitlistedSlots.has(slotISO)
+                        const isJoining = joiningSlotISO === slotISO
+                        return (
+                          <button
+                            key={slot.start_time}
+                            onClick={isWaitlisted || isJoining ? undefined : () => joinWaitlist(slotISO)}
+                            disabled={isWaitlisted || isJoining}
+                            style={{
+                              padding: '8px 13px', borderRadius: '999px', fontSize: '12.5px', fontWeight: 600,
+                              cursor: isWaitlisted || isJoining ? 'default' : 'pointer',
+                              background: 'var(--bg)',
+                              border: '1px dashed var(--line)',
+                              color: isWaitlisted ? 'var(--ink-3)' : 'var(--accent)',
+                              transition: 'all .15s ease',
+                            }}
+                          >
+                            {label} · {isWaitlisted ? 'On waitlist' : isJoining ? 'Joining…' : 'Join waitlist'}
+                          </button>
+                        )
+                      }
+
                       return (
                         <button
                           key={slot.start_time}
-                          onClick={isBooked ? undefined : () => setSelectedTime(label)}
+                          onClick={() => setSelectedTime(label)}
                           style={{
                             padding: '8px 13px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
-                            cursor: isBooked ? 'default' : 'pointer',
-                            background: !isBooked && selectedTime === label ? 'var(--ink)' : 'var(--bg)',
-                            border: `1px solid ${!isBooked && selectedTime === label ? 'var(--ink)' : 'var(--line)'}`,
-                            color: isBooked ? 'var(--ink-3)' : selectedTime === label ? 'var(--bg)' : 'var(--ink-2)',
-                            textDecoration: isBooked ? 'line-through' : 'none',
-                            opacity: isBooked ? 0.55 : 1,
+                            cursor: 'pointer',
+                            background: selectedTime === label ? 'var(--ink)' : 'var(--bg)',
+                            border: `1px solid ${selectedTime === label ? 'var(--ink)' : 'var(--line)'}`,
+                            color: selectedTime === label ? 'var(--bg)' : 'var(--ink-2)',
                             transition: 'all .15s ease',
                           }}
                         >{label}</button>
                       )
                     })}
                   </div>
+                )}
+                {waitlistError && (
+                  <div style={{ fontSize: '12.5px', color: '#DC2626', marginTop: '8px' }}>{waitlistError}</div>
                 )}
               </div>
 
@@ -540,7 +624,7 @@ export default function TrainerProfile({ params: { slug } }) {
                 paddingBottom: '18px', marginBottom: '18px', borderBottom: '1px solid var(--line)',
               }}>
                 <span style={{ color: 'var(--ink-2)', fontSize: '15px' }}>Total</span>
-                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: 'var(--ink)' }}>${rate}</span>
+                <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '22px', color: 'var(--ink)' }}>${displayRate}</span>
               </div>
 
               {/* CTA */}

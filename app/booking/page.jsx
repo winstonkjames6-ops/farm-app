@@ -729,20 +729,22 @@ function BookingPageInner() {
   const timeParam = searchParams.get('time') ?? ''
   const formatParam = searchParams.get('format') ?? 'In-Person'
 
-  const trainer = {
-    id: trainerId,
-    name,
-    initials: getInitials(name),
-    specialty,
-    rate,
-  }
-
   const [step, setStep] = useState(0)
   const [dir, setDir] = useState(1)
   const [format, setFormat] = useState(formatParam)
   const [selectedAthlete, setSelectedAthlete] = useState(null)
   const [athletes, setAthletes] = useState(null)
   const [athletesLoading, setAthletesLoading] = useState(true)
+  const [trainerRowId, setTrainerRowId] = useState(null)
+  const [effectiveRate, setEffectiveRate] = useState(rate)
+
+  const trainer = {
+    id: trainerId,
+    name,
+    initials: getInitials(name),
+    specialty,
+    rate: effectiveRate,
+  }
 
   useEffect(() => {
     if (!trainerId) router.push('/search')
@@ -773,6 +775,35 @@ function BookingPageInner() {
     loadAthletes()
   }, [trainerId])
 
+  // trainerId here is the trainer's profile_id (see handlePay below); resolve the
+  // actual trainers.id once so it can be used as the FK in trainer_athlete_rates.
+  useEffect(() => {
+    if (!trainerId) return
+    async function loadTrainerRowId() {
+      const supabase = createClient()
+      const { data } = await supabase.from('trainers').select('id').eq('profile_id', trainerId).single()
+      setTrainerRowId(data?.id ?? null)
+    }
+    loadTrainerRowId()
+  }, [trainerId])
+
+  // Once both the trainer row and a specific athlete are known, check for a rate
+  // override so the displayed total (steps + review) matches what'll actually be charged.
+  useEffect(() => {
+    if (!trainerRowId || !selectedAthlete?.id) { setEffectiveRate(rate); return }
+    async function loadRateOverride() {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('trainer_athlete_rates')
+        .select('rate')
+        .eq('trainer_id', trainerRowId)
+        .eq('athlete_id', selectedAthlete.id)
+        .maybeSingle()
+      setEffectiveRate(data ? String(data.rate) : rate)
+    }
+    loadRateOverride()
+  }, [trainerRowId, selectedAthlete, rate])
+
   const goTo = (next) => {
     setDir(next > step ? 1 : -1)
     setStep(next)
@@ -790,6 +821,20 @@ function BookingPageInner() {
     if (authError || !user) throw new Error('You must be logged in to book a session.')
     const { data: trainerRow } = await supabase.from('trainers').select('id').eq('profile_id', trainerId).single()
     if (!trainerRow) throw new Error('Trainer not found. Please go back and try again.')
+
+    // Re-check the rate override right before charging — the definitive source of
+    // truth for what gets billed, independent of whatever the display already resolved.
+    let chargedRate = Number(rate)
+    if (selectedAthlete?.id) {
+      const { data: rateOverride } = await supabase
+        .from('trainer_athlete_rates')
+        .select('rate')
+        .eq('trainer_id', trainerRow.id)
+        .eq('athlete_id', selectedAthlete.id)
+        .maybeSingle()
+      if (rateOverride) chargedRate = Number(rateOverride.rate)
+    }
+
     const sessionTime = buildSessionTime(dateParam, timeParam)
     const { data: existing } = await supabase
       .from('trainer_booked_slots')
@@ -802,7 +847,7 @@ function BookingPageInner() {
       athlete_id: selectedAthlete?.id ?? null,
       trainer_id: trainerRow.id,
       format,
-      rate: Number(rate),
+      rate: chargedRate,
       session_time: sessionTime,
       status: 'pending',
     })

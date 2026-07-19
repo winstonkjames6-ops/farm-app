@@ -8,6 +8,7 @@ import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 import { generateSlotsForPreset, buildSlotISO } from '@/lib/scheduling'
 import { getAthleteColor } from '@/lib/athleteColors'
+import { notifyWaitlistOfOpening } from '@/lib/waitlist'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -19,6 +20,7 @@ type TrainerPreset = {
   end_time: string
   session_length_minutes: number
   break_minutes: number
+  starts_on: string | null
 }
 
 // Config for the trainer's active preset — the same shape the public booking
@@ -214,6 +216,9 @@ function WeeklyHoursPanel({
   const [customPresets, setCustomPresets] = useState<TrainerPreset[]>([])
   const [showSavePresetForm, setShowSavePresetForm] = useState(false)
   const [presetLabelInput, setPresetLabelInput] = useState('')
+  // Optional scheduled activation date (trainer_presets.starts_on) — empty means
+  // this preset only activates when the trainer explicitly sets it as active.
+  const [presetStartsOnInput, setPresetStartsOnInput] = useState('')
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null)
   const [presetSaving, setPresetSaving] = useState(false)
   const [presetError, setPresetError] = useState('')
@@ -244,7 +249,7 @@ function WeeklyHoursPanel({
       const [presetsRes, trainerRes] = await Promise.all([
         supabase
           .from('trainer_presets')
-          .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes')
+          .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes, starts_on')
           .eq('trainer_id', trainerId)
           .order('created_at', { ascending: true }),
         supabase
@@ -362,6 +367,7 @@ function WeeklyHoursPanel({
     applyCustomPreset(preset)
     setEditingPresetId(preset.id)
     setPresetLabelInput(preset.label)
+    setPresetStartsOnInput(preset.starts_on ?? '')
     setShowSavePresetForm(true)
     setPresetError('')
   }
@@ -369,6 +375,7 @@ function WeeklyHoursPanel({
   function cancelSavePreset() {
     setShowSavePresetForm(false)
     setPresetLabelInput('')
+    setPresetStartsOnInput('')
     setEditingPresetId(null)
     setPresetError('')
   }
@@ -390,13 +397,14 @@ function WeeklyHoursPanel({
     setPresetSaving(true)
     const supabase = createClient()
     const days = Array.from(quickDays).sort((a, b) => a - b)
+    const startsOn = presetStartsOnInput || null
 
     if (editingPresetId) {
       const { data, error } = await supabase
         .from('trainer_presets')
-        .update({ label: presetLabelInput.trim(), days, start_time: quickStart, end_time: quickEnd, session_length_minutes: sessionLength, break_minutes: breakMinutes })
+        .update({ label: presetLabelInput.trim(), days, start_time: quickStart, end_time: quickEnd, session_length_minutes: sessionLength, break_minutes: breakMinutes, starts_on: startsOn })
         .eq('id', editingPresetId)
-        .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes')
+        .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes, starts_on')
         .single()
       setPresetSaving(false)
       if (error) {
@@ -407,8 +415,8 @@ function WeeklyHoursPanel({
     } else {
       const { data, error } = await supabase
         .from('trainer_presets')
-        .insert({ trainer_id: trainerId, label: presetLabelInput.trim(), days, start_time: quickStart, end_time: quickEnd, session_length_minutes: sessionLength, break_minutes: breakMinutes })
-        .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes')
+        .insert({ trainer_id: trainerId, label: presetLabelInput.trim(), days, start_time: quickStart, end_time: quickEnd, session_length_minutes: sessionLength, break_minutes: breakMinutes, starts_on: startsOn })
+        .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes, starts_on')
         .single()
       setPresetSaving(false)
       if (error) {
@@ -421,6 +429,7 @@ function WeeklyHoursPanel({
 
     setShowSavePresetForm(false)
     setPresetLabelInput('')
+    setPresetStartsOnInput('')
     setEditingPresetId(null)
   }
 
@@ -461,7 +470,7 @@ function WeeklyHoursPanel({
         trainer_id: trainerId, label, days, start_time: start, end_time: end,
         session_length_minutes: sessionLength, break_minutes: breakMinutes,
       })
-      .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes')
+      .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes, starts_on')
       .single()
     if (error) {
       setQuickSaving(false)
@@ -520,7 +529,7 @@ function WeeklyHoursPanel({
           session_length_minutes: sessionLength, break_minutes: breakMinutes,
         })
         .eq('id', liveActivePresetId)
-        .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes')
+        .select('id, label, days, start_time, end_time, session_length_minutes, break_minutes, starts_on')
         .single()
       setQuickSaving(false)
       if (error) {
@@ -775,6 +784,17 @@ function WeeklyHoursPanel({
               >
                 Cancel
               </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>
+                Starts on <span style={{ fontWeight: 400, color: T.ink3 }}>(optional — auto-activates this preset on that date)</span>
+              </label>
+              <input
+                type="date"
+                value={presetStartsOnInput}
+                onChange={(e) => setPresetStartsOnInput(e.target.value)}
+                style={{ width: '160px', height: '36px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '0 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+              />
             </div>
             {presetError && (
               <span style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px' }}>{presetError}</span>
@@ -1143,8 +1163,40 @@ export default function TrainerSchedulePage() {
     setActivePreset(preset ?? null)
   }
 
+  // Scheduled preset activation — if a saved preset's starts_on has arrived (<= today)
+  // and it isn't already the live preset, switch to the most recent due one. Runs once
+  // per page load (mount effect below), not on every onScheduleChanged refresh, so it
+  // can never silently override a preset the trainer just activated manually themselves.
+  async function activateScheduledPresetIfDue(id: string) {
+    const supabase = createClient()
+    const todayKey = dateKey(new Date())
+    const { data: trainerRow } = await supabase
+      .from('trainers')
+      .select('active_preset_id')
+      .eq('id', id)
+      .single()
+    const currentActiveId = trainerRow?.active_preset_id ?? null
+
+    const { data: duePresets } = await supabase
+      .from('trainer_presets')
+      .select('id, starts_on')
+      .eq('trainer_id', id)
+      .not('starts_on', 'is', null)
+      .lte('starts_on', todayKey)
+      .order('starts_on', { ascending: false })
+
+    const next = (duePresets ?? []).find((p) => p.id !== currentActiveId)
+    if (!next) return
+    await supabase.from('trainers').update({ active_preset_id: next.id }).eq('id', id)
+  }
+
   useEffect(() => {
-    refreshActivePreset()
+    async function initialLoad() {
+      if (!trainerId) return
+      await activateScheduledPresetIfDue(trainerId)
+      await refreshActivePreset()
+    }
+    initialLoad()
   }, [trainerId])
 
   // Load trainer id once
@@ -1313,6 +1365,7 @@ export default function TrainerSchedulePage() {
   }
 
   async function declineBooking(id: string) {
+    const declined = bookings.find((b) => b.id === id)
     const supabase = createClient()
     const { error } = await supabase.from('bookings').update({ status: 'declined' }).eq('id', id)
     if (error) {
@@ -1321,6 +1374,9 @@ export default function TrainerSchedulePage() {
     }
     setBookingActionErrors((prev) => { const next = { ...prev }; delete next[id]; return next })
     setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: 'declined' } : b))
+    if (trainerId && declined) {
+      notifyWaitlistOfOpening(trainerId, declined.session_time)
+    }
   }
 
   // Toggling a day only edits local pending-change state — no write happens until
