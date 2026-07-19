@@ -106,18 +106,7 @@ const NOTIF_ROWS = [
 
 const SPORTS = ['Soccer', 'Basketball', 'Tennis', 'Volleyball', 'Lacrosse', 'Baseball', 'Swimming', 'Track']
 const AGE_GROUPS = ['U6-U8', 'U9-U10', 'U11-U12', 'U13-U14', 'U15-U16', 'U17-U18', 'Adults']
-const DURATIONS = ['30 min', '60 min', '90 min']
-const NOTICE_OPTIONS = ['1 hour', '2 hours', '4 hours', '24 hours', '48 hours']
-const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const TRAVEL_OPTIONS = ['No travel', 'Up to 5 miles', 'Up to 10 miles', 'Up to 20 miles', 'Up to 30 miles']
-
-const TIME_SLOTS: string[] = []
-for (let h = 6; h <= 21; h++) {
-  const d = h === 12 ? 12 : h > 12 ? h - 12 : h
-  const ap = h >= 12 ? 'PM' : 'AM'
-  TIME_SLOTS.push(`${d}:00 ${ap}`)
-  if (h < 21) TIME_SLOTS.push(`${d}:30 ${ap}`)
-}
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -590,18 +579,12 @@ function RateSection({
   onSave?: (rate: string) => Promise<void>
 }) {
   const [hourlyRate, setHourlyRate] = useState(initialHourlyRate ?? '')
-  const [selectedDurations, setSelectedDurations] = useState<string[]>(['60 min'])
-  const [noticeTime, setNoticeTime] = useState('24 hours')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
     if (initialHourlyRate !== undefined) setHourlyRate(initialHourlyRate)
   }, [initialHourlyRate])
-
-  function toggleDur(dur: string) {
-    setSelectedDurations((prev) => prev.includes(dur) ? prev.filter((d) => d !== dur) : [...prev, dur])
-  }
 
   async function handleSave() {
     if (!onSave) return
@@ -618,7 +601,7 @@ function RateSection({
 
   return (
     <SectionCard id="section-rate">
-      <CardLabel>Rate &amp; Session</CardLabel>
+      <CardLabel>Rate</CardLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div>
           <FieldLabel>Hourly rate</FieldLabel>
@@ -628,94 +611,10 @@ function RateSection({
           </div>
           <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '6px' }}>You keep 85% — FARM takes 15%</div>
         </div>
-        <div>
-          <FieldLabel>Session length</FieldLabel>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px' }}>
-            {DURATIONS.map((dur) => {
-              const sel = selectedDurations.includes(dur)
-              return (
-                <motion.button key={dur} whileTap={{ scale: 0.95 }} onClick={() => toggleDur(dur)} style={{ borderRadius: '999px', padding: '6px 16px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", border: sel ? '1px solid rgba(0,188,200,0.3)' : '1px solid #E5E7EB', background: sel ? 'rgba(0,188,200,0.1)' : 'transparent', color: sel ? T.cyan : T.ink2, cursor: 'pointer', minHeight: '44px' }}>
-                  {dur}
-                </motion.button>
-              )
-            })}
-          </div>
-        </div>
-        <div>
-          <FieldLabel>Minimum notice</FieldLabel>
-          <select value={noticeTime} onChange={(e) => setNoticeTime(e.target.value)} style={{ height: '44px', borderRadius: '8px', border: '1px solid #E5E7EB', fontSize: '16px', fontFamily: "'Hanken Grotesk', sans-serif", padding: '0 14px', outline: 'none', color: T.ink, background: '#FFFFFF', cursor: 'pointer' }}>
-            {NOTICE_OPTIONS.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-        </div>
       </div>
       <SaveButton onClick={handleSave} />
       {saveStatus === 'saved' && <div style={{ fontSize: '13px', color: '#10B981', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>Saved!</div>}
       {saveStatus === 'error' && <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{saveError}</div>}
-    </SectionCard>
-  )
-}
-
-// ── Section: Availability ──────────────────────────────────────────────────────
-
-type DayState = { enabled: boolean; from: string; to: string }
-
-function AvailabilitySection() {
-  const [avail, setAvail] = useState<Record<string, DayState>>({
-    Monday:    { enabled: true,  from: '9:00 AM',  to: '5:00 PM'  },
-    Tuesday:   { enabled: false, from: '9:00 AM',  to: '5:00 PM'  },
-    Wednesday: { enabled: true,  from: '9:00 AM',  to: '5:00 PM'  },
-    Thursday:  { enabled: false, from: '9:00 AM',  to: '5:00 PM'  },
-    Friday:    { enabled: true,  from: '3:00 PM',  to: '7:00 PM'  },
-    Saturday:  { enabled: true,  from: '8:00 AM',  to: '12:00 PM' },
-    Sunday:    { enabled: false, from: '9:00 AM',  to: '5:00 PM'  },
-  })
-
-  function toggleDay(day: string) {
-    setAvail((prev) => ({ ...prev, [day]: { ...prev[day], enabled: !prev[day].enabled } }))
-  }
-
-  const dropdownStyle: React.CSSProperties = {
-    height: '40px', width: '110px', borderRadius: '8px', border: '1px solid #E5E7EB',
-    fontSize: '16px', fontFamily: "'Hanken Grotesk', sans-serif",
-    padding: '0 8px', outline: 'none', color: T.ink, background: '#FFFFFF', cursor: 'pointer',
-  }
-
-  return (
-    <SectionCard id="section-availability">
-      <CardLabel>Availability</CardLabel>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {DAYS_OF_WEEK.map((day, i) => {
-          const d = avail[day]
-          return (
-            <div key={day} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 0', borderBottom: i < DAYS_OF_WEEK.length - 1 ? '1px solid #E5E7EB' : 'none', flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', fontWeight: 500, color: T.ink, width: '100px', flexShrink: 0, opacity: d.enabled ? 1 : 0.45 }}>{day}</span>
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                {d.enabled && (
-                  <>
-                    <select value={d.from} onChange={(e) => setAvail((prev) => ({ ...prev, [day]: { ...prev[day], from: e.target.value } }))} style={dropdownStyle}>
-                      {TIME_SLOTS.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                    <span style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>to</span>
-                    <select value={d.to} onChange={(e) => setAvail((prev) => ({ ...prev, [day]: { ...prev[day], to: e.target.value } }))} style={dropdownStyle}>
-                      {TIME_SLOTS.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </>
-                )}
-                <div
-                  onClick={() => toggleDay(day)}
-                  style={{ width: '44px', height: '24px', borderRadius: '999px', background: d.enabled ? '#00BCC8' : '#E5E7EB', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s ease', display: 'inline-block' }}
-                >
-                  <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#FFFFFF', position: 'absolute', top: '2px', left: d.enabled ? '22px' : '2px', transition: 'left 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      <button style={{ background: 'transparent', border: 'none', color: T.cyan, cursor: 'pointer', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500, padding: '8px 0', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <Plus size={16} /> Add exception date
-      </button>
-      <SaveButton />
     </SectionCard>
   )
 }
@@ -1335,7 +1234,6 @@ export default function TrainerProfilePage() {
               initialHourlyRate={initRate}
               onSave={saveRate}
             />
-            <AvailabilitySection />
             <CredentialsSection
               certificationStatus={certificationStatus}
               certificationNotes={certificationNotes}
