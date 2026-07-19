@@ -42,12 +42,6 @@ export default function TrainerProfile({ params: { slug } }) {
   const [exceptions, setExceptions] = useState([])
   const [existingBookings, setExistingBookings] = useState([])
 
-  // Waitlist for slots that are already booked — keyed by the exact slot ISO
-  // datetime so joining is scoped to one specific session_time per trainer.
-  const [waitlistedSlots, setWaitlistedSlots] = useState(() => new Set())
-  const [joiningSlotISO, setJoiningSlotISO] = useState(null)
-  const [waitlistError, setWaitlistError] = useState('')
-
   // Per-athlete rate override preview (trainer_athlete_rates) — null when none applies.
   const [overrideRate, setOverrideRate] = useState(null)
 
@@ -112,31 +106,6 @@ export default function TrainerProfile({ params: { slug } }) {
     const firstAvailable = daySlots.find(slot => !bookedSet.has(new Date(buildSlotISO(isoDate, slot.start_time)).getTime()))
     setSelectedTime(firstAvailable ? formatTime12h(firstAvailable.start_time) : null)
   }, [daySlots, bookedSet, DATES, selectedDate])
-
-  async function joinWaitlist(slotISO) {
-    setWaitlistError('')
-    setJoiningSlotISO(slotISO)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setJoiningSlotISO(null)
-      setWaitlistError('Please log in as a parent to join the waitlist.')
-      return
-    }
-    const { error } = await supabase.from('booking_waitlist').insert({
-      trainer_id: trainer.id,
-      parent_id: user.id,
-      session_time: slotISO,
-    })
-    setJoiningSlotISO(null)
-    // 23505 = unique_violation (trainer_id, parent_id, session_time) — already on
-    // the waitlist for this exact slot; treat that as a successful join, not an error.
-    if (error && error.code !== '23505') {
-      setWaitlistError('Failed to join waitlist. Try again.')
-      return
-    }
-    setWaitlistedSlots(prev => new Set(prev).add(slotISO))
-  }
 
   useEffect(() => {
     async function load() {
@@ -551,48 +520,24 @@ export default function TrainerProfile({ params: { slug } }) {
                       const label = formatTime12h(slot.start_time)
                       const slotISO = buildSlotISO(DATES[selectedDate]?.isoDate ?? '', slot.start_time)
                       const isBooked = bookedSet.has(new Date(slotISO).getTime())
-
-                      if (isBooked) {
-                        const isWaitlisted = waitlistedSlots.has(slotISO)
-                        const isJoining = joiningSlotISO === slotISO
-                        return (
-                          <button
-                            key={slot.start_time}
-                            onClick={isWaitlisted || isJoining ? undefined : () => joinWaitlist(slotISO)}
-                            disabled={isWaitlisted || isJoining}
-                            style={{
-                              padding: '8px 13px', borderRadius: '999px', fontSize: '12.5px', fontWeight: 600,
-                              cursor: isWaitlisted || isJoining ? 'default' : 'pointer',
-                              background: 'var(--bg)',
-                              border: '1px dashed var(--line)',
-                              color: isWaitlisted ? 'var(--ink-3)' : 'var(--accent)',
-                              transition: 'all .15s ease',
-                            }}
-                          >
-                            {label} · {isWaitlisted ? 'On waitlist' : isJoining ? 'Joining…' : 'Join waitlist'}
-                          </button>
-                        )
-                      }
-
                       return (
                         <button
                           key={slot.start_time}
-                          onClick={() => setSelectedTime(label)}
+                          onClick={isBooked ? undefined : () => setSelectedTime(label)}
                           style={{
                             padding: '8px 13px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
-                            cursor: 'pointer',
-                            background: selectedTime === label ? 'var(--ink)' : 'var(--bg)',
-                            border: `1px solid ${selectedTime === label ? 'var(--ink)' : 'var(--line)'}`,
-                            color: selectedTime === label ? 'var(--bg)' : 'var(--ink-2)',
+                            cursor: isBooked ? 'default' : 'pointer',
+                            background: !isBooked && selectedTime === label ? 'var(--ink)' : 'var(--bg)',
+                            border: `1px solid ${!isBooked && selectedTime === label ? 'var(--ink)' : 'var(--line)'}`,
+                            color: isBooked ? 'var(--ink-3)' : selectedTime === label ? 'var(--bg)' : 'var(--ink-2)',
+                            textDecoration: isBooked ? 'line-through' : 'none',
+                            opacity: isBooked ? 0.55 : 1,
                             transition: 'all .15s ease',
                           }}
                         >{label}</button>
                       )
                     })}
                   </div>
-                )}
-                {waitlistError && (
-                  <div style={{ fontSize: '12.5px', color: '#DC2626', marginTop: '8px' }}>{waitlistError}</div>
                 )}
               </div>
 
