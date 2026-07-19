@@ -722,13 +722,42 @@ function AvailabilitySection() {
 
 // ── Section: Credentials ───────────────────────────────────────────────────────
 
-function CredentialsSection() {
+function CredentialsSection({
+  certificationStatus,
+  certificationNotes,
+  onRequestVerification,
+}: {
+  certificationStatus?: 'none' | 'pending' | 'approved' | 'rejected'
+  certificationNotes?: string
+  onRequestVerification?: (notes: string) => Promise<void>
+}) {
   const [certs, setCerts] = useState<Certification[]>(INITIAL_CERTS)
   const [affs, setAffs] = useState<Affiliation[]>(INITIAL_AFFS)
   const [addingCert, setAddingCert] = useState(false)
   const [newCert, setNewCert] = useState({ name: '', org: '', year: '' })
   const [addingAff, setAddingAff] = useState(false)
   const [newAff, setNewAff] = useState({ name: '', role: '', years: '' })
+
+  const [notesDraft, setNotesDraft] = useState(certificationNotes ?? '')
+  const [verificationSaveStatus, setVerificationSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [verificationSaveError, setVerificationSaveError] = useState('')
+
+  useEffect(() => {
+    setNotesDraft(certificationNotes ?? '')
+  }, [certificationNotes])
+
+  async function submitVerificationRequest() {
+    if (!onRequestVerification) return
+    setVerificationSaveStatus('saving')
+    setVerificationSaveError('')
+    try {
+      await onRequestVerification(notesDraft)
+      setVerificationSaveStatus('saved')
+    } catch (e) {
+      setVerificationSaveError(e instanceof Error ? e.message : 'Request failed')
+      setVerificationSaveStatus('error')
+    }
+  }
 
   const inlineInput: React.CSSProperties = {
     flex: 1, height: '40px', borderRadius: '8px', border: '1px solid #E5E7EB',
@@ -821,6 +850,44 @@ function CredentialsSection() {
           </button>
         )}
       </div>
+
+      {certificationStatus !== 'approved' && (
+        <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #E5E7EB' }}>
+          <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Verification</div>
+
+          {certificationStatus === 'pending' && (
+            <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+              Verification request submitted — under review
+            </div>
+          )}
+
+          {(certificationStatus === 'none' || certificationStatus === 'rejected' || !certificationStatus) && (
+            <>
+              {certificationStatus === 'rejected' && (
+                <div style={{ fontSize: '14px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '12px' }}>
+                  Verification request not approved
+                </div>
+              )}
+              <FieldLabel>Describe your certifications, coaching credentials, or experience</FieldLabel>
+              <textarea
+                value={notesDraft}
+                onChange={(e) => setNotesDraft(e.target.value)}
+                rows={4}
+                style={{ width: '100%', borderRadius: '8px', border: '1px solid #E5E7EB', padding: '12px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", outline: 'none', color: T.ink, background: '#FFFFFF', resize: 'vertical', boxSizing: 'border-box' }}
+              />
+              <button
+                type="button"
+                onClick={submitVerificationRequest}
+                disabled={verificationSaveStatus === 'saving'}
+                style={{ width: '100%', height: '44px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 500, fontFamily: "'Hanken Grotesk', sans-serif", cursor: verificationSaveStatus === 'saving' ? 'default' : 'pointer', marginTop: '12px', opacity: verificationSaveStatus === 'saving' ? 0.7 : 1 }}
+              >
+                {certificationStatus === 'rejected' ? 'Resubmit for verification' : 'Request verification'}
+              </button>
+              {verificationSaveStatus === 'error' && <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{verificationSaveError}</div>}
+            </>
+          )}
+        </div>
+      )}
 
       <SaveButton />
     </SectionCard>
@@ -1052,6 +1119,8 @@ export default function TrainerProfilePage() {
   const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null)
   const [verified, setVerified] = useState(false)
   const [isCertified, setIsCertified] = useState(false)
+  const [certificationStatus, setCertificationStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none')
+  const [certificationNotes, setCertificationNotes] = useState('')
   const [themePreference, setThemePreference] = useState<ThemePreference>('dark')
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>('full')
   const [bookings, setBookings] = useState<TrainerBookingRow[]>([])
@@ -1066,7 +1135,7 @@ export default function TrainerProfilePage() {
       setUserId(user.id)
       const [profileRes, trainerRes] = await Promise.all([
         supabase.from('profiles').select('name, avatar_url, banner_image_url, phone, verified, theme_preference, background_mode').eq('id', user.id).single(),
-        supabase.from('trainers').select('id, specialty, bio, rate, location, is_certified').eq('profile_id', user.id).single(),
+        supabase.from('trainers').select('id, specialty, bio, rate, location, is_certified, certification_status, certification_notes').eq('profile_id', user.id).single(),
       ])
       if (profileRes.data?.name) setInitName(profileRes.data.name)
       setAvatarUrl(profileRes.data?.avatar_url ?? null)
@@ -1080,6 +1149,8 @@ export default function TrainerProfilePage() {
       if (trainerRes.data?.rate != null) setInitRate(String(trainerRes.data.rate))
       if (trainerRes.data?.specialty) setInitSpecialty(trainerRes.data.specialty)
       setIsCertified((trainerRes.data as any)?.is_certified ?? false)
+      setCertificationStatus(((trainerRes.data as any)?.certification_status as typeof certificationStatus) ?? 'none')
+      setCertificationNotes((trainerRes.data as any)?.certification_notes ?? '')
 
       const trainerRowId = trainerRes.data?.id
       if (trainerRowId) {
@@ -1144,6 +1215,18 @@ export default function TrainerProfilePage() {
     const supabase = createClient()
     const { error } = await supabase.from('trainers').update({ specialty }).eq('profile_id', userId)
     if (error) throw new Error(error.message)
+  }
+
+  async function requestVerification(notes: string) {
+    if (!userId) throw new Error('Not authenticated')
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('trainers')
+      .update({ certification_status: 'pending', certification_notes: notes })
+      .eq('profile_id', userId)
+    if (error) throw new Error(error.message)
+    setCertificationStatus('pending')
+    setCertificationNotes(notes)
   }
 
   async function handleSaveAppearance(updates: { theme_preference?: ThemePreference; background_mode?: BackgroundMode }) {
@@ -1253,7 +1336,11 @@ export default function TrainerProfilePage() {
               onSave={saveRate}
             />
             <AvailabilitySection />
-            <CredentialsSection />
+            <CredentialsSection
+              certificationStatus={certificationStatus}
+              certificationNotes={certificationNotes}
+              onRequestVerification={requestVerification}
+            />
             <ReviewsSection />
             <SessionSetupSection />
             <NotificationsSection />
