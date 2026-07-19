@@ -164,8 +164,10 @@ const HOUR_PRESETS: HourPreset[] = [
 
 function WeeklyHoursPanel({
   trainerId,
+  onActivePresetChanged,
 }: {
   trainerId: string | null
+  onActivePresetChanged: () => void
 }) {
   // Quick-add-with-presets — prefills day checkboxes + start/end below; "Save hours"
   // writes this straight into the active trainer_presets row (see saveHours()).
@@ -279,6 +281,7 @@ function WeeklyHoursPanel({
       return
     }
     setLiveActivePresetId(id)
+    onActivePresetChanged()
   }
 
   function applyPreset(preset: HourPreset) {
@@ -461,11 +464,15 @@ function WeeklyHoursPanel({
       }
       setCustomPresets((prev) => prev.map((p) => (p.id === liveActivePresetId ? data : p)))
       setActivePreset(`custom:${liveActivePresetId}`)
+      onActivePresetChanged()
       return
     }
 
     const data = await createAndActivatePreset('My hours', days, quickStart, quickEnd)
-    if (data) setActivePreset(`custom:${data.id}`)
+    if (data) {
+      setActivePreset(`custom:${data.id}`)
+      onActivePresetChanged()
+    }
   }
 
   // Built-in presets have no backing trainer_presets row yet — "Set as active" must
@@ -855,24 +862,27 @@ export default function TrainerSchedulePage() {
 
   // Load the trainer's active preset (same config shape + same generateSlotsForPreset
   // the public booking page uses) so Week/Day views generate the exact same slots.
-  useEffect(() => {
+  // Also re-run this on demand (see onActivePresetChanged below) whenever the panel
+  // activates or edits a preset, so Week/Day don't keep showing a stale schedule.
+  async function refreshActivePreset() {
     if (!trainerId) return
-    async function loadActivePreset() {
-      const supabase = createClient()
-      const { data: trainerRow } = await supabase
-        .from('trainers')
-        .select('active_preset_id')
-        .eq('id', trainerId)
-        .single()
-      if (!trainerRow?.active_preset_id) { setActivePreset(null); return }
-      const { data: preset } = await supabase
-        .from('trainer_presets')
-        .select('days, start_time, end_time, session_length_minutes, break_minutes')
-        .eq('id', trainerRow.active_preset_id)
-        .single()
-      setActivePreset(preset ?? null)
-    }
-    loadActivePreset()
+    const supabase = createClient()
+    const { data: trainerRow } = await supabase
+      .from('trainers')
+      .select('active_preset_id')
+      .eq('id', trainerId)
+      .single()
+    if (!trainerRow?.active_preset_id) { setActivePreset(null); return }
+    const { data: preset } = await supabase
+      .from('trainer_presets')
+      .select('days, start_time, end_time, session_length_minutes, break_minutes')
+      .eq('id', trainerRow.active_preset_id)
+      .single()
+    setActivePreset(preset ?? null)
+  }
+
+  useEffect(() => {
+    refreshActivePreset()
   }, [trainerId])
 
   // Load trainer id once
@@ -1416,6 +1426,7 @@ export default function TrainerSchedulePage() {
                   <div style={{ paddingTop: '16px' }}>
                     <WeeklyHoursPanel
                       trainerId={trainerId}
+                      onActivePresetChanged={refreshActivePreset}
                     />
                   </div>
                 </motion.div>
