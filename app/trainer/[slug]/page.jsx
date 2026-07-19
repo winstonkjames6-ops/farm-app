@@ -77,6 +77,8 @@ export default function TrainerProfile({ params: { slug } }) {
     // A blocked exception on this exact date wins regardless of the preset's days.
     if (exceptionByDate[iso] === 'blocked') return []
     const dow = new Date(iso + 'T00:00:00').getDay()
+    // A standing day off blocks this weekday everywhere, regardless of the preset's days.
+    if ((trainer?.standing_days_off ?? []).includes(dow)) return []
     if (!activePreset.days.includes(dow)) return []
 
     // Once this date already has max_sessions_per_day non-cancelled bookings,
@@ -92,7 +94,7 @@ export default function TrainerProfile({ params: { slug } }) {
     return generateSlotsForPreset(activePreset)
       .map(start_time => ({ start_time }))
       .filter(slot => new Date(buildSlotISO(iso, slot.start_time)).getTime() >= noticeCutoff)
-  }, [activePreset, exceptionByDate, selectedDate, DATES, existingBookings, trainer?.max_sessions_per_day, trainer?.min_notice_hours])
+  }, [activePreset, exceptionByDate, selectedDate, DATES, existingBookings, trainer?.max_sessions_per_day, trainer?.min_notice_hours, trainer?.standing_days_off])
 
   const bookedSet = useMemo(() => new Set(existingBookings.map(b => new Date(b.session_time).getTime())), [existingBookings])
 
@@ -107,7 +109,7 @@ export default function TrainerProfile({ params: { slug } }) {
       const supabase = createClient()
       const { data } = await supabase
         .from('trainers')
-        .select('id, profile_id, specialty, bio, rate, location, active_preset_id, max_sessions_per_day, min_notice_hours, max_advance_days, profiles(name)')
+        .select('id, profile_id, specialty, bio, rate, location, active_preset_id, max_sessions_per_day, min_notice_hours, max_advance_days, standing_days_off, profiles(name)')
         .eq('profile_id', slug)
         .single()
       if (!data) {

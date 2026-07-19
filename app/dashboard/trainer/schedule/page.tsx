@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Pencil, Trash2, Star } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 import { generateSlotsForPreset, buildSlotISO } from '@/lib/scheduling'
+import { getAthleteColor } from '@/lib/athleteColors'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -42,6 +43,7 @@ type BookingRow = {
   session_time: string
   status: string
   format: string | null
+  athleteId: string | null
   athleteName: string
   parentName: string
   parentProfileId: string
@@ -202,6 +204,12 @@ function WeeklyHoursPanel({
   const [bookingRulesError, setBookingRulesError] = useState('')
   const [bookingRulesSaved, setBookingRulesSaved] = useState(false)
 
+  // Days of week the trainer never works (trainers.standing_days_off) — independent
+  // of the active preset's own days array; blocks that day regardless of preset.
+  const [standingDaysOff, setStandingDaysOff] = useState<number[]>([])
+  const [standingDaysOffSaving, setStandingDaysOffSaving] = useState(false)
+  const [standingDaysOffError, setStandingDaysOffError] = useState('')
+
   // Trainer-saved custom presets (trainer_presets table)
   const [customPresets, setCustomPresets] = useState<TrainerPreset[]>([])
   const [showSavePresetForm, setShowSavePresetForm] = useState(false)
@@ -241,7 +249,7 @@ function WeeklyHoursPanel({
           .order('created_at', { ascending: true }),
         supabase
           .from('trainers')
-          .select('active_preset_id, hidden_builtin_presets, max_sessions_per_day, min_notice_hours, max_advance_days')
+          .select('active_preset_id, hidden_builtin_presets, max_sessions_per_day, min_notice_hours, max_advance_days, standing_days_off')
           .eq('id', trainerId)
           .single(),
       ])
@@ -253,6 +261,7 @@ function WeeklyHoursPanel({
       setMaxSessionsPerDay(trainerRes.data?.max_sessions_per_day != null ? String(trainerRes.data.max_sessions_per_day) : '')
       setMinNoticeHours(trainerRes.data?.min_notice_hours ? String(trainerRes.data.min_notice_hours) : '')
       setMaxAdvanceDays(trainerRes.data?.max_advance_days != null ? String(trainerRes.data.max_advance_days) : '')
+      setStandingDaysOff(trainerRes.data?.standing_days_off ?? [])
 
       // Prefill the live-schedule card with whichever preset is actually active,
       // so it shows real days/hours on load instead of an empty form.
@@ -596,6 +605,26 @@ function WeeklyHoursPanel({
     setBookingRulesSaved(true)
   }
 
+  // Toggling a standing day off saves immediately (no separate Save button) — it's
+  // a direct trainers.standing_days_off write, independent of any preset's own days.
+  async function toggleStandingDayOff(day: number) {
+    if (!trainerId) return
+    setStandingDaysOffError('')
+    const next = standingDaysOff.includes(day)
+      ? standingDaysOff.filter((d) => d !== day)
+      : [...standingDaysOff, day].sort((a, b) => a - b)
+    setStandingDaysOffSaving(true)
+    const supabase = createClient()
+    const { error } = await supabase.from('trainers').update({ standing_days_off: next }).eq('id', trainerId)
+    setStandingDaysOffSaving(false)
+    if (error) {
+      setStandingDaysOffError('Failed to save. Try again.')
+      return
+    }
+    setStandingDaysOff(next)
+    onActivePresetChanged()
+  }
+
   const livePresetLabel = liveActivePresetId
     ? customPresets.find((p) => p.id === liveActivePresetId)?.label ?? null
     : null
@@ -820,6 +849,45 @@ function WeeklyHoursPanel({
         </div>
       </div>
 
+      {/* Days you never work — independent of the active schedule's own day
+          selection; blocks that weekday everywhere regardless of any preset. */}
+      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink, marginBottom: '4px' }}>
+          Days you never work
+        </div>
+        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', color: T.ink2, marginBottom: '14px' }}>
+          Blocked on every schedule, no matter what days a preset covers. Saves immediately.
+        </div>
+
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          {FULL_WEEK.map((day) => {
+            const dayNum = DAY_MAP[day]
+            const checked = standingDaysOff.includes(dayNum)
+            return (
+              <button
+                key={day}
+                onClick={() => toggleStandingDayOff(dayNum)}
+                disabled={standingDaysOffSaving}
+                style={{
+                  width: '44px', height: '36px', borderRadius: '8px', cursor: standingDaysOffSaving ? 'default' : 'pointer',
+                  fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', fontWeight: 600,
+                  border: checked ? '1.5px solid #B45309' : `1px solid ${T.border}`,
+                  background: checked ? 'rgba(245,158,11,0.12)' : 'transparent',
+                  color: checked ? '#B45309' : T.ink2,
+                  opacity: standingDaysOffSaving ? 0.7 : 1,
+                }}
+              >{day}</button>
+            )
+          })}
+        </div>
+
+        {standingDaysOffError && (
+          <div style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', marginTop: '10px' }}>
+            {standingDaysOffError}
+          </div>
+        )}
+      </div>
+
       {/* Everything else — built-in presets + other saved schedules — collapsed by
           default so the live schedule above stays the primary, uncluttered focus. */}
       <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '4px 20px' }}>
@@ -1027,6 +1095,7 @@ export default function TrainerSchedulePage() {
   const [weekCursor, setWeekCursor] = useState(startOfWeek(today))
   const [dayCursor, setDayCursor] = useState(today)
   const [activePreset, setActivePreset] = useState<ActivePresetConfig | null>(null)
+  const [standingDaysOff, setStandingDaysOff] = useState<number[]>([])
   const [exceptions, setExceptions] = useState<Record<string, 'available' | 'blocked'>>({})
   const [bookings, setBookings] = useState<BookingRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -1034,6 +1103,15 @@ export default function TrainerSchedulePage() {
   const [toggleError, setToggleError] = useState<string | null>(null)
   const [pendingChanges, setPendingChanges] = useState<Record<string, 'available' | 'blocked'>>({})
   const [confirmSaving, setConfirmSaving] = useState(false)
+
+  // "Block a date range" (vacation mode) — bulk-writes availability_exceptions,
+  // separate from the day-by-day pendingChanges batch above.
+  const [vacationOpen, setVacationOpen] = useState(false)
+  const [vacationStart, setVacationStart] = useState('')
+  const [vacationEnd, setVacationEnd] = useState('')
+  const [vacationSaving, setVacationSaving] = useState(false)
+  const [vacationError, setVacationError] = useState('')
+  const [vacationSaved, setVacationSaved] = useState(false)
 
   // Moving the browsed date range (in any view) discards unsaved pending changes
   // rather than carrying or silently saving them — the batch never writes without
@@ -1051,9 +1129,10 @@ export default function TrainerSchedulePage() {
     const supabase = createClient()
     const { data: trainerRow } = await supabase
       .from('trainers')
-      .select('active_preset_id')
+      .select('active_preset_id, standing_days_off')
       .eq('id', trainerId)
       .single()
+    setStandingDaysOff(trainerRow?.standing_days_off ?? [])
     if (!trainerRow?.active_preset_id) { setActivePreset(null); return }
     const { data: preset } = await supabase
       .from('trainer_presets')
@@ -1111,7 +1190,7 @@ export default function TrainerSchedulePage() {
 
     const { data: bookingData } = await supabase
       .from('bookings')
-      .select('id, session_time, status, format, parent_id, athletes!athlete_id(name), profiles!parent_id(name)')
+      .select('id, session_time, status, format, parent_id, athlete_id, athletes!athlete_id(name), profiles!parent_id(name)')
       .eq('trainer_id', trainerId)
       .gte('session_time', rangeStart.toISOString())
       .lt('session_time', rangeEnd.toISOString())
@@ -1133,6 +1212,7 @@ export default function TrainerSchedulePage() {
         session_time: b.session_time,
         status: b.status,
         format: b.format,
+        athleteId: b.athlete_id ?? null,
         athleteName: b.athletes?.name ?? 'Athlete',
         parentName: b.profiles?.name ?? 'Parent',
         parentProfileId: b.parent_id ?? '',
@@ -1170,6 +1250,19 @@ export default function TrainerSchedulePage() {
     return set
   }, [bookings])
 
+  // First confirmed/pending booking's athlete per date — used to color the Month
+  // view's booked-day dot per-athlete instead of one fixed color for every booking.
+  const bookedAthleteByDate = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const b of bookings) {
+      if ((b.status === 'confirmed' || b.status === 'pending') && b.athleteId) {
+        const key = dateKey(new Date(b.session_time))
+        if (!map.has(key)) map.set(key, b.athleteId)
+      }
+    }
+    return map
+  }, [bookings])
+
   // Same booking rows Month view already loads, indexed by exact slot start time
   // so Week/Day views can label each generated slot Open vs Booked (+ client name).
   const bookingsByTime = useMemo(() => {
@@ -1187,6 +1280,7 @@ export default function TrainerSchedulePage() {
     if (bookedDateKeys.has(key)) return 'booked'
     const exception = exceptions[key]
     if (exception) return exception
+    if (standingDaysOff.includes(d.getDay())) return 'blocked'
     return activePreset?.days.includes(d.getDay()) ? 'available' : 'blocked'
   }
 
@@ -1196,6 +1290,7 @@ export default function TrainerSchedulePage() {
     if (!activePreset) return []
     const iso = dateKey(d)
     if (exceptions[iso] === 'blocked') return []
+    if (standingDaysOff.includes(d.getDay())) return []
     if (!activePreset.days.includes(d.getDay())) return []
     return generateSlotsForPreset(activePreset).map((start_time) => {
       const slotISO = buildSlotISO(iso, start_time)
@@ -1281,6 +1376,56 @@ export default function TrainerSchedulePage() {
     }
 
     setPendingChanges({})
+    await loadRangeData()
+  }
+
+  // Vacation mode — blocks every date in [vacationStart, vacationEnd] in one action.
+  // Same upsert-per-date pattern as confirmPendingChanges above, but reports a single
+  // aggregated success/error for the whole range rather than per-date state.
+  async function blockDateRange() {
+    if (!trainerId) return
+    if (!vacationStart || !vacationEnd) {
+      setVacationError('Please set both a start and end date.')
+      return
+    }
+    if (vacationStart > vacationEnd) {
+      setVacationError('Start date must be on or before the end date.')
+      return
+    }
+    setVacationError('')
+    setVacationSaved(false)
+    setVacationSaving(true)
+    const supabase = createClient()
+
+    const dates: string[] = []
+    const cursor = new Date(vacationStart + 'T00:00:00')
+    const end = new Date(vacationEnd + 'T00:00:00')
+    while (cursor <= end) {
+      dates.push(dateKey(cursor))
+      cursor.setDate(cursor.getDate() + 1)
+    }
+
+    const results = await Promise.all(
+      dates.map((exceptionDate) =>
+        supabase
+          .from('availability_exceptions')
+          .upsert(
+            { trainer_id: trainerId, exception_date: exceptionDate, status: 'blocked' },
+            { onConflict: 'trainer_id,exception_date' }
+          )
+      )
+    )
+    setVacationSaving(false)
+
+    const failedCount = results.filter((r) => r.error).length
+    if (failedCount > 0) {
+      setVacationError(`Failed to block ${failedCount} of ${dates.length} date${dates.length > 1 ? 's' : ''}. Try again.`)
+      return
+    }
+
+    setVacationSaved(true)
+    setVacationStart('')
+    setVacationEnd('')
     await loadRangeData()
   }
 
@@ -1420,6 +1565,10 @@ export default function TrainerSchedulePage() {
                   const pendingTarget = pendingChanges[cellKey]
                   const isPending = pendingTarget !== undefined
                   const colors = DAY_COLORS[isPending ? pendingTarget : status]
+                  const bookedAthleteId = bookedAthleteByDate.get(cellKey)
+                  const dotColor = !isPending && status === 'booked' && bookedAthleteId
+                    ? getAthleteColor(bookedAthleteId)
+                    : colors.dot
                   return (
                     <div
                       key={i}
@@ -1443,7 +1592,7 @@ export default function TrainerSchedulePage() {
                           {pendingTarget === 'blocked' ? 'Block' : 'Open'}
                         </span>
                       ) : (
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: colors.dot }} />
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: dotColor }} />
                       )}
                     </div>
                   )
@@ -1620,6 +1769,74 @@ export default function TrainerSchedulePage() {
               )}
             </AnimatePresence>
           </div>
+
+          {/* Vacation-mode entry point */}
+          <div style={{ borderTop: `1px solid ${T.border}`, padding: '16px 20px' }}>
+            <button
+              onClick={() => setVacationOpen((v) => !v)}
+              style={{
+                width: '100%', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: 'transparent', border: `1px solid ${T.border}`, borderRadius: '10px', padding: '0 16px',
+                cursor: 'pointer', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: T.ink,
+              }}
+            >
+              Block a date range
+              <span style={{ transform: vacationOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', color: T.ink3 }}>⌄</span>
+            </button>
+            <AnimatePresence>
+              {vacationOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <div style={{ paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>Start date</label>
+                        <input
+                          type="date"
+                          value={vacationStart}
+                          onChange={(e) => { setVacationStart(e.target.value); setVacationSaved(false) }}
+                          style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600 }}>End date</label>
+                        <input
+                          type="date"
+                          value={vacationEnd}
+                          onChange={(e) => { setVacationEnd(e.target.value); setVacationSaved(false) }}
+                          style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+                        />
+                      </div>
+                    </div>
+
+                    {vacationError && (
+                      <div style={{ color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px' }}>
+                        {vacationError}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={blockDateRange}
+                        disabled={vacationSaving}
+                        style={{ height: '40px', padding: '0 20px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 700, cursor: vacationSaving ? 'default' : 'pointer', opacity: vacationSaving ? 0.7 : 1 }}
+                      >
+                        {vacationSaving ? 'Blocking…' : 'Block'}
+                      </button>
+                      {vacationSaved && !vacationSaving && (
+                        <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', fontWeight: 600, color: T.cyan }}>Blocked</span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {Object.keys(pendingChanges).length > 0 && (
@@ -1694,7 +1911,10 @@ export default function TrainerSchedulePage() {
                             {formatSessionTime(b.session_time)}
                           </span>
                         </div>
-                        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', color: T.ink2, marginTop: '2px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', color: T.ink2, marginTop: '2px' }}>
+                          {b.athleteId && (
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: getAthleteColor(b.athleteId), flexShrink: 0 }} />
+                          )}
                           {b.athleteName} · {b.parentName} · {normalizeFormat(b.format)}
                         </div>
                       </div>
