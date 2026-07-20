@@ -112,7 +112,7 @@ export default function TrainerProfile({ params: { slug } }) {
       const supabase = createClient()
       const { data } = await supabase
         .from('trainers')
-        .select('id, profile_id, specialty, bio, rate, location, active_preset_id, max_sessions_per_day, min_notice_hours, max_advance_days, standing_days_off, profiles(name)')
+        .select('id, profile_id, specialty, bio, rate, location, active_preset_id, max_sessions_per_day, min_notice_hours, max_advance_days, standing_days_off, profiles(name, avatar_url)')
         .eq('profile_id', slug)
         .single()
       if (!data) {
@@ -221,6 +221,7 @@ export default function TrainerProfile({ params: { slug } }) {
 
   // Derive name safely
   const name = trainer?.profiles?.name ?? ''
+  const avatarUrl = trainer?.profiles?.avatar_url ?? null
   const { profile_id, specialty, bio, rate, location } = trainer ?? {}
   const displayRate = overrideRate ?? rate
 
@@ -393,13 +394,24 @@ export default function TrainerProfile({ params: { slug } }) {
             <div style={card}>
               <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
                 {/* Avatar */}
-                <div style={{
-                  width: '88px', height: '88px', borderRadius: '20px', flexShrink: 0,
-                  background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: '30px',
-                  color: '#fff', letterSpacing: '-.02em', border: '1px solid var(--line)',
-                }}>{getInitials(name)}</div>
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={avatarUrl} alt=""
+                    style={{
+                      width: '88px', height: '88px', borderRadius: '20px', flexShrink: 0,
+                      objectFit: 'cover', border: '1px solid var(--line)',
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '88px', height: '88px', borderRadius: '20px', flexShrink: 0,
+                    background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: '30px',
+                    color: '#fff', letterSpacing: '-.02em', border: '1px solid var(--line)',
+                  }}>{getInitials(name)}</div>
+                )}
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <h1 style={{
