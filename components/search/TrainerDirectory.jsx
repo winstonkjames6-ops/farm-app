@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { Star, Volleyball } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -54,6 +55,54 @@ const labelStyle = {
 
 const divider = { height: '1px', background: 'rgba(0,0,0,0.08)' }
 
+// ── Sport icons ───────────────────────────────────────────────────────────────
+
+function SportIcon({ sport, size = 12, color = 'currentColor' }) {
+  const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  switch (sport) {
+    case 'Soccer':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8.5 15.3 10.9 14.1 14.8 9.9 14.8 8.7 10.9 12 8.5" />
+        </svg>
+      )
+    case 'Basketball':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 3v18M3 12h18" />
+        </svg>
+      )
+    case 'Tennis':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M5 7c5 2 5 8 0 10M19 7c-5 2-5 8 0 10" />
+        </svg>
+      )
+    case 'Baseball':
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M6 8.5c3 2 3 5 0 7M18 8.5c-3 2-3 5 0 7" />
+        </svg>
+      )
+    case 'Lacrosse':
+      return (
+        <svg {...common}>
+          <path d="M12 21V10" />
+          <path d="M7.5 10C7.5 6 9.5 3 12 3s4.5 3 4.5 7" />
+          <path d="M8.3 8h7.4" />
+        </svg>
+      )
+    case 'Volleyball':
+      return <Volleyball size={size} color={color} strokeWidth={1.8} />
+    default:
+      return null
+  }
+}
+
 // ── TrainerCard ───────────────────────────────────────────────────────────────
 
 function TrainerCard({ trainer, index }) {
@@ -79,16 +128,28 @@ function TrainerCard({ trainer, index }) {
         >
           {/* Header row: avatar + name + rate */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
-            <div style={{
-              width: '48px', height: '48px', flexShrink: 0,
-              background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
-              borderRadius: '12px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: barlow, fontWeight: 800, fontSize: '17px',
-              color: '#FFFFFF',
-            }}>
-              {trainer.initials}
-            </div>
+            {trainer.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={trainer.avatarUrl}
+                alt=""
+                style={{
+                  width: '48px', height: '48px', flexShrink: 0,
+                  borderRadius: '12px', objectFit: 'cover',
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '48px', height: '48px', flexShrink: 0,
+                background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
+                borderRadius: '12px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: barlow, fontWeight: 800, fontSize: '17px',
+                color: '#FFFFFF',
+              }}>
+                {trainer.initials}
+              </div>
+            )}
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -97,11 +158,15 @@ function TrainerCard({ trainer, index }) {
                 </span>
                 {trainer.sport && (
                   <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '4px',
                     fontFamily: barlow, fontSize: '11px', fontWeight: 700,
                     letterSpacing: '.1em', textTransform: 'uppercase',
                     background: 'rgba(0,188,200,0.10)', color: '#00BCC8',
                     border: '1px solid rgba(0,188,200,0.20)', padding: '2px 8px',
-                  }}>{trainer.sport}</span>
+                  }}>
+                    <SportIcon sport={trainer.sport} size={11} color="#00BCC8" />
+                    {trainer.sport}
+                  </span>
                 )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}>
@@ -115,6 +180,13 @@ function TrainerCard({ trainer, index }) {
             <div style={{ flexShrink: 0, textAlign: 'right' }}>
               <div style={{ fontFamily: barlow, fontWeight: 800, fontSize: '22px', color: '#00BCC8' }}>${trainer.rate}</div>
               <div style={{ fontFamily: hanken, fontSize: '12px', color: '#9A9A9A' }}>/hr</div>
+              {trainer.reviewCount > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px', marginTop: '4px' }}>
+                  <Star size={11} fill="#F59E0B" color="#F59E0B" />
+                  <span style={{ fontFamily: hanken, fontSize: '12px', fontWeight: 600, color: '#1A1A1A' }}>{trainer.avgRating.toFixed(1)}</span>
+                  <span style={{ fontFamily: hanken, fontSize: '11px', color: '#9A9A9A' }}>({trainer.reviewCount})</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -195,12 +267,23 @@ export default function TrainerDirectory() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase
-      .from('trainers')
-      .select('profile_id, specialty, bio, rate, location, is_certified, active_preset_id, profiles(name)')
-      .then(({ data }) => {
-        if (data) {
-          setTrainers(data.map((row) => ({
+    Promise.all([
+      supabase
+        .from('trainers')
+        .select('id, profile_id, specialty, bio, rate, location, is_certified, active_preset_id, profiles(name, avatar_url)'),
+      supabase.from('reviews').select('trainer_id, rating'),
+    ]).then(([{ data }, { data: reviewData }]) => {
+      if (data) {
+        const ratingsByTrainer = {}
+        for (const r of reviewData ?? []) {
+          const bucket = ratingsByTrainer[r.trainer_id] ?? (ratingsByTrainer[r.trainer_id] = { sum: 0, count: 0 })
+          bucket.sum += r.rating
+          bucket.count += 1
+        }
+
+        setTrainers(data.map((row) => {
+          const ratings = ratingsByTrainer[row.id]
+          return {
             id: row.profile_id,
             name: row.profiles?.name ?? 'Unknown',
             sport: row.specialty ?? '',
@@ -210,11 +293,15 @@ export default function TrainerDirectory() {
             bio: row.bio ?? null,
             isCertified: !!row.is_certified,
             hasActivePreset: !!row.active_preset_id,
+            avatarUrl: row.profiles?.avatar_url ?? null,
             initials: getInitials(row.profiles?.name ?? ''),
-          })))
-        }
-        setLoading(false)
-      })
+            avgRating: ratings ? Math.round((ratings.sum / ratings.count) * 10) / 10 : null,
+            reviewCount: ratings?.count ?? 0,
+          }
+        }))
+      }
+      setLoading(false)
+    })
   }, [])
 
   const toggleSport = (s) => {
@@ -255,20 +342,29 @@ export default function TrainerDirectory() {
       {/* Sport */}
       <div>
         <div style={labelStyle}>Sport</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {SPORTS.map((s) => (
-            <label key={s} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-              <input
-                type="checkbox" checked={selectedSports.includes(s)} onChange={() => toggleSport(s)}
-                style={{ accentColor: '#00BCC8', width: '15px', height: '15px', cursor: 'pointer' }}
-              />
-              <span style={{
-                fontFamily: hanken, fontSize: '14px',
-                color: selectedSports.includes(s) ? '#1A1A1A' : '#4A4A4A',
-                fontWeight: selectedSports.includes(s) ? 600 : 400,
-              }}>{s}</span>
-            </label>
-          ))}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {SPORTS.map((s) => {
+            const active = selectedSports.includes(s)
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => toggleSport(s)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '5px',
+                  borderRadius: '999px', padding: '6px 14px',
+                  fontFamily: hanken, fontSize: '13px', fontWeight: active ? 600 : 400,
+                  border: active ? '1px solid rgba(0,188,200,0.3)' : '1px solid rgba(0,0,0,0.12)',
+                  background: active ? 'rgba(0,188,200,0.10)' : 'transparent',
+                  color: active ? '#00BCC8' : '#4A4A4A',
+                  cursor: 'pointer',
+                }}
+              >
+                <SportIcon sport={s} size={12} color={active ? '#00BCC8' : '#4A4A4A'} />
+                {s}
+              </button>
+            )
+          })}
         </div>
       </div>
 
