@@ -241,7 +241,7 @@ export default function ChildProfilePage() {
 
         {/* ── Section 4: CTA ── */}
         <div style={{ marginTop: 16 }}>
-          <Link href="/search" style={{
+          <Link href="/dashboard/search" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             width: '100%', height: 52, borderRadius: 12,
             background: T.cyan, color: '#FFFFFF',

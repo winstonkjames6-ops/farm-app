@@ -467,7 +467,7 @@ export default function CreateChildPage() {
               </div>
 
               <Link
-                href="/search"
+                href="/dashboard/search"
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '8px',
                   width: '100%', padding: '15px', borderRadius: '12px',

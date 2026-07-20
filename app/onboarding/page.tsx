@@ -135,7 +135,7 @@ function OnboardingInner() {
   const [slide, setSlide] = useState(0)
   const router = useRouter()
 
-  const destination = role === 'trainer' ? '/dashboard/trainer/schedule' : '/search'
+  const destination = role === 'trainer' ? '/dashboard/trainer/schedule' : '/dashboard/search'
   const slides = role === 'parent' ? PARENT_SLIDES : TRAINER_SLIDES
 
   function advance() {

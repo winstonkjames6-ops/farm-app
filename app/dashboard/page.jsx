@@ -211,7 +211,7 @@ function PastCard({ booking, index }) {
 
         <div className="flex-none pt-1 flex flex-col items-end gap-2">
           <Link
-            href={booking.trainerProfileId ? `/trainer/${booking.trainerProfileId}` : '/search'}
+            href={booking.trainerProfileId ? `/trainer/${booking.trainerProfileId}` : '/dashboard/search'}
             className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-[border-color] duration-150"
             style={{
               border: `1.5px solid ${T.line}`,
@@ -265,7 +265,7 @@ function EmptyState() {
       <p className="text-[17px] font-semibold mb-1" style={{ color: T.ink }}>No sessions yet</p>
       <p className="text-[14.5px] mb-6" style={{ color: T.ink3 }}>Book your first session to get started</p>
       <Link
-        href="/search"
+        href="/dashboard/search"
         className="inline-flex items-center gap-2 font-bold text-[15px] px-6 py-3 rounded-xl transition-[filter] duration-150"
         style={{ background: T.cyan, color: '#FFFFFF', textDecoration: 'none' }}
         onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.07)' }}
