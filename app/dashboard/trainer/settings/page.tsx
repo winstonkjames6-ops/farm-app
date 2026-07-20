@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 
@@ -106,17 +106,48 @@ function ToggleRow({
 
 export default function TrainerSettingsPage() {
   const router = useRouter()
+  const [userId, setUserId] = useState<string | null>(null)
+
+  const [sessionReminders, setSessionReminders] = useState(true)
+  const [newMessages, setNewMessages] = useState(true)
+  const [bookingRequests, setBookingRequests] = useState(true)
+  const [promoUpdates, setPromoUpdates] = useState(false)
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      setUserId(user.id)
+      const { data } = await supabase
+        .from('profiles')
+        .select('notif_session_reminders, notif_messages, notif_booking_requests, notif_promo_updates')
+        .eq('id', user.id)
+        .single()
+      if (data) {
+        setSessionReminders(data.notif_session_reminders)
+        setNewMessages(data.notif_messages)
+        setBookingRequests(data.notif_booking_requests)
+        setPromoUpdates(data.notif_promo_updates)
+      }
+    }
+    load()
+  }, [])
+
+  async function toggleField(column: string, current: boolean, setter: (v: boolean) => void) {
+    const next = !current
+    setter(next)
+    if (!userId) return
+    const supabase = createClient()
+    const { error } = await supabase.from('profiles').update({ [column]: next }).eq('id', userId)
+    if (error) setter(current)
+  }
 
   async function handleLogOut() {
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
   }
-
-  const [sessionReminders, setSessionReminders] = useState(true)
-  const [newMessages, setNewMessages] = useState(true)
-  const [bookingRequests, setBookingRequests] = useState(true)
-  const [promoUpdates, setPromoUpdates] = useState(false)
 
   return (
     <div style={{ position: 'relative', zIndex: 2 }}>
@@ -142,25 +173,25 @@ export default function TrainerSettingsPage() {
                 label="Session reminders"
                 description="Get notified 1 hour before each session"
                 on={sessionReminders}
-                onToggle={() => setSessionReminders((v) => !v)}
+                onToggle={() => toggleField('notif_session_reminders', sessionReminders, setSessionReminders)}
               />
               <ToggleRow
                 label="New messages"
                 description="When a parent messages you"
                 on={newMessages}
-                onToggle={() => setNewMessages((v) => !v)}
+                onToggle={() => toggleField('notif_messages', newMessages, setNewMessages)}
               />
               <ToggleRow
                 label="Booking requests"
                 description="When a parent requests a new session"
                 on={bookingRequests}
-                onToggle={() => setBookingRequests((v) => !v)}
+                onToggle={() => toggleField('notif_booking_requests', bookingRequests, setBookingRequests)}
               />
               <ToggleRow
                 label="Promotional updates"
                 description="Tips, offers, and platform news"
                 on={promoUpdates}
-                onToggle={() => setPromoUpdates((v) => !v)}
+                onToggle={() => toggleField('notif_promo_updates', promoUpdates, setPromoUpdates)}
                 isLast
               />
             </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 
@@ -110,12 +110,45 @@ function ToggleRow({
 
 export default function SettingsPage() {
   const router = useRouter()
+  const [userId, setUserId] = useState<string | null>(null)
   const [sessionReminders, setSessionReminders] = useState(true)
   const [trainerMessages, setTrainerMessages] = useState(true)
   const [reviewReminders, setReviewReminders] = useState(true)
   const [promoUpdates, setPromoUpdates] = useState(false)
   const [shareProgress, setShareProgress] = useState(true)
   const [publicProfile, setPublicProfile] = useState(false)
+
+  useEffect(() => {
+    async function load() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      setUserId(user.id)
+      const { data } = await supabase
+        .from('profiles')
+        .select('notif_session_reminders, notif_messages, notif_booking_requests, notif_promo_updates, share_progress, public_profile')
+        .eq('id', user.id)
+        .single()
+      if (data) {
+        setSessionReminders(data.notif_session_reminders)
+        setTrainerMessages(data.notif_messages)
+        setReviewReminders(data.notif_booking_requests)
+        setPromoUpdates(data.notif_promo_updates)
+        setShareProgress(data.share_progress)
+        setPublicProfile(data.public_profile)
+      }
+    }
+    load()
+  }, [])
+
+  async function toggleField(column: string, current: boolean, setter: (v: boolean) => void) {
+    const next = !current
+    setter(next)
+    if (!userId) return
+    const supabase = createClient()
+    const { error } = await supabase.from('profiles').update({ [column]: next }).eq('id', userId)
+    if (error) setter(current)
+  }
 
   async function handleLogOut() {
     const supabase = createClient()
@@ -153,25 +186,25 @@ export default function SettingsPage() {
                 label="Session reminders"
                 description="Get notified 1 hour before sessions"
                 on={sessionReminders}
-                onToggle={() => setSessionReminders((v) => !v)}
+                onToggle={() => toggleField('notif_session_reminders', sessionReminders, setSessionReminders)}
               />
               <ToggleRow
                 label="New trainer messages"
                 description="When a trainer messages you"
                 on={trainerMessages}
-                onToggle={() => setTrainerMessages((v) => !v)}
+                onToggle={() => toggleField('notif_messages', trainerMessages, setTrainerMessages)}
               />
               <ToggleRow
                 label="Review reminders"
                 description="Reminder to rate completed sessions"
                 on={reviewReminders}
-                onToggle={() => setReviewReminders((v) => !v)}
+                onToggle={() => toggleField('notif_booking_requests', reviewReminders, setReviewReminders)}
               />
               <ToggleRow
                 label="Promotional updates"
                 description="Tips, offers, and platform news"
                 on={promoUpdates}
-                onToggle={() => setPromoUpdates((v) => !v)}
+                onToggle={() => toggleField('notif_promo_updates', promoUpdates, setPromoUpdates)}
                 isLast
               />
             </div>
@@ -185,13 +218,13 @@ export default function SettingsPage() {
                 label="Share athlete progress"
                 description="Allow trainers to share session clips"
                 on={shareProgress}
-                onToggle={() => setShareProgress((v) => !v)}
+                onToggle={() => toggleField('share_progress', shareProgress, setShareProgress)}
               />
               <ToggleRow
                 label="Public profile"
                 description="Let other parents see your review history"
                 on={publicProfile}
-                onToggle={() => setPublicProfile((v) => !v)}
+                onToggle={() => toggleField('public_profile', publicProfile, setPublicProfile)}
                 isLast
               />
             </div>
