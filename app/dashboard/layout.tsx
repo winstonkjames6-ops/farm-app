@@ -114,7 +114,7 @@ const NAV_ITEMS = [
 
 const NAV_HREFS: Record<string, string> = {
   home:     '/dashboard',
-  search:   '/dashboard/search',
+  search:   '/search',
   calendar: '/dashboard/calendar',
   messages: '/dashboard/messages',
   profile:  '/dashboard/profile',
@@ -127,10 +127,6 @@ const PAGE_HELP: Record<string, { title: string; body: string }> = {
   '/dashboard': {
     title: 'Home',
     body: "Your home dashboard shows upcoming sessions, past bookings, and quick access to your athletes. Tap \"Join session\" when it's time to connect with your trainer.",
-  },
-  '/dashboard/search': {
-    title: 'Find a Trainer',
-    body: 'Browse and filter trainers by sport, format, location, and price. Click any card to view their full profile, credentials, and availability before booking.',
   },
   '/dashboard/calendar': {
     title: 'Calendar',
@@ -610,7 +606,6 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
 
   const getActiveNav = () => {
     if (pathname === '/dashboard') return 'home'
-    if (pathname.startsWith('/dashboard/search')) return 'search'
     if (pathname.startsWith('/dashboard/calendar')) return 'calendar'
     if (pathname.startsWith('/dashboard/messages')) return 'messages'
     if (pathname.startsWith('/dashboard/profile')) return 'profile'
