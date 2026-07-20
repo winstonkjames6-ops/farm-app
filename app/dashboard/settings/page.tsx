@@ -126,13 +126,13 @@ export default function SettingsPage() {
       setUserId(user.id)
       const { data } = await supabase
         .from('profiles')
-        .select('notif_session_reminders, notif_messages, notif_booking_requests, notif_promo_updates, share_progress, public_profile')
+        .select('notif_session_reminders, notif_messages, notif_review_reminders, notif_promo_updates, share_progress, public_profile')
         .eq('id', user.id)
         .single()
       if (data) {
         setSessionReminders(data.notif_session_reminders)
         setTrainerMessages(data.notif_messages)
-        setReviewReminders(data.notif_booking_requests)
+        setReviewReminders(data.notif_review_reminders)
         setPromoUpdates(data.notif_promo_updates)
         setShareProgress(data.share_progress)
         setPublicProfile(data.public_profile)
@@ -198,7 +198,7 @@ export default function SettingsPage() {
                 label="Review reminders"
                 description="Reminder to rate completed sessions"
                 on={reviewReminders}
-                onToggle={() => toggleField('notif_booking_requests', reviewReminders, setReviewReminders)}
+                onToggle={() => toggleField('notif_review_reminders', reviewReminders, setReviewReminders)}
               />
               <ToggleRow
                 label="Promotional updates"
