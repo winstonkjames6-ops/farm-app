@@ -24,6 +24,7 @@ import {
   PlayCircle,
 } from 'lucide-react'
 import { T } from '@/lib/theme'
+import { AvatarCropModal } from '@/components/profile/AvatarCropModal'
 import { ProfileCard } from '@/components/profile/ProfileCard'
 import { AppearanceSection } from '@/components/profile/AppearanceSection'
 import { ActivityList } from '@/components/profile/ActivityList'
@@ -203,10 +204,11 @@ function ProfilePhotoSection({
   const [strengthExpanded, setStrengthExpanded] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const initials = getInitials(fullName)
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
@@ -226,12 +228,16 @@ function ProfilePhotoSection({
       return
     }
 
+    setPendingFile(file)
+  }
+
+  async function handleCropSave(blob: Blob) {
+    setPendingFile(null)
     setUploading(true)
     const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `${userId}/${Date.now()}.${ext}`
+    const path = `${userId}/${Date.now()}.jpg`
 
-    const { error: uploadErr } = await supabase.storage.from('avatars').upload(path, file)
+    const { error: uploadErr } = await supabase.storage.from('avatars').upload(path, blob, { contentType: 'image/jpeg' })
     if (uploadErr) {
       setUploadError(uploadErr.message)
       setUploading(false)
@@ -347,6 +353,14 @@ function ProfilePhotoSection({
         >{uploading ? 'Uploading…' : 'Upload photo'}</button>
         <button style={{ height: '44px', padding: '0 20px', background: 'transparent', color: T.ink2, border: '1px solid rgba(0,0,0,0.12)', borderRadius: '8px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer' }}>Remove photo</button>
       </div>
+
+      {pendingFile && (
+        <AvatarCropModal
+          file={pendingFile}
+          onSave={handleCropSave}
+          onCancel={() => setPendingFile(null)}
+        />
+      )}
     </SectionCard>
   )
 }
