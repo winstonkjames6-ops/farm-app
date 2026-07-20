@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useTrainerSport } from '../sport-context'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -8,6 +8,7 @@ import Link from 'next/link'
 import {
   ChevronDown,
   Camera,
+  Loader2,
   MapPin,
   Phone,
   Video,
@@ -108,6 +109,9 @@ const SPORTS = ['Soccer', 'Basketball', 'Tennis', 'Volleyball', 'Lacrosse', 'Bas
 const AGE_GROUPS = ['U6-U8', 'U9-U10', 'U11-U12', 'U13-U14', 'U15-U16', 'U17-U18', 'Adults']
 const TRAVEL_OPTIONS = ['No travel', 'Up to 5 miles', 'Up to 10 miles', 'Up to 20 miles', 'Up to 30 miles']
 
+const AVATAR_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const AVATAR_MAX_BYTES = 5 * 1024 * 1024 // matches the avatars bucket's own file_size_limit
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function scrollTo(id: string) {
@@ -186,17 +190,101 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: () => void }) {
 
 // ── Section: Profile photo ─────────────────────────────────────────────────────
 
-function ProfilePhotoSection({ fullName, sport }: { fullName: string; sport: string }) {
+function ProfilePhotoSection({
+  fullName, sport, userId, avatarUrl, onAvatarChange,
+}: {
+  fullName: string
+  sport: string
+  userId: string
+  avatarUrl: string | null
+  onAvatarChange: (url: string) => void
+}) {
   const profileStrength = PROFILE_ITEMS.filter((i) => i.completed).reduce((sum, i) => sum + parseInt(i.boost), 0)
   const [strengthExpanded, setStrengthExpanded] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const initials = getInitials(fullName)
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setUploadError('')
+
+    if (!userId) {
+      setUploadError('Not authenticated. Please refresh and try again.')
+      return
+    }
+    if (!AVATAR_ALLOWED_TYPES.includes(file.type)) {
+      setUploadError('Please upload a JPEG, PNG, or WEBP image.')
+      return
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+      setUploadError('Image must be under 5MB.')
+      return
+    }
+
+    setUploading(true)
+    const supabase = createClient()
+    const ext = file.name.split('.').pop()
+    const path = `${userId}/${Date.now()}.${ext}`
+
+    const { error: uploadErr } = await supabase.storage.from('avatars').upload(path, file)
+    if (uploadErr) {
+      setUploadError(uploadErr.message)
+      setUploading(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+    const { error: updateErr } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId)
+    if (updateErr) {
+      setUploadError(updateErr.message)
+      setUploading(false)
+      return
+    }
+
+    onAvatarChange(publicUrl)
+    setUploading(false)
+  }
 
   return (
     <SectionCard id="section-photo">
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          <div style={{ width: 120, height: 120, borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '36px', color: '#FFFFFF' }}>{initials}</div>
-          <button style={{ position: 'absolute', bottom: '4px', right: '4px', width: '32px', height: '32px', borderRadius: '999px', background: T.cyan, border: '2px solid #FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }}
+        >
+          <input
+            ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
+            onChange={handleFileChange} style={{ display: 'none' }}
+          />
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl} alt=""
+              style={{ width: 120, height: 120, borderRadius: '999px', objectFit: 'cover' }}
+            />
+          ) : (
+            <div style={{ width: 120, height: 120, borderRadius: '999px', background: T.cyan, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '36px', color: '#FFFFFF' }}>{initials}</div>
+          )}
+          {uploading && (
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: '999px',
+              background: 'rgba(255,255,255,0.75)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }}>
+                <Loader2 size={26} color={T.cyan} />
+              </motion.div>
+            </div>
+          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}
+            style={{ position: 'absolute', bottom: '4px', right: '4px', width: '32px', height: '32px', borderRadius: '999px', background: T.cyan, border: '2px solid #FFFFFF', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+          >
             <Camera size={16} color="#FFFFFF" />
           </button>
         </div>
@@ -248,8 +336,15 @@ function ProfilePhotoSection({ fullName, sport }: { fullName: string; sport: str
           </AnimatePresence>
         </div>
       </div>
+      {uploadError && (
+        <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '12px' }}>{uploadError}</div>
+      )}
       <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-        <button style={{ height: '44px', padding: '0 20px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer' }}>Upload photo</button>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          style={{ height: '44px', padding: '0 20px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: uploading ? 'default' : 'pointer', opacity: uploading ? 0.7 : 1 }}
+        >{uploading ? 'Uploading…' : 'Upload photo'}</button>
         <button style={{ height: '44px', padding: '0 20px', background: 'transparent', color: T.ink2, border: '1px solid rgba(0,0,0,0.12)', borderRadius: '8px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer' }}>Remove photo</button>
       </div>
     </SectionCard>
@@ -1206,7 +1301,7 @@ export default function TrainerProfilePage() {
                 style={{ border: '1px solid rgba(0,0,0,0.12)', color: T.ink2, background: 'transparent', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px', flexShrink: 0 }}
               >← Done editing</button>
             </div>
-            <ProfilePhotoSection fullName={initName} sport={sport} />
+            <ProfilePhotoSection fullName={initName} sport={sport} userId={userId ?? ''} avatarUrl={avatarUrl} onAvatarChange={setAvatarUrl} />
             <BasicInfoSection
               initialFullName={initName}
               initialBio={initBio}
