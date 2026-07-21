@@ -175,26 +175,12 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: { role: 'athlete', name: `${form.firstName} ${form.lastName}` }
+      }
     })
     if (error) { setAuthError(error.message); setStep('account'); return }
-    if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        role: 'athlete',
-        name: `${form.firstName} ${form.lastName}`,
-        email: form.email,
-      })
-      if (profileError) { setAuthError('Account created but profile setup failed. Please contact support.'); setStep('account'); return }
-      // Requires: ALTER TABLE athletes ALTER COLUMN parent_id DROP NOT NULL;
-      // and an RLS INSERT policy where profile_id = auth.uid()
-      const { error: athleteError } = await supabase.from('athletes').insert({
-        profile_id: data.user.id,
-        parent_id: null,
-        name: `${form.firstName} ${form.lastName}`,
-      })
-      if (athleteError) { setAuthError('Account created but athlete profile setup failed. Please contact support.'); setStep('account'); return }
-    }
     setStep('done')
     router.push('/dashboard/athlete')
   }
@@ -204,25 +190,15 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: { role: 'parent', name: `${form.firstName} ${form.lastName}` }
+      }
     })
     if (error) {
       setAuthError(error.message)
       setStep('account')
       return
-    }
-    if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        role: 'parent',
-        name: `${form.firstName} ${form.lastName}`,
-        email: form.email,
-      })
-      if (profileError) {
-        setAuthError('Account created but profile setup failed. Please contact support.')
-        setStep('account')
-        return
-      }
     }
     setStep('done')
     router.push('/onboarding?role=parent')
@@ -233,36 +209,21 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: {
+          role: 'trainer',
+          name: `${form.firstName} ${form.lastName}`,
+          specialty: form.trainerSport,
+          rate: form.trainerRate,
+          location: form.trainerLocation,
+        }
+      }
     })
     if (error) {
       setAuthError(error.message)
       setStep('account')
       return
-    }
-    if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        role: 'trainer',
-        name: `${form.firstName} ${form.lastName}`,
-        email: form.email,
-      })
-      if (profileError) {
-        setAuthError('Account created but profile setup failed. Please contact support.')
-        setStep('account')
-        return
-      }
-      const { error: trainerError } = await supabase.from('trainers').insert({
-        profile_id: data.user.id,
-        specialty: form.trainerSport,
-        rate: Number(form.trainerRate),
-        location: form.trainerLocation,
-      })
-      if (trainerError) {
-        setAuthError('Account created but profile setup failed. Please contact support.')
-        setStep('account')
-        return
-      }
     }
     setStep('done')
     router.push('/onboarding?role=trainer')
