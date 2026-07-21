@@ -172,7 +172,11 @@ export default function SignupPage() {
 
   async function createSelfAthleteAccount() {
     const supabase = createClient()
-    const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password })
+    const { data, error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+    })
     if (error) { setAuthError(error.message); setStep('account'); return }
     if (data.user) {
       const { error: profileError } = await supabase.from('profiles').insert({
@@ -197,7 +201,11 @@ export default function SignupPage() {
 
   async function handleParentDone() {
     const supabase = createClient()
-    const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password })
+    const { data, error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+    })
     if (error) {
       setAuthError(error.message)
       setStep('account')
@@ -222,7 +230,11 @@ export default function SignupPage() {
 
   async function handleTrainerDone() {
     const supabase = createClient()
-    const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password })
+    const { data, error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` }
+    })
     if (error) {
       setAuthError(error.message)
       setStep('account')
