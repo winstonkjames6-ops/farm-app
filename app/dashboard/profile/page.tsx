@@ -634,65 +634,240 @@ const ATHLETE_PERMISSION_CATEGORIES = [
 
 const PERM_KEYS = ATHLETE_PERMISSION_CATEGORIES.flatMap((c) => c.items.map((it) => it.key))
 
-// ── Direct-message waiver confirmation modal ──────────────────────────────────
+// ── Direct-message waiver modal ───────────────────────────────────────────────
 
-function DirectMessageConfirmModal({
-  athleteName, onConfirm, onCancel, confirming,
+function pointFromEvent(canvas: HTMLCanvasElement, clientX: number, clientY: number) {
+  const rect = canvas.getBoundingClientRect()
+  return { x: clientX - rect.left, y: clientY - rect.top }
+}
+
+function WaiverModal({
+  athleteName, onSubmit, onCancel, submitting, error,
 }: {
   athleteName: string
-  onConfirm: () => void
+  onSubmit: (parentName: string, signatureDataUrl: string) => void
   onCancel: () => void
-  confirming: boolean
+  submitting: boolean
+  error: string | null
 }) {
+  const [parentName, setParentName] = useState('')
+  const [agreed, setAgreed] = useState(false)
+  const [hasSignature, setHasSignature] = useState(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const isDrawingRef = useRef(false)
+  const lastPointRef = useRef<{ x: number; y: number } | null>(null)
+
+  function beginStroke(clientX: number, clientY: number) {
+    const canvas = canvasRef.current
+    if (!canvas || submitting) return
+    isDrawingRef.current = true
+    lastPointRef.current = pointFromEvent(canvas, clientX, clientY)
+    setHasSignature(true)
+  }
+
+  function extendStroke(clientX: number, clientY: number) {
+    const canvas = canvasRef.current
+    if (!canvas || !isDrawingRef.current || submitting) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx || !lastPointRef.current) return
+    const point = pointFromEvent(canvas, clientX, clientY)
+    ctx.strokeStyle = '#111827'
+    ctx.lineWidth = 2
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.beginPath()
+    ctx.moveTo(lastPointRef.current.x, lastPointRef.current.y)
+    ctx.lineTo(point.x, point.y)
+    ctx.stroke()
+    lastPointRef.current = point
+  }
+
+  function endStroke() {
+    isDrawingRef.current = false
+    lastPointRef.current = null
+  }
+
+  function handleClear() {
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext('2d')
+    if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height)
+    setHasSignature(false)
+  }
+
+  const canSubmit = parentName.trim().length > 0 && agreed && hasSignature && !submitting
+
+  function handleSubmit() {
+    const canvas = canvasRef.current
+    if (!canvas || !canSubmit) return
+    onSubmit(parentName.trim(), canvas.toDataURL('image/png'))
+  }
+
   return createPortal(
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
       background: 'rgba(0,0,0,0.6)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '24px',
+      padding: '24px', overflowY: 'auto',
     }}>
       <div style={{
         background: '#FFFFFF', borderRadius: '16px', padding: '24px',
-        width: '420px', maxWidth: '100%',
+        width: '420px', maxWidth: '100%', maxHeight: '92vh', overflowY: 'auto',
       }}>
-        <div style={{
-          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '18px',
-          color: T.ink, marginBottom: '12px',
-        }}>
-          Allow direct messaging
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+          <div style={{
+            width: '28px', height: '28px', borderRadius: '8px', background: T.cyan,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <span style={{
+              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '15px',
+              color: '#FFFFFF',
+            }}>F</span>
+          </div>
+          <div style={{
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '18px',
+            color: T.ink,
+          }}>
+            Allow direct messaging
+          </div>
         </div>
         <div style={{
-          fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', lineHeight: 1.5,
-          color: T.ink2, marginBottom: '20px',
+          fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif",
+          marginBottom: '16px',
         }}>
-          By enabling this, you acknowledge that {athleteName} will be able to send and receive
-          private messages directly with their trainer(s) on FARM. You are responsible for
-          reviewing this decision periodically. FARM is not liable for the content of these
-          communications.
+          Parent/guardian consent required — FARM Athlete Communication Waiver
         </div>
+
+        {/* Waiver text */}
+        <div style={{
+          background: T.surface2, border: `1px solid ${T.line}`, borderRadius: '8px',
+          padding: '12px', maxHeight: '120px', overflowY: 'auto',
+          fontSize: '13px', lineHeight: 1.5, color: T.ink2,
+          fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '16px',
+        }}>
+          By signing this waiver, I acknowledge that my child will be able to send and receive
+          private messages directly with their assigned trainer(s) on FARM. I understand I am
+          responsible for periodically reviewing this decision and may revoke it at any time.
+          I have read and agree to FARM&apos;s full messaging consent terms.
+        </div>
+
+        {/* Parent/Guardian name */}
+        <div style={{ marginBottom: '12px' }}>
+          <FieldLabel>Parent/Guardian name</FieldLabel>
+          <input
+            style={inputBase}
+            value={parentName}
+            onChange={(e) => setParentName(e.target.value)}
+            placeholder="Type your full name"
+            disabled={submitting}
+          />
+        </div>
+
+        {/* Athlete name (read-only) */}
+        <div style={{ marginBottom: '12px' }}>
+          <FieldLabel>Athlete name</FieldLabel>
+          <input
+            style={{ ...inputBase, background: T.surface2, color: T.ink2, cursor: 'not-allowed' }}
+            value={athleteName}
+            readOnly
+            disabled
+          />
+        </div>
+
+        {/* Signature */}
+        <div style={{ marginBottom: '8px' }}>
+          <FieldLabel>Signature</FieldLabel>
+          <div style={{ position: 'relative', width: '100%', height: '140px' }}>
+            <canvas
+              ref={canvasRef}
+              width={372}
+              height={140}
+              style={{
+                width: '100%', height: '140px', borderRadius: '8px',
+                border: `1px solid ${T.line}`, background: T.surface2,
+                touchAction: 'none', cursor: submitting ? 'not-allowed' : 'crosshair',
+                display: 'block',
+              }}
+              onPointerDown={(e) => beginStroke(e.clientX, e.clientY)}
+              onPointerMove={(e) => extendStroke(e.clientX, e.clientY)}
+              onPointerUp={endStroke}
+              onPointerLeave={endStroke}
+              onPointerCancel={endStroke}
+            />
+            {!hasSignature && (
+              <span style={{
+                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                fontSize: '13px', color: 'rgba(107,114,128,0.5)', pointerEvents: 'none',
+                fontFamily: "'Hanken Grotesk', sans-serif",
+              }}>
+                Draw with mouse or touch
+              </span>
+            )}
+          </div>
+          <button
+            onClick={handleClear}
+            disabled={submitting}
+            style={{
+              marginTop: '6px', background: 'transparent', border: 'none', padding: 0,
+              color: T.cyan, fontSize: '13px', fontWeight: 600,
+              fontFamily: "'Hanken Grotesk', sans-serif",
+              cursor: submitting ? 'default' : 'pointer',
+            }}
+          >Clear</button>
+        </div>
+
+        {/* Agreement checkbox */}
+        <label style={{
+          display: 'flex', alignItems: 'flex-start', gap: '8px',
+          marginTop: '12px', marginBottom: '12px',
+          cursor: submitting ? 'default' : 'pointer',
+        }}>
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            disabled={submitting}
+            style={{ marginTop: '2px' }}
+          />
+          <span style={{
+            fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif",
+          }}>
+            I have read and agree to the terms above
+          </span>
+        </label>
+
+        {error && (
+          <div style={{
+            fontSize: '13px', color: T.danger, marginBottom: '12px',
+            fontFamily: "'Hanken Grotesk', sans-serif",
+          }}>
+            {error}
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: '12px' }}>
           <button
             onClick={onCancel}
-            disabled={confirming}
+            disabled={submitting}
             style={{
               flex: 1, height: '44px', padding: '0 16px',
               background: 'transparent', color: T.ink2,
               border: '1px solid rgba(0,0,0,0.12)', borderRadius: '8px',
               fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif",
-              cursor: confirming ? 'default' : 'pointer', opacity: confirming ? 0.6 : 1,
+              cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.6 : 1,
             }}
           >Cancel</button>
           <button
-            onClick={onConfirm}
-            disabled={confirming}
+            onClick={handleSubmit}
+            disabled={!canSubmit}
             style={{
               flex: 1, height: '44px', padding: '0 16px',
               background: T.cyan, color: '#FFFFFF',
               border: 'none', borderRadius: '8px',
               fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600,
-              cursor: confirming ? 'default' : 'pointer', opacity: confirming ? 0.7 : 1,
+              cursor: canSubmit ? 'pointer' : 'not-allowed', opacity: canSubmit ? 1 : 0.5,
             }}
-          >{confirming ? 'Enabling…' : 'I agree, enable messaging'}</button>
+          >{submitting ? 'Enabling…' : 'I agree, enable messaging'}</button>
         </div>
       </div>
     </div>,
@@ -764,42 +939,60 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
   }
 
   // Persists the messaging waiver (sign or revoke) and only flips the toggle
-  // once the write succeeds — never optimistically.
-  async function persistWaiver(athleteId: string, waiverSignedAt: string | null, nextValue: boolean) {
+  // once the write succeeds — never optimistically. Returns whether it succeeded
+  // so callers (e.g. the waiver modal) know whether to close.
+  async function persistWaiver(
+    athleteId: string,
+    waiverSignedAt: string | null,
+    waiverSignedBy: string | null,
+    waiverSignature: string | null,
+    nextValue: boolean,
+  ): Promise<boolean> {
     setDmPending((prev) => ({ ...prev, [athleteId]: true }))
     setSaveError((prev) => ({ ...prev, [athleteId]: null }))
     const supabase = createClient()
     const { error } = await supabase
       .from('athletes')
-      .update({ waiver_signed_at: waiverSignedAt })
+      .update({
+        waiver_signed_at: waiverSignedAt,
+        waiver_signed_by: waiverSignedBy,
+        waiver_signature: waiverSignature,
+      })
       .eq('id', athleteId)
     setDmPending((prev) => ({ ...prev, [athleteId]: false }))
     if (error) {
       setSaveError((prev) => ({ ...prev, [athleteId]: error.message }))
-      return
+      return false
     }
     setAthletePerms((prev) => ({
       ...prev,
       [athleteId]: { ...prev[athleteId], directMessageAthlete: nextValue },
     }))
+    return true
   }
 
   function handleDirectMessageToggle(athlete: AthleteRow) {
     const current = athletePerms[athlete.id]?.directMessageAthlete ?? false
     if (current) {
-      // Turning off — no confirmation needed, revoke the waiver.
-      void persistWaiver(athlete.id, null, false)
+      // Turning off — no waiver needed; clear the signature along with the date.
+      void persistWaiver(athlete.id, null, null, null, false)
       return
     }
-    // Turning on — require confirmation before writing anything.
+    // Turning on — require a signed waiver before writing anything.
     setPendingDmAthlete(athlete)
   }
 
-  async function confirmDirectMessage() {
+  async function submitWaiver(parentName: string, signatureDataUrl: string) {
     if (!pendingDmAthlete) return
     const athlete = pendingDmAthlete
-    setPendingDmAthlete(null)
-    await persistWaiver(athlete.id, new Date().toISOString(), true)
+    const ok = await persistWaiver(
+      athlete.id,
+      new Date().toISOString(),
+      parentName,
+      signatureDataUrl,
+      true,
+    )
+    if (ok) setPendingDmAthlete(null)
   }
 
   function cancelDirectMessage() {
@@ -1068,10 +1261,11 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
       </div>
     </SectionCard>
     {pendingDmAthlete && (
-      <DirectMessageConfirmModal
+      <WaiverModal
         athleteName={pendingDmAthlete.name}
-        confirming={dmPending[pendingDmAthlete.id] ?? false}
-        onConfirm={() => void confirmDirectMessage()}
+        submitting={dmPending[pendingDmAthlete.id] ?? false}
+        error={saveError[pendingDmAthlete.id] ?? null}
+        onSubmit={(parentName, signatureDataUrl) => void submitWaiver(parentName, signatureDataUrl)}
         onCancel={cancelDirectMessage}
       />
     )}
