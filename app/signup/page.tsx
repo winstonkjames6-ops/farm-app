@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
@@ -40,12 +39,6 @@ const labelStyle: React.CSSProperties = {
   display: 'block',
 }
 
-const SPORTS = [
-  'Soccer','Basketball','Baseball','Softball','Tennis','Volleyball',
-  'Lacrosse','Football','Track & Field','Swimming','Golf','Gymnastics',
-  'Martial Arts','Hockey','Wrestling','Other',
-]
-
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -71,21 +64,7 @@ function WarningIcon({ color = '#F59E0B' }: { color?: string }) {
   )
 }
 
-function DotProgress({ total, active }: { total: number; active: number }) {
-  return (
-    <div style={{ display: 'flex', gap: '6px', marginBottom: '28px' }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} style={{
-          width: '8px', height: '8px', borderRadius: '50%',
-          background: i === active ? T.cyan : 'rgba(0,0,0,0.12)',
-          transition: 'background .2s ease',
-        }} />
-      ))}
-    </div>
-  )
-}
-
-type Step = 'age' | 'account' | 'parent-invite' | 'role' | 'onboarding-trainer' | 'done'
+type Step = 'age' | 'account' | 'parent-invite' | 'role' | 'check-email'
 
 export default function SignupPage() {
   const [step, setStep] = useState<Step>('age')
@@ -94,15 +73,13 @@ export default function SignupPage() {
   const [dob, setDob] = useState('')
   const [calculatedAge, setCalculatedAge] = useState<number | null>(null)
   const [form, setForm] = useState({
-    firstName: '', lastName: '', email: '', password: '',
+    email: '', password: '',
     role: '' as 'parent' | 'trainer' | 'athlete' | '',
-    trainerSport: '', trainerRate: '', trainerLocation: '',
   })
   const [showPassword, setShowPassword] = useState(false)
   const [focused, setFocused] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [authError, setAuthError] = useState<string | null>(null)
-  const router = useRouter()
 
   const [inviteCopied, setInviteCopied] = useState(false)
 
@@ -149,8 +126,6 @@ export default function SignupPage() {
 
   function validateAccount(): boolean {
     const e: Record<string, string> = {}
-    if (!form.firstName.trim()) e.firstName = 'First name is required.'
-    if (!form.lastName.trim()) e.lastName = 'Last name is required.'
     if (!form.email.trim() || !form.email.includes('@')) e.email = 'Enter a valid email address.'
     if (!form.password || form.password.length < 8) e.password = 'Password must be at least 8 characters.'
     setErrors(e)
@@ -166,33 +141,32 @@ export default function SignupPage() {
 
   function handleRoleContinue() {
     if (form.role === 'parent') handleParentDone()
-    else if (form.role === 'trainer') setStep('onboarding-trainer')
+    else if (form.role === 'trainer') handleTrainerDone()
     else if (form.role === 'athlete') createSelfAthleteAccount()
   }
 
   async function createSelfAthleteAccount() {
     const supabase = createClient()
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: { role: 'athlete', name: `${form.firstName} ${form.lastName}` }
+        data: { role: 'athlete', dob }
       }
     })
     if (error) { setAuthError(error.message); setStep('account'); return }
-    setStep('done')
-    router.push('/dashboard/athlete')
+    setStep('check-email')
   }
 
   async function handleParentDone() {
     const supabase = createClient()
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: { role: 'parent', name: `${form.firstName} ${form.lastName}` }
+        data: { role: 'parent', dob }
       }
     })
     if (error) {
@@ -200,24 +174,17 @@ export default function SignupPage() {
       setStep('account')
       return
     }
-    setStep('done')
-    router.push('/onboarding?role=parent')
+    setStep('check-email')
   }
 
   async function handleTrainerDone() {
     const supabase = createClient()
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: {
-          role: 'trainer',
-          name: `${form.firstName} ${form.lastName}`,
-          specialty: form.trainerSport,
-          rate: form.trainerRate,
-          location: form.trainerLocation,
-        }
+        data: { role: 'trainer', dob }
       }
     })
     if (error) {
@@ -225,15 +192,13 @@ export default function SignupPage() {
       setStep('account')
       return
     }
-    setStep('done')
-    router.push('/onboarding?role=trainer')
+    setStep('check-email')
   }
 
   function goBack() {
     if (step === 'account') setStep('age')
     else if (step === 'parent-invite') setStep('account')
     else if (step === 'role') setStep('account')
-    else if (step === 'onboarding-trainer') setStep('role')
   }
 
   const inputStyle = (field: string): React.CSSProperties => ({
@@ -402,35 +367,6 @@ export default function SignupPage() {
           <p style={{ fontSize: '15px', color: T.ink2, margin: '0 0 28px', lineHeight: 1.5 }}>
             You&apos;re {calculatedAge} — let&apos;s get you set up.
           </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '18px' }}>
-            <div>
-              <label style={labelStyle}>First name</label>
-              <input
-                type="text"
-                value={form.firstName}
-                onChange={e => update('firstName', e.target.value)}
-                onFocus={() => setFocused('firstName')}
-                onBlur={() => setFocused(null)}
-                placeholder="Alex"
-                style={inputStyle('firstName')}
-              />
-              {errors.firstName && <p style={{ fontSize: '12px', color: T.error, margin: '4px 0 0' }}>{errors.firstName}</p>}
-            </div>
-            <div>
-              <label style={labelStyle}>Last name</label>
-              <input
-                type="text"
-                value={form.lastName}
-                onChange={e => update('lastName', e.target.value)}
-                onFocus={() => setFocused('lastName')}
-                onBlur={() => setFocused(null)}
-                placeholder="Johnson"
-                style={inputStyle('lastName')}
-              />
-              {errors.lastName && <p style={{ fontSize: '12px', color: T.error, margin: '4px 0 0' }}>{errors.lastName}</p>}
-            </div>
-          </div>
 
           <div style={{ marginBottom: '18px' }}>
             <label style={labelStyle}>Email address</label>
@@ -668,90 +604,9 @@ export default function SignupPage() {
       )
     }
 
-    if (step === 'onboarding-trainer') {
-      const valid = form.trainerSport && form.trainerRate
+    if (step === 'check-email') {
       return (
-        <>
-          <button onClick={goBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: '14px', padding: '0 0 4px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
-            ← Back
-          </button>
-          <DotProgress total={3} active={1} />
-          <h1 style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: '26px', color: T.ink, margin: '0 0 8px' }}>
-            Set up your profile
-          </h1>
-          <p style={{ fontSize: '14px', color: T.ink2, margin: '0 0 28px', lineHeight: 1.5 }}>
-            You can update this anytime.
-          </p>
-
-          <div style={{ marginBottom: '18px' }}>
-            <label style={labelStyle}>Primary sport</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {SPORTS.map(sport => {
-                const selected = form.trainerSport === sport
-                return (
-                  <button
-                    key={sport}
-                    onClick={() => update('trainerSport', sport)}
-                    style={{
-                      padding: '8px 16px', borderRadius: '999px', fontSize: '14px', fontWeight: 600,
-                      cursor: 'pointer', minHeight: '44px', border: 'none',
-                      background: selected ? T.cyan : 'transparent',
-                      color: selected ? '#FFFFFF' : T.ink2,
-                      outline: selected ? 'none' : `1px solid rgba(0,0,0,0.12)`,
-                      fontFamily: "'Hanken Grotesk', sans-serif",
-                      transition: 'all .15s ease',
-                    }}
-                  >
-                    {sport}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '18px' }}>
-            <label style={labelStyle}>Hourly rate</label>
-            <div style={{ display: 'flex', alignItems: 'center', background: '#FFFFFF', border: `1px solid ${focused === 'trainerRate' ? T.cyan : 'rgba(0,0,0,0.12)'}`, borderRadius: '10px', padding: '0 16px', boxShadow: focused === 'trainerRate' ? '0 0 0 3px rgba(0,188,200,0.12)' : 'none', transition: 'border-color .15s ease, box-shadow .15s ease' }}>
-              <span style={{ fontSize: '16px', color: T.ink2, paddingRight: '8px' }}>$</span>
-              <input
-                type="number"
-                value={form.trainerRate}
-                onChange={e => update('trainerRate', e.target.value)}
-                onFocus={() => setFocused('trainerRate')}
-                onBlur={() => setFocused(null)}
-                placeholder="65"
-                style={{ ...inputBase, border: 'none', padding: '13px 0', boxShadow: 'none', flex: 1 }}
-              />
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '28px' }}>
-            <label style={labelStyle}>Location / City</label>
-            <input
-              type="text"
-              value={form.trainerLocation}
-              onChange={e => update('trainerLocation', e.target.value)}
-              onFocus={() => setFocused('trainerLocation')}
-              onBlur={() => setFocused(null)}
-              placeholder="Austin, TX"
-              style={inputStyle('trainerLocation')}
-            />
-          </div>
-
-          <button
-            onClick={handleTrainerDone}
-            disabled={!valid}
-            style={{ ...cyanBtn, opacity: valid ? 1 : 0.5, cursor: valid ? 'pointer' : 'not-allowed' }}
-          >
-            Go to my dashboard →
-          </button>
-        </>
-      )
-    }
-
-    if (step === 'done') {
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', gap: '20px', textAlign: 'center' }}>
           <div style={{
             width: '64px', height: '64px', borderRadius: '50%', background: T.cyan,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -760,7 +615,15 @@ export default function SignupPage() {
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <p style={{ fontSize: '16px', color: T.ink2, margin: 0, fontWeight: 600 }}>Setting things up...</p>
+          <h1 style={{ fontFamily: "'Archivo Black', sans-serif", fontSize: '26px', color: T.ink, margin: 0 }}>
+            Check your email
+          </h1>
+          <p style={{ fontSize: '15px', color: T.ink2, margin: 0, lineHeight: 1.6, maxWidth: '360px' }}>
+            We sent a confirmation link to <strong>{form.email}</strong>. Click it to finish setting up your account.
+          </p>
+          <Link href="/login" style={{ color: T.cyan, fontWeight: 700, fontSize: '14px', textDecoration: 'none', marginTop: '8px' }}>
+            Back to login
+          </Link>
         </div>
       )
     }
