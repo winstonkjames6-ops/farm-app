@@ -5,10 +5,7 @@ export default function Hero() {
     <section
       className="relative overflow-hidden min-h-screen flex items-center pt-20"
       style={{
-        backgroundImage: "url('/hero-athlete.png')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'left center',
-        backgroundRepeat: 'no-repeat',
+        background: '#09090b',
       }}
     >
       {/* Dark overlay */}

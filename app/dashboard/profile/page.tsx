@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
@@ -41,6 +42,7 @@ interface AthleteRow {
   age: number | null
   sport: string
   initials: string
+  waiver_signed_at: string | null
 }
 
 // ── Static data ────────────────────────────────────────────────────────────────
@@ -159,11 +161,15 @@ function SaveButton({
   )
 }
 
-function ToggleSwitch({ on, onChange }: { on: boolean; onChange: () => void }) {
+function ToggleSwitch({ on, onChange, disabled }: { on: boolean; onChange: () => void; disabled?: boolean }) {
   return (
     <div
-      onClick={onChange}
-      style={{ width: '44px', height: '24px', borderRadius: '999px', background: on ? T.cyan : '#E5E7EB', position: 'relative', cursor: 'pointer', flexShrink: 0, transition: 'background 0.2s ease', display: 'inline-block' }}
+      onClick={disabled ? undefined : onChange}
+      style={{
+        width: '44px', height: '24px', borderRadius: '999px', background: on ? T.cyan : '#E5E7EB',
+        position: 'relative', cursor: disabled ? 'not-allowed' : 'pointer', flexShrink: 0,
+        transition: 'background 0.2s ease', display: 'inline-block', opacity: disabled ? 0.6 : 1,
+      }}
     >
       <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#FFFFFF', position: 'absolute', top: '2px', left: on ? '22px' : '2px', transition: 'left 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
     </div>
@@ -628,6 +634,72 @@ const ATHLETE_PERMISSION_CATEGORIES = [
 
 const PERM_KEYS = ATHLETE_PERMISSION_CATEGORIES.flatMap((c) => c.items.map((it) => it.key))
 
+// ── Direct-message waiver confirmation modal ──────────────────────────────────
+
+function DirectMessageConfirmModal({
+  athleteName, onConfirm, onCancel, confirming,
+}: {
+  athleteName: string
+  onConfirm: () => void
+  onCancel: () => void
+  confirming: boolean
+}) {
+  return createPortal(
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'rgba(0,0,0,0.6)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px',
+    }}>
+      <div style={{
+        background: '#FFFFFF', borderRadius: '16px', padding: '24px',
+        width: '420px', maxWidth: '100%',
+      }}>
+        <div style={{
+          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '18px',
+          color: T.ink, marginBottom: '12px',
+        }}>
+          Allow direct messaging
+        </div>
+        <div style={{
+          fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', lineHeight: 1.5,
+          color: T.ink2, marginBottom: '20px',
+        }}>
+          By enabling this, you acknowledge that {athleteName} will be able to send and receive
+          private messages directly with their trainer(s) on FARM. You are responsible for
+          reviewing this decision periodically. FARM is not liable for the content of these
+          communications.
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={onCancel}
+            disabled={confirming}
+            style={{
+              flex: 1, height: '44px', padding: '0 16px',
+              background: 'transparent', color: T.ink2,
+              border: '1px solid rgba(0,0,0,0.12)', borderRadius: '8px',
+              fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif",
+              cursor: confirming ? 'default' : 'pointer', opacity: confirming ? 0.6 : 1,
+            }}
+          >Cancel</button>
+          <button
+            onClick={onConfirm}
+            disabled={confirming}
+            style={{
+              flex: 1, height: '44px', padding: '0 16px',
+              background: T.cyan, color: '#FFFFFF',
+              border: 'none', borderRadius: '8px',
+              fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600,
+              cursor: confirming ? 'default' : 'pointer', opacity: confirming ? 0.7 : 1,
+            }}
+          >{confirming ? 'Enabling…' : 'I agree, enable messaging'}</button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
 // ── Section: Athletes ──────────────────────────────────────────────────────────
 
 function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] }) {
@@ -639,12 +711,24 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
   // Per-athlete active tab — default 'details'
   const [activeTab, setActiveTab] = useState<Record<string, 'details' | 'permissions'>>({})
 
-  // Per-athlete permission toggles — all false by default
+  // Per-athlete permission toggles — all false by default, except
+  // directMessageAthlete which reflects whether the messaging waiver is on file.
   const [athletePerms, setAthletePerms] = useState<Record<string, Record<string, boolean>>>(
     () => Object.fromEntries(
-      initialAthletes.map((a) => [a.id, Object.fromEntries(PERM_KEYS.map((k) => [k, false]))])
+      initialAthletes.map((a) => [
+        a.id,
+        Object.fromEntries(PERM_KEYS.map((k) => [
+          k,
+          k === 'directMessageAthlete' ? a.waiver_signed_at != null : false,
+        ])),
+      ])
     )
   )
+
+  // Direct-message waiver: the athlete pending confirmation, and per-athlete
+  // in-flight state for the waiver write (separate from the details `saving`).
+  const [pendingDmAthlete, setPendingDmAthlete] = useState<AthleteRow | null>(null)
+  const [dmPending, setDmPending] = useState<Record<string, boolean>>({})
 
   function handleChange(id: string, field: string, value: string | number) {
     setAthletes((prev) =>
@@ -677,6 +761,49 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
       ...prev,
       [athleteId]: { ...prev[athleteId], [key]: !prev[athleteId][key] },
     }))
+  }
+
+  // Persists the messaging waiver (sign or revoke) and only flips the toggle
+  // once the write succeeds — never optimistically.
+  async function persistWaiver(athleteId: string, waiverSignedAt: string | null, nextValue: boolean) {
+    setDmPending((prev) => ({ ...prev, [athleteId]: true }))
+    setSaveError((prev) => ({ ...prev, [athleteId]: null }))
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('athletes')
+      .update({ waiver_signed_at: waiverSignedAt })
+      .eq('id', athleteId)
+    setDmPending((prev) => ({ ...prev, [athleteId]: false }))
+    if (error) {
+      setSaveError((prev) => ({ ...prev, [athleteId]: error.message }))
+      return
+    }
+    setAthletePerms((prev) => ({
+      ...prev,
+      [athleteId]: { ...prev[athleteId], directMessageAthlete: nextValue },
+    }))
+  }
+
+  function handleDirectMessageToggle(athlete: AthleteRow) {
+    const current = athletePerms[athlete.id]?.directMessageAthlete ?? false
+    if (current) {
+      // Turning off — no confirmation needed, revoke the waiver.
+      void persistWaiver(athlete.id, null, false)
+      return
+    }
+    // Turning on — require confirmation before writing anything.
+    setPendingDmAthlete(athlete)
+  }
+
+  async function confirmDirectMessage() {
+    if (!pendingDmAthlete) return
+    const athlete = pendingDmAthlete
+    setPendingDmAthlete(null)
+    await persistWaiver(athlete.id, new Date().toISOString(), true)
+  }
+
+  function cancelDirectMessage() {
+    setPendingDmAthlete(null)
   }
 
   function setTab(athleteId: string, tab: 'details' | 'permissions') {
@@ -841,13 +968,28 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
                               }}>
                                 <ToggleSwitch
                                   on={athletePerms[athlete.id]?.[item.key] ?? false}
-                                  onChange={() => togglePerm(athlete.id, item.key)}
+                                  disabled={item.key === 'directMessageAthlete' && dmPending[athlete.id]}
+                                  onChange={() => {
+                                    if (item.key === 'directMessageAthlete') {
+                                      handleDirectMessageToggle(athlete)
+                                    } else {
+                                      togglePerm(athlete.id, item.key)
+                                    }
+                                  }}
                                 />
                               </div>
                             </div>
                           ))}
                         </div>
                       ))}
+                      {saveError[athlete.id] && (
+                        <div style={{
+                          fontSize: '13px', color: T.danger, marginTop: '12px',
+                          fontFamily: "'Hanken Grotesk', sans-serif",
+                        }}>
+                          {saveError[athlete.id]}
+                        </div>
+                      )}
                       <SaveButton />
                     </>
                   )}
@@ -925,6 +1067,14 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
         </Link>
       </div>
     </SectionCard>
+    {pendingDmAthlete && (
+      <DirectMessageConfirmModal
+        athleteName={pendingDmAthlete.name}
+        confirming={dmPending[pendingDmAthlete.id] ?? false}
+        onConfirm={() => void confirmDirectMessage()}
+        onCancel={cancelDirectMessage}
+      />
+    )}
     </div>
   )
 }
@@ -1216,7 +1366,7 @@ export default function ParentProfilePage() {
 
       const { data: athleteData } = await supabase
         .from('athletes')
-        .select('id, name, dob, sport')
+        .select('id, name, dob, sport, waiver_signed_at')
         .eq('parent_id', user.id)
 
       setAthletes(
@@ -1227,6 +1377,7 @@ export default function ParentProfilePage() {
           age: calcAge(a.dob as string | null),
           sport: a.sport as string,
           initials: getInitials(a.name as string),
+          waiver_signed_at: a.waiver_signed_at as string | null,
         }))
       )
 

@@ -227,8 +227,7 @@ export default function Home() {
           display: 'flex', alignItems: 'center', overflow: 'hidden',
         }}>
           <div style={{
-            position: 'absolute', inset: 0, backgroundImage: "url('/hero-athlete.png')",
-            backgroundSize: 'cover', backgroundPosition: 'left center', zIndex: 0,
+            position: 'absolute', inset: 0, background: '#09090b', zIndex: 0,
           }} />
           <div style={{
             position: 'absolute', inset: 0, zIndex: 1,
