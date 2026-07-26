@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { TourProvider, useTour } from './tour-context'
 import TourOverlay from './tour-overlay'
 import { createClient } from '@/utils/supabase/client'
@@ -559,6 +559,7 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
   const [nextSessionText, setNextSessionText] = useState<string | null>(null)
   const [nextSessionTrainer, setNextSessionTrainer] = useState<string | null>(null)
   const pathname = usePathname()
+  const router = useRouter()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
 
   useEffect(() => {
@@ -586,6 +587,7 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
         .eq('parent_id', user.id)
         .then(({ data }) => {
           if (data) setAthletes(data)
+          if (data && data.length === 0) router.replace('/onboarding/parent')
         })
       supabase
         .from('bookings')

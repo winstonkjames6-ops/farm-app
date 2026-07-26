@@ -25,7 +25,6 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
 
 export function AppearanceSection({
   themePreference,
-  backgroundMode,
   hasBannerImage,
   onSave,
   cardStyle,
@@ -37,7 +36,6 @@ export function AppearanceSection({
   cardStyle?: React.CSSProperties
 }) {
   const [theme, setTheme] = useState(themePreference)
-  const [bgMode, setBgMode] = useState(backgroundMode)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,20 +49,6 @@ export function AppearanceSection({
       setSaved(true)
     } catch (e) {
       setTheme(theme)
-      setError(e instanceof Error ? e.message : 'Failed to save')
-    }
-    setSaving(false)
-  }
-
-  async function handleToggleBg() {
-    const next: BackgroundMode = bgMode === 'full' ? 'banner' : 'full'
-    setBgMode(next)
-    setSaving(true); setSaved(false); setError(null)
-    try {
-      await onSave({ background_mode: next })
-      setSaved(true)
-    } catch (e) {
-      setBgMode(bgMode)
       setError(e instanceof Error ? e.message : 'Failed to save')
     }
     setSaving(false)
@@ -89,7 +73,7 @@ export function AppearanceSection({
         <div>
           <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>Dark mode</div>
           <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
-            Controls how your public profile card looks
+            Controls how your public profile card looks when no banner photo is set
           </div>
         </div>
         <Toggle on={theme === 'dark'} onChange={handleToggleTheme} />
@@ -98,12 +82,16 @@ export function AppearanceSection({
       {hasBannerImage && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '14px 0' }}>
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>Banner style</div>
+            <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>Banner photo</div>
             <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
-              {bgMode === 'full' ? 'Photo fills the whole card' : 'Photo shown as a compact top strip'}
+              Your banner image is showing on your public profile card
             </div>
           </div>
-          <Toggle on={bgMode === 'banner'} onChange={handleToggleBg} />
+          <span style={{
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '10.5px',
+            letterSpacing: '.1em', textTransform: 'uppercase' as const, color: T.cyan,
+            border: `1.5px solid ${T.cyan}`, borderRadius: '999px', padding: '4px 10px',
+          }}>Active</span>
         </div>
       )}
 

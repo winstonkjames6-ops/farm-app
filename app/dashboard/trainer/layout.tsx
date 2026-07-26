@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { TrainerSportProvider, useTrainerSport } from './sport-context'
 import { createClient } from '@/utils/supabase/client'
 import NotificationsDropdown from '@/components/NotificationsDropdown'
@@ -512,6 +512,7 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
   const [trainerName, setTrainerName] = useState('')
   const [trainerInitials, setTrainerInitials] = useState('')
   const pathname = usePathname()
+  const router = useRouter()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
 
   useEffect(() => {
@@ -538,7 +539,7 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
         })
       supabase
         .from('trainers')
-        .select('specialty')
+        .select('specialty, years_experience, location, rate')
         .eq('profile_id', user.id)
         .single()
         .then(({ data }) => {
@@ -546,6 +547,8 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
             const sport = data.specialty.toLowerCase()
             setPrimarySport(KNOWN_SPORTS.has(sport) ? sport : 'turf-bg')
           }
+          const onboarded = !!(data && data.years_experience != null && data.location && data.rate != null)
+          if (data && !onboarded) router.replace('/onboarding/trainer')
         })
     })
   }, [])

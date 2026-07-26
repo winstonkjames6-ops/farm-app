@@ -9,6 +9,21 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+        if (profile?.role === 'trainer') {
+          const { data: trainer } = await supabase
+            .from('trainers')
+            .select('years_experience, location, rate')
+            .eq('profile_id', user.id)
+            .single()
+          const onboarded = !!(trainer && trainer.years_experience != null && trainer.location && trainer.rate != null)
+          if (!onboarded) {
+            return NextResponse.redirect(`${origin}/onboarding/trainer`)
+          }
+        }
+      }
       return NextResponse.redirect(`${origin}/dashboard`)
     }
   }
