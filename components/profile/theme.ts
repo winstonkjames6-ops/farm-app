@@ -1,11 +1,11 @@
-import { ProfileCardTokens, ThemePreference } from './types'
+import { ProfileCardTokens, ThemePreference, ThemeSetting } from './types'
 
 const LIGHT: ProfileCardTokens = {
   bg: '#F8F8F6',
   card: '#FFFFFF',
   ink: '#111827',
   ink2: '#6B7280',
-  ink3: '#9CA3AF',
+  ink3: '#6B7280',
   border: 'rgba(0,0,0,0.08)',
   surface2: '#F0EFEB',
   cyan: '#00BCC8',
@@ -24,6 +24,18 @@ const DARK: ProfileCardTokens = {
   heroOverlay: 'rgba(10,20,18,0.62)',
 }
 
-export function getProfileCardTokens(theme: ThemePreference): ProfileCardTokens {
-  return theme === 'light' ? LIGHT : DARK
+export function prefersDarkOS(): boolean {
+  if (typeof window === 'undefined' || !window.matchMedia) return false
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+}
+
+/** Collapse a stored setting ('light' | 'dark' | 'system') to the theme to render. */
+export function resolveThemeSetting(setting: ThemeSetting | null | undefined): ThemePreference {
+  if (setting === 'dark') return 'dark'
+  if (setting === 'system') return prefersDarkOS() ? 'dark' : 'light'
+  return 'light'
+}
+
+export function getProfileCardTokens(theme: ThemeSetting): ProfileCardTokens {
+  return resolveThemeSetting(theme) === 'light' ? LIGHT : DARK
 }

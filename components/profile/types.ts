@@ -1,4 +1,7 @@
+// Resolved theme actually used for rendering
 export type ThemePreference = 'light' | 'dark'
+// What is stored in profiles.theme_preference ('system' follows the OS)
+export type ThemeSetting = ThemePreference | 'system'
 export type BackgroundMode = 'full' | 'banner'
 
 export interface ProfileCardTokens {

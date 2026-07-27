@@ -13,8 +13,8 @@ import { AvatarCropModal } from '@/components/profile/AvatarCropModal'
 import { ProfileCard } from '@/components/profile/ProfileCard'
 import { AppearanceSection } from '@/components/profile/AppearanceSection'
 import { ActivityList } from '@/components/profile/ActivityList'
-import { getProfileCardTokens } from '@/components/profile/theme'
-import type { ActivityItem, BackgroundMode, ThemePreference } from '@/components/profile/types'
+import { getProfileCardTokens, resolveThemeSetting } from '@/components/profile/theme'
+import type { ActivityItem, BackgroundMode, ThemeSetting } from '@/components/profile/types'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -1418,10 +1418,10 @@ function EditMode({
   onProfileUpdate: (updates: { firstName: string; lastName: string; phone: string }) => void
   athletes: AthleteRow[]
   onLogOut: () => void
-  themePreference: ThemePreference
+  themePreference: ThemeSetting
   backgroundMode: BackgroundMode
   hasBannerImage: boolean
-  onSaveAppearance: (updates: { theme_preference?: ThemePreference; background_mode?: BackgroundMode }) => Promise<void>
+  onSaveAppearance: (updates: { theme_preference?: ThemeSetting; background_mode?: BackgroundMode }) => Promise<void>
   avatarUrl: string | null
   onAvatarChange: (url: string) => void
 }) {
@@ -1493,7 +1493,7 @@ interface ProfileState {
   avatarUrl: string | null
   bannerImageUrl: string | null
   verified: boolean
-  themePreference: ThemePreference
+  themePreference: ThemeSetting
   backgroundMode: BackgroundMode
 }
 
@@ -1554,7 +1554,7 @@ export default function ParentProfilePage() {
         avatarUrl: profileData?.avatar_url ?? null,
         bannerImageUrl: profileData?.banner_image_url ?? null,
         verified: profileData?.verified ?? false,
-        themePreference: (profileData?.theme_preference as ThemePreference) ?? 'dark',
+        themePreference: (profileData?.theme_preference as ThemeSetting) ?? 'light',
         backgroundMode: (profileData?.background_mode as BackgroundMode) ?? 'full',
       })
 
@@ -1632,7 +1632,7 @@ export default function ParentProfilePage() {
     setProfile((p) => p ? { ...p, avatarUrl: url } : p)
   }
 
-  async function handleSaveAppearance(updates: { theme_preference?: ThemePreference; background_mode?: BackgroundMode }) {
+  async function handleSaveAppearance(updates: { theme_preference?: ThemeSetting; background_mode?: BackgroundMode }) {
     if (!userId) throw new Error('Not authenticated')
     const supabase = createClient()
     const { error } = await supabase.from('profiles').update(updates).eq('id', userId)
@@ -1776,7 +1776,7 @@ export default function ParentProfilePage() {
             />
           ) : (
             <ProfileCard
-              themePreference={profile.themePreference}
+              themePreference={resolveThemeSetting(profile.themePreference)}
               backgroundMode={profile.backgroundMode}
               bannerImageUrl={profile.bannerImageUrl}
               avatarUrl={profile.avatarUrl}

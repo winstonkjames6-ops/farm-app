@@ -7,8 +7,8 @@ import { T } from '@/lib/theme'
 import { ProfileCard } from '@/components/profile/ProfileCard'
 import { AppearanceSection } from '@/components/profile/AppearanceSection'
 import { ActivityList } from '@/components/profile/ActivityList'
-import { getProfileCardTokens } from '@/components/profile/theme'
-import type { ActivityItem, BackgroundMode, ThemePreference } from '@/components/profile/types'
+import { getProfileCardTokens, resolveThemeSetting } from '@/components/profile/theme'
+import type { ActivityItem, BackgroundMode, ThemeSetting } from '@/components/profile/types'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null)
   const [verified, setVerified] = useState(false)
-  const [themePreference, setThemePreference] = useState<ThemePreference>('dark')
+  const [themePreference, setThemePreference] = useState<ThemeSetting>('light')
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>('full')
   const [bookings, setBookings] = useState<BookingRow[]>([])
   const [messages, setMessages] = useState<MessageRow[]>([])
@@ -97,7 +97,7 @@ export default function ProfilePage() {
         setAvatarUrl((ownProfile as any).avatar_url ?? null)
         setBannerImageUrl((ownProfile as any).banner_image_url ?? null)
         setVerified((ownProfile as any).verified ?? false)
-        setThemePreference(((ownProfile as any).theme_preference as ThemePreference) ?? 'dark')
+        setThemePreference(((ownProfile as any).theme_preference as ThemeSetting) ?? 'light')
         setBackgroundMode(((ownProfile as any).background_mode as BackgroundMode) ?? 'full')
       }
 
@@ -158,7 +158,7 @@ export default function ProfilePage() {
     load()
   }, [])
 
-  async function handleSaveAppearance(updates: { theme_preference?: ThemePreference; background_mode?: BackgroundMode }) {
+  async function handleSaveAppearance(updates: { theme_preference?: ThemeSetting; background_mode?: BackgroundMode }) {
     if (!userId) throw new Error('Not authenticated')
     const supabase = createClient()
     const { error } = await supabase.from('profiles').update(updates).eq('id', userId)
@@ -238,7 +238,7 @@ export default function ProfilePage() {
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '32px 24px 80px' }}>
 
         <ProfileCard
-          themePreference={themePreference}
+          themePreference={resolveThemeSetting(themePreference)}
           backgroundMode={backgroundMode}
           bannerImageUrl={bannerImageUrl}
           avatarUrl={avatarUrl}

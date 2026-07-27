@@ -1,8 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { T } from '@/lib/theme'
-import { BackgroundMode, ThemePreference } from './types'
+import { getProfileCardTokens, prefersDarkOS } from './theme'
+import { BackgroundMode, ThemeSetting } from './types'
+
+const THEME_OPTIONS: { value: ThemeSetting; label: string }[] = [
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+  { value: 'system', label: 'System' },
+]
 
 function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
   return (
@@ -23,44 +30,121 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
   )
 }
 
+function ThemeSegmented({
+  value, onChange, disabled,
+}: {
+  value: ThemeSetting
+  onChange: (next: ThemeSetting) => void
+  disabled?: boolean
+}) {
+  return (
+    <div style={{
+      display: 'flex', gap: '4px', flexShrink: 0,
+      background: '#F3F4F6', border: '1px solid rgba(0,0,0,0.08)',
+      borderRadius: '10px', padding: '3px',
+    }}>
+      {THEME_OPTIONS.map(({ value: v, label }) => {
+        const active = v === value
+        return (
+          <button
+            key={v}
+            onClick={() => { if (!disabled && !active) onChange(v) }}
+            style={{
+              minHeight: '32px', padding: '0 12px', borderRadius: '8px',
+              border: active ? '1px solid rgba(0,0,0,0.08)' : '1px solid transparent',
+              background: active ? '#FFFFFF' : 'transparent',
+              color: active ? T.ink : T.ink2,
+              fontFamily: "'Hanken Grotesk', sans-serif",
+              fontSize: '13px', fontWeight: active ? 700 : 500,
+              cursor: disabled ? 'default' : 'pointer',
+              boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+              transition: 'background .15s ease, color .15s ease',
+            }}
+          >{label}</button>
+        )
+      })}
+    </div>
+  )
+}
+
 export function AppearanceSection({
   themePreference,
+  backgroundMode,
   hasBannerImage,
   onSave,
   cardStyle,
 }: {
-  themePreference: ThemePreference
+  themePreference: ThemeSetting
   backgroundMode: BackgroundMode
   hasBannerImage: boolean
-  onSave: (updates: { theme_preference?: ThemePreference; background_mode?: BackgroundMode }) => Promise<void>
+  onSave: (updates: { theme_preference?: ThemeSetting; background_mode?: BackgroundMode }) => Promise<void>
   cardStyle?: React.CSSProperties
 }) {
-  const [theme, setTheme] = useState(themePreference)
+  const [theme, setTheme] = useState<ThemeSetting>(themePreference)
+  const [bgMode, setBgMode] = useState(backgroundMode)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [osDark, setOsDark] = useState(false)
 
-  async function handleToggleTheme() {
-    const next: ThemePreference = theme === 'dark' ? 'light' : 'dark'
+  // Track the OS preference so the "System" helper line stays accurate
+  useEffect(() => {
+    setOsDark(prefersDarkOS())
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const listener = (e: MediaQueryListEvent) => setOsDark(e.matches)
+    mq.addEventListener('change', listener)
+    return () => mq.removeEventListener('change', listener)
+  }, [])
+
+  const tokens = getProfileCardTokens(theme)
+
+  async function handleSelectTheme(next: ThemeSetting) {
+    const previous = theme
     setTheme(next)
     setSaving(true); setSaved(false); setError(null)
     try {
       await onSave({ theme_preference: next })
       setSaved(true)
     } catch (e) {
-      setTheme(theme)
+      setTheme(previous)
       setError(e instanceof Error ? e.message : 'Failed to save')
     }
     setSaving(false)
   }
 
+  async function handleToggleBg() {
+    const next: BackgroundMode = bgMode === 'full' ? 'banner' : 'full'
+    setBgMode(next)
+    setSaving(true); setSaved(false); setError(null)
+    try {
+      await onSave({ background_mode: next })
+      setSaved(true)
+    } catch (e) {
+      setBgMode(bgMode)
+      setError(e instanceof Error ? e.message : 'Failed to save')
+    }
+    setSaving(false)
+  }
+
+  // Glass only makes sense over photography — without a banner backdrop use a solid card.
+  const resolvedCardStyle: React.CSSProperties = cardStyle ?? (hasBannerImage ? {
+    background: 'rgba(255,255,255,0.92)',
+    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+    borderRadius: '14px', padding: '24px',
+    border: '1px solid rgba(0,0,0,0.08)',
+  } : {
+    background: tokens.card,
+    borderRadius: '14px', padding: '24px',
+    border: `1px solid ${tokens.border}`,
+  })
+
+  const themeHint = theme === 'system'
+    ? `Following your device — currently ${osDark ? 'dark' : 'light'}`
+    : 'Controls how your public profile card looks'
+
   return (
-    <div style={cardStyle ?? {
-      background: 'rgba(255,255,255,0.92)',
-      backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-      borderRadius: '14px', padding: '24px',
-      border: '1px solid rgba(0,0,0,0.08)',
-    }}>
+    <div style={resolvedCardStyle}>
       <div style={{
         fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '11px',
         letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: T.ink3, marginBottom: '16px',
@@ -69,29 +153,26 @@ export function AppearanceSection({
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
         padding: '14px 0', borderBottom: hasBannerImage ? `1px solid ${T.line}` : 'none',
+        flexWrap: 'wrap',
       }}>
         <div>
-          <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>Dark mode</div>
+          <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>Theme</div>
           <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
-            Controls how your public profile card looks when no banner photo is set
+            {themeHint}
           </div>
         </div>
-        <Toggle on={theme === 'dark'} onChange={handleToggleTheme} />
+        <ThemeSegmented value={theme} onChange={handleSelectTheme} disabled={saving} />
       </div>
 
       {hasBannerImage && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '14px 0' }}>
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>Banner photo</div>
+            <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>Banner style</div>
             <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
-              Your banner image is showing on your public profile card
+              {bgMode === 'full' ? 'Photo fills the whole card' : 'Photo shown as a compact top strip'}
             </div>
           </div>
-          <span style={{
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '10.5px',
-            letterSpacing: '.1em', textTransform: 'uppercase' as const, color: T.cyan,
-            border: `1.5px solid ${T.cyan}`, borderRadius: '999px', padding: '4px 10px',
-          }}>Active</span>
+          <Toggle on={bgMode === 'banner'} onChange={handleToggleBg} />
         </div>
       )}
 

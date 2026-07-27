@@ -28,8 +28,8 @@ import { AvatarCropModal } from '@/components/profile/AvatarCropModal'
 import { ProfileCard } from '@/components/profile/ProfileCard'
 import { AppearanceSection } from '@/components/profile/AppearanceSection'
 import { ActivityList } from '@/components/profile/ActivityList'
-import { getProfileCardTokens } from '@/components/profile/theme'
-import type { ActivityItem, BackgroundMode, ThemePreference } from '@/components/profile/types'
+import { getProfileCardTokens, resolveThemeSetting } from '@/components/profile/theme'
+import type { ActivityItem, BackgroundMode, ThemeSetting } from '@/components/profile/types'
 
 const IconInstagram = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1129,7 +1129,7 @@ export default function TrainerProfilePage() {
   const [isCertified, setIsCertified] = useState(false)
   const [certificationStatus, setCertificationStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none')
   const [certificationNotes, setCertificationNotes] = useState('')
-  const [themePreference, setThemePreference] = useState<ThemePreference>('dark')
+  const [themePreference, setThemePreference] = useState<ThemeSetting>('light')
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>('full')
   const [bookings, setBookings] = useState<TrainerBookingRow[]>([])
   const [reviews, setReviews] = useState<TrainerReviewRow[]>([])
@@ -1150,7 +1150,7 @@ export default function TrainerProfilePage() {
       setBannerImageUrl(profileRes.data?.banner_image_url ?? null)
       setInitPhone(profileRes.data?.phone ?? '')
       setVerified(profileRes.data?.verified ?? false)
-      setThemePreference((profileRes.data?.theme_preference as ThemePreference) ?? 'dark')
+      setThemePreference((profileRes.data?.theme_preference as ThemeSetting) ?? 'light')
       setBackgroundMode((profileRes.data?.background_mode as BackgroundMode) ?? 'full')
       if (trainerRes.data?.bio) setInitBio(trainerRes.data.bio)
       if (trainerRes.data?.location) setInitLocation(trainerRes.data.location)
@@ -1237,7 +1237,7 @@ export default function TrainerProfilePage() {
     setCertificationNotes(notes)
   }
 
-  async function handleSaveAppearance(updates: { theme_preference?: ThemePreference; background_mode?: BackgroundMode }) {
+  async function handleSaveAppearance(updates: { theme_preference?: ThemeSetting; background_mode?: BackgroundMode }) {
     if (!userId) throw new Error('Not authenticated')
     const supabase = createClient()
     const { error } = await supabase.from('profiles').update(updates).eq('id', userId)
@@ -1355,7 +1355,7 @@ export default function TrainerProfilePage() {
           </div>
         ) : (
           <ProfileCard
-            themePreference={themePreference}
+            themePreference={resolveThemeSetting(themePreference)}
             backgroundMode={backgroundMode}
             bannerImageUrl={bannerImageUrl}
             avatarUrl={avatarUrl}

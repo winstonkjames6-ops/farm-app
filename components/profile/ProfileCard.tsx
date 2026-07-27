@@ -186,12 +186,12 @@ function CenteredCard({
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         padding: '20px 24px 8px', textAlign: 'center',
       }}>
-        <Avatar src={avatarUrl} initials={initials} size={118} border={`3px solid ${tokens.border}`} />
+        <Avatar src={avatarUrl} initials={initials} size={96} border={`3px solid ${tokens.border}`} />
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px' }}>
           <span style={{
-            fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '28px', color: tokens.ink,
+            fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '24px', color: tokens.ink,
           }}>{name}</span>
-          {verified && <VerifiedBadge label={verifiedLabel} tokens={tokens} bgOpacity={isDark ? 0.18 : 0.1} />}
+          {verified && <VerifiedBadge label={verifiedLabel} tokens={tokens} />}
         </div>
         {minor && <div style={{ marginTop: '8px' }}><MinorBadge tokens={tokens} /></div>}
         {stats.length > 0 && (
@@ -234,11 +234,11 @@ function CenteredCard({
   )
 }
 
-// ── Banner mode (full-bleed image, avatar overlaps by 48px) ────────────────────
+// ── Banner mode (identity content overlaid directly on the banner image) ───────
 
 function BannerCard({
   tokens, isDark, bannerImageUrl, avatarUrl, initials, name,
-  verified, verifiedLabel, minor, metaLine, specialtyTags, stats, contactRows,
+  verified, verifiedLabel, minor, metaLine, specialtyTags, contactRows,
   onEditProfile, onOpenSettings,
 }: {
   tokens: ReturnType<typeof getProfileCardTokens>
@@ -257,74 +257,53 @@ function BannerCard({
   onEditProfile: () => void
   onOpenSettings?: () => void
 }) {
-  const cardBg = isDark ? '#161616' : '#FFFFFF'
-  const textColor = isDark ? '#FFFFFF' : tokens.ink
-  const subTextColor = isDark ? 'rgba(255,255,255,0.65)' : tokens.ink2
+  const avatarRing = isDark ? '#161616' : '#FFFFFF'
+  const textShadow = isDark ? '0 1px 3px rgba(0,0,0,0.45)' : '0 1px 2px rgba(255,255,255,0.85)'
 
   return (
     <div style={{
       borderRadius: '20px', overflow: 'hidden', position: 'relative',
-      background: cardBg, border: `1px solid ${tokens.border}`,
+      border: `1px solid ${tokens.border}`,
     }}>
-      <div style={{ position: 'relative', height: '180px' }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: `url(${bannerImageUrl})`,
-          backgroundSize: 'cover', backgroundPosition: 'center',
-        }} />
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: `linear-gradient(to bottom, rgba(0,0,0,0) 45%, ${cardBg} 100%)`,
-        }} />
-        <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px' }}>
-          <EditButton onClick={onEditProfile} dark={isDark} glass />
-          <GearButton onClick={onOpenSettings} dark={isDark} glass />
-        </div>
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: `url(${bannerImageUrl})`,
+        backgroundSize: 'cover', backgroundPosition: 'center',
+      }} />
+      {/* bottom-to-top scrim so the overlaid identity content stays legible over an arbitrary photo */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: `linear-gradient(to top, ${tokens.heroOverlay} 0%, ${tokens.heroOverlay} 38%, transparent 88%)`,
+      }} />
+
+      <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 2, display: 'flex', gap: '8px' }}>
+        <EditButton onClick={onEditProfile} dark={isDark} glass />
+        <GearButton onClick={onOpenSettings} dark={isDark} glass />
       </div>
 
-      <div style={{ padding: '0 24px 24px' }}>
-        <div style={{ marginTop: '-48px', marginBottom: '12px', position: 'relative', zIndex: 1 }}>
-          <Avatar src={avatarUrl} initials={initials} size={96} border={`4px solid ${cardBg}`} />
-        </div>
+      <div style={{
+        position: 'relative', zIndex: 1,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+        padding: '120px 24px 28px',
+      }}>
+        <Avatar src={avatarUrl} initials={initials} size={96} border={`4px solid ${avatarRing}`} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '16px' }}>
           <span style={{
-            fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '22px', color: textColor,
+            fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '24px', color: tokens.ink, textShadow,
           }}>{name}</span>
-          {verified && <VerifiedBadge label={verifiedLabel} tokens={tokens} bgOpacity={isDark ? 0.18 : 0.1} />}
+          {verified && <VerifiedBadge label={verifiedLabel} tokens={tokens} />}
         </div>
+        {minor && <div style={{ marginTop: '8px' }}><MinorBadge tokens={tokens} /></div>}
         {metaLine && (
           <div style={{
-            fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: subTextColor, marginTop: '3px',
+            fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: tokens.ink2, marginTop: '4px', textShadow,
           }}>{metaLine}</div>
         )}
-        {minor && <div style={{ marginTop: '8px' }}><MinorBadge tokens={tokens} /></div>}
 
         {(contactRows.length > 0 || specialtyTags.length > 0) && (
-          <div style={{ marginTop: '12px' }}>
-            <ChipRow contactRows={contactRows} specialtyTags={specialtyTags} tokens={tokens} justify="flex-start" />
-          </div>
-        )}
-
-        {stats.length > 0 && (
-          <div style={{
-            display: 'grid', gridTemplateColumns: `repeat(${stats.length}, 1fr)`,
-            border: `1px solid ${tokens.border}`, borderRadius: '12px', marginTop: '16px', overflow: 'hidden',
-          }}>
-            {stats.map((s, i) => (
-              <div key={s.label} style={{
-                padding: '12px 0', textAlign: 'center',
-                borderRight: i < stats.length - 1 ? `1px solid ${tokens.border}` : 'none',
-              }}>
-                <div style={{
-                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '20px', color: textColor,
-                }}>{s.value}</div>
-                <div style={{
-                  fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: subTextColor,
-                  textTransform: 'uppercase' as const, letterSpacing: '.06em', marginTop: '2px',
-                }}>{s.label}</div>
-              </div>
-            ))}
+          <div style={{ marginTop: '14px' }}>
+            <ChipRow contactRows={contactRows} specialtyTags={specialtyTags} tokens={tokens} justify="center" />
           </div>
         )}
       </div>
