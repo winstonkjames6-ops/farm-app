@@ -178,6 +178,53 @@ function SaveButton({ onClick }: { onClick?: () => void }) {
   )
 }
 
+function FloatingSaveBar({
+  status,
+  error,
+  onSave,
+}: {
+  status: 'idle' | 'saving' | 'saved' | 'error'
+  error: string
+  onSave: () => void
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 16 }}
+      transition={{ duration: 0.2 }}
+      style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}
+    >
+      {status === 'error' && (
+        <div style={{ background: '#111827', color: '#FCA5A5', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", borderRadius: '8px', padding: '8px 14px', maxWidth: '280px' }}>
+          {error || 'Save failed'}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={status === 'saving'}
+        style={{
+          height: '48px', padding: '0 28px', borderRadius: '999px', border: 'none',
+          background: T.cyan, color: '#FFFFFF',
+          fontSize: '15px', fontWeight: 600, fontFamily: "'Hanken Grotesk', sans-serif",
+          cursor: status === 'saving' ? 'default' : 'pointer',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.22)',
+          display: 'flex', alignItems: 'center', gap: '8px',
+          opacity: status === 'saving' ? 0.85 : 1,
+        }}
+      >
+        {status === 'saving' && (
+          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }} style={{ display: 'flex' }}>
+            <Loader2 size={16} color="#FFFFFF" />
+          </motion.div>
+        )}
+        {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved' : 'Save changes'}
+      </button>
+    </motion.div>
+  )
+}
+
 function ToggleSwitch({ on, onChange }: { on: boolean; onChange: () => void }) {
   return (
     <button
@@ -368,52 +415,26 @@ function ProfilePhotoSection({
 // ── Section: Basic info ────────────────────────────────────────────────────────
 
 function BasicInfoSection({
-  initialFullName,
-  initialBio,
-  initialLocation,
-  initialPhone,
-  onSave,
+  fullName,
+  onFullNameChange,
+  bio,
+  onBioChange,
+  location,
+  onLocationChange,
+  phone,
+  onPhoneChange,
 }: {
-  initialFullName?: string
-  initialBio?: string
-  initialLocation?: string
-  initialPhone?: string
-  onSave?: (fullName: string, bio: string, location: string, phone: string) => Promise<void>
+  fullName: string
+  onFullNameChange: (v: string) => void
+  bio: string
+  onBioChange: (v: string) => void
+  location: string
+  onLocationChange: (v: string) => void
+  phone: string
+  onPhoneChange: (v: string) => void
 }) {
-  const [fullName, setFullName] = useState(initialFullName ?? '')
   const [tagline, setTagline] = useState('')
-  const [bio, setBio] = useState(initialBio ?? '')
-  const [location, setLocation] = useState(initialLocation ?? '')
   const [experience, setExperience] = useState('')
-  const [phone, setPhone] = useState(initialPhone ?? '')
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [saveError, setSaveError] = useState('')
-
-  useEffect(() => {
-    if (initialFullName !== undefined) setFullName(initialFullName)
-  }, [initialFullName])
-  useEffect(() => {
-    if (initialBio !== undefined) setBio(initialBio)
-  }, [initialBio])
-  useEffect(() => {
-    if (initialLocation !== undefined) setLocation(initialLocation)
-  }, [initialLocation])
-  useEffect(() => {
-    if (initialPhone !== undefined) setPhone(initialPhone)
-  }, [initialPhone])
-
-  async function handleSave() {
-    if (!onSave) return
-    setSaveStatus('saving')
-    setSaveError('')
-    try {
-      await onSave(fullName, bio, location, phone)
-      setSaveStatus('saved')
-    } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Save failed')
-      setSaveStatus('error')
-    }
-  }
 
   const inputBase: React.CSSProperties = {
     width: '100%', height: '44px', borderRadius: '8px', border: '1px solid #E5E7EB',
@@ -427,7 +448,7 @@ function BasicInfoSection({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div>
           <FieldLabel>Full name</FieldLabel>
-          <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Marcus Torres" style={inputBase} />
+          <input value={fullName} onChange={(e) => onFullNameChange(e.target.value)} placeholder="Marcus Torres" style={inputBase} />
         </div>
         <div>
           <FieldLabel>Tagline</FieldLabel>
@@ -435,13 +456,13 @@ function BasicInfoSection({
         </div>
         <div>
           <FieldLabel>Bio</FieldLabel>
-          <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell parents about your training philosophy, background, and what makes your sessions unique..." style={{ width: '100%', minHeight: '120px', borderRadius: '8px', border: '1px solid #E5E7EB', padding: '14px', fontSize: '16px', fontFamily: "'Hanken Grotesk', sans-serif", resize: 'vertical', outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF' }} />
+          <textarea value={bio} onChange={(e) => onBioChange(e.target.value)} placeholder="Tell parents about your training philosophy, background, and what makes your sessions unique..." style={{ width: '100%', minHeight: '120px', borderRadius: '8px', border: '1px solid #E5E7EB', padding: '14px', fontSize: '16px', fontFamily: "'Hanken Grotesk', sans-serif", resize: 'vertical', outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF' }} />
         </div>
         <div>
           <FieldLabel>Location</FieldLabel>
           <div style={{ position: 'relative' }}>
             <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: T.ink3, display: 'flex', pointerEvents: 'none' }}><MapPin size={16} /></span>
-            <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, State" style={{ ...inputBase, paddingLeft: '40px' }} />
+            <input value={location} onChange={(e) => onLocationChange(e.target.value)} placeholder="City, State" style={{ ...inputBase, paddingLeft: '40px' }} />
           </div>
         </div>
         <div>
@@ -452,13 +473,10 @@ function BasicInfoSection({
           <FieldLabel>Phone number</FieldLabel>
           <div style={{ position: 'relative' }}>
             <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: T.ink3, display: 'flex', pointerEvents: 'none' }}><Phone size={16} /></span>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 000-0000" style={{ ...inputBase, paddingLeft: '40px' }} />
+            <input type="tel" value={phone} onChange={(e) => onPhoneChange(e.target.value)} placeholder="(555) 000-0000" style={{ ...inputBase, paddingLeft: '40px' }} />
           </div>
         </div>
       </div>
-      <SaveButton onClick={handleSave} />
-      {saveStatus === 'saved' && <div style={{ fontSize: '13px', color: '#10B981', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>Saved!</div>}
-      {saveStatus === 'error' && <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{saveError}</div>}
     </SectionCard>
   )
 }
@@ -543,39 +561,21 @@ function SpecialtiesSection({
   primarySport,
   setPrimarySport,
   initialSpecialty,
-  onSave,
 }: {
   primarySport: string
   setPrimarySport: (s: string) => void
   initialSpecialty?: string
-  onSave?: (specialty: string) => Promise<void>
 }) {
   const [selectedSports, setSelectedSports] = useState<string[]>([])
   const [selectedAges, setSelectedAges] = useState<string[]>(['U9-U10', 'U11-U12'])
   const [selectedTypes, setSelectedTypes] = useState<string[]>(['In-Person'])
   const [pillPopover, setPillPopover] = useState<string | null>(null)
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
     if (!initialSpecialty) return
     setSelectedSports([initialSpecialty])
     setPrimarySport(initialSpecialty.toLowerCase())
   }, [initialSpecialty])
-
-  async function handleSave() {
-    if (!onSave) return
-    setSaveStatus('saving')
-    setSaveError('')
-    try {
-      const sportName = SPORTS.find((s) => s.toLowerCase() === primarySport) ?? primarySport
-      await onSave(sportName)
-      setSaveStatus('saved')
-    } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Save failed')
-      setSaveStatus('error')
-    }
-  }
 
   function toggle(arr: string[], setArr: (a: string[]) => void, item: string) {
     setArr(arr.includes(item) ? arr.filter((x) => x !== item) : [...arr, item])
@@ -671,9 +671,6 @@ function SpecialtiesSection({
           </div>
         </div>
       </div>
-      <SaveButton onClick={handleSave} />
-      {saveStatus === 'saved' && <div style={{ fontSize: '13px', color: '#10B981', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>Saved!</div>}
-      {saveStatus === 'error' && <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{saveError}</div>}
     </SectionCard>
   )
 }
@@ -681,33 +678,12 @@ function SpecialtiesSection({
 // ── Section: Rate ──────────────────────────────────────────────────────────────
 
 function RateSection({
-  initialHourlyRate,
-  onSave,
+  hourlyRate,
+  onHourlyRateChange,
 }: {
-  initialHourlyRate?: string
-  onSave?: (rate: string) => Promise<void>
+  hourlyRate: string
+  onHourlyRateChange: (v: string) => void
 }) {
-  const [hourlyRate, setHourlyRate] = useState(initialHourlyRate ?? '')
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [saveError, setSaveError] = useState('')
-
-  useEffect(() => {
-    if (initialHourlyRate !== undefined) setHourlyRate(initialHourlyRate)
-  }, [initialHourlyRate])
-
-  async function handleSave() {
-    if (!onSave) return
-    setSaveStatus('saving')
-    setSaveError('')
-    try {
-      await onSave(hourlyRate)
-      setSaveStatus('saved')
-    } catch (e) {
-      setSaveError(e instanceof Error ? e.message : 'Save failed')
-      setSaveStatus('error')
-    }
-  }
-
   return (
     <SectionCard id="section-rate">
       <CardLabel>Rate</CardLabel>
@@ -716,14 +692,11 @@ function RateSection({
           <FieldLabel>Hourly rate</FieldLabel>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px' }}>
             <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '20px', color: T.ink3 }}>$</span>
-            <input type="number" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} style={{ width: '160px', border: 'none', borderBottom: '2px solid #E5E7EB', fontSize: '32px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: T.ink, outline: 'none', background: 'transparent', padding: '0 4px' }} />
+            <input type="number" value={hourlyRate} onChange={(e) => onHourlyRateChange(e.target.value)} style={{ width: '160px', border: 'none', borderBottom: '2px solid #E5E7EB', fontSize: '32px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: T.ink, outline: 'none', background: 'transparent', padding: '0 4px' }} />
           </div>
           <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '6px' }}>You keep 85% — FARM takes 15%</div>
         </div>
       </div>
-      <SaveButton onClick={handleSave} />
-      {saveStatus === 'saved' && <div style={{ fontSize: '13px', color: '#10B981', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>Saved!</div>}
-      {saveStatus === 'error' && <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{saveError}</div>}
     </SectionCard>
   )
 }
@@ -1135,6 +1108,16 @@ export default function TrainerProfilePage() {
   const [reviews, setReviews] = useState<TrainerReviewRow[]>([])
   const [activeTab, setActiveTab] = useState('activity')
 
+  const [dataLoaded, setDataLoaded] = useState(false)
+  const [draftFullName, setDraftFullName] = useState('')
+  const [draftBio, setDraftBio] = useState('')
+  const [draftLocation, setDraftLocation] = useState('')
+  const [draftPhone, setDraftPhone] = useState('')
+  const [draftRate, setDraftRate] = useState('')
+  const [savedSpecialty, setSavedSpecialty] = useState('')
+  const [saveBarStatus, setSaveBarStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [saveBarError, setSaveBarError] = useState('')
+
   useEffect(() => {
     async function load() {
       const supabase = createClient()
@@ -1145,20 +1128,35 @@ export default function TrainerProfilePage() {
         supabase.from('profiles').select('name, avatar_url, banner_image_url, phone, verified, theme_preference, background_mode').eq('id', user.id).single(),
         supabase.from('trainers').select('id, specialty, bio, rate, location, is_certified, certification_status, certification_notes').eq('profile_id', user.id).single(),
       ])
-      if (profileRes.data?.name) setInitName(profileRes.data.name)
+      const loadedName = profileRes.data?.name ?? ''
+      const loadedPhone = profileRes.data?.phone ?? ''
+      const loadedBio = trainerRes.data?.bio ?? ''
+      const loadedLocation = trainerRes.data?.location ?? ''
+      const loadedRate = trainerRes.data?.rate != null ? String(trainerRes.data.rate) : ''
+      const loadedSpecialty = trainerRes.data?.specialty ?? ''
+
+      if (loadedName) setInitName(loadedName)
       setAvatarUrl(profileRes.data?.avatar_url ?? null)
       setBannerImageUrl(profileRes.data?.banner_image_url ?? null)
-      setInitPhone(profileRes.data?.phone ?? '')
+      setInitPhone(loadedPhone)
       setVerified(profileRes.data?.verified ?? false)
       setThemePreference((profileRes.data?.theme_preference as ThemeSetting) ?? 'light')
       setBackgroundMode((profileRes.data?.background_mode as BackgroundMode) ?? 'full')
-      if (trainerRes.data?.bio) setInitBio(trainerRes.data.bio)
-      if (trainerRes.data?.location) setInitLocation(trainerRes.data.location)
-      if (trainerRes.data?.rate != null) setInitRate(String(trainerRes.data.rate))
-      if (trainerRes.data?.specialty) setInitSpecialty(trainerRes.data.specialty)
+      if (loadedBio) setInitBio(loadedBio)
+      if (loadedLocation) setInitLocation(loadedLocation)
+      if (loadedRate) setInitRate(loadedRate)
+      if (loadedSpecialty) setInitSpecialty(loadedSpecialty)
       setIsCertified((trainerRes.data as any)?.is_certified ?? false)
       setCertificationStatus(((trainerRes.data as any)?.certification_status as typeof certificationStatus) ?? 'none')
       setCertificationNotes((trainerRes.data as any)?.certification_notes ?? '')
+
+      setDraftFullName(loadedName)
+      setDraftBio(loadedBio)
+      setDraftLocation(loadedLocation)
+      setDraftPhone(loadedPhone)
+      setDraftRate(loadedRate)
+      setSavedSpecialty(loadedSpecialty.toLowerCase())
+      setDataLoaded(true)
 
       const trainerRowId = trainerRes.data?.id
       if (trainerRowId) {
@@ -1208,6 +1206,9 @@ export default function TrainerProfilePage() {
     ])
     if (profileRes.error) throw new Error(profileRes.error.message)
     if (trainerRes.error) throw new Error(trainerRes.error.message)
+    setInitName(fullName)
+    setInitBio(bio)
+    setInitLocation(location)
     setInitPhone(phone)
   }
 
@@ -1216,6 +1217,7 @@ export default function TrainerProfilePage() {
     const supabase = createClient()
     const { error } = await supabase.from('trainers').update({ rate: Number(rate) }).eq('profile_id', userId)
     if (error) throw new Error(error.message)
+    setInitRate(rate)
   }
 
   async function saveSpecialty(specialty: string) {
@@ -1223,6 +1225,28 @@ export default function TrainerProfilePage() {
     const supabase = createClient()
     const { error } = await supabase.from('trainers').update({ specialty }).eq('profile_id', userId)
     if (error) throw new Error(error.message)
+    setInitSpecialty(specialty)
+    setSavedSpecialty(specialty.toLowerCase())
+  }
+
+  async function handleSaveAll() {
+    setSaveBarStatus('saving')
+    setSaveBarError('')
+    try {
+      const tasks: Promise<void>[] = []
+      if (basicDirty) tasks.push(saveBasicInfo(draftFullName, draftBio, draftLocation, draftPhone))
+      if (specialtyDirty) {
+        const sportName = SPORTS.find((s) => s.toLowerCase() === primarySport) ?? primarySport
+        tasks.push(saveSpecialty(sportName))
+      }
+      if (rateDirty) tasks.push(saveRate(draftRate))
+      await Promise.all(tasks)
+      setSaveBarStatus('saved')
+      setTimeout(() => setSaveBarStatus('idle'), 1500)
+    } catch (e) {
+      setSaveBarError(e instanceof Error ? e.message : 'Save failed')
+      setSaveBarStatus('error')
+    }
   }
 
   async function requestVerification(notes: string) {
@@ -1249,6 +1273,12 @@ export default function TrainerProfilePage() {
   const location = initLocation
   const sport = SPORTS.find((s) => s.toLowerCase() === primarySport) ?? primarySport
   const cardTokens = getProfileCardTokens(themePreference)
+
+  const basicDirty = dataLoaded && (draftFullName !== initName || draftBio !== initBio || draftLocation !== initLocation || draftPhone !== initPhone)
+  const specialtyDirty = dataLoaded && primarySport !== savedSpecialty
+  const rateDirty = dataLoaded && draftRate !== initRate
+  const anyDirty = basicDirty || specialtyDirty || rateDirty
+  const showSaveBar = isEditing && (anyDirty || saveBarStatus === 'saving' || saveBarStatus === 'saved')
 
   const avgRating = reviews.length > 0
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
@@ -1308,7 +1338,7 @@ export default function TrainerProfilePage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
               <div>
                 <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: T.ink }}>Edit profile</div>
-                <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px' }}>Changes are saved per section</div>
+                <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px' }}>Your changes are saved together from the button below</div>
               </div>
               <button
                 onClick={() => setIsEditing(false)}
@@ -1317,11 +1347,14 @@ export default function TrainerProfilePage() {
             </div>
             <ProfilePhotoSection fullName={initName} sport={sport} userId={userId ?? ''} avatarUrl={avatarUrl} onAvatarChange={setAvatarUrl} />
             <BasicInfoSection
-              initialFullName={initName}
-              initialBio={initBio}
-              initialLocation={initLocation}
-              initialPhone={initPhone}
-              onSave={saveBasicInfo}
+              fullName={draftFullName}
+              onFullNameChange={setDraftFullName}
+              bio={draftBio}
+              onBioChange={setDraftBio}
+              location={draftLocation}
+              onLocationChange={setDraftLocation}
+              phone={draftPhone}
+              onPhoneChange={setDraftPhone}
             />
             <div id="section-appearance">
               <AppearanceSection
@@ -1337,11 +1370,10 @@ export default function TrainerProfilePage() {
               primarySport={primarySport}
               setPrimarySport={setPrimarySport}
               initialSpecialty={initSpecialty}
-              onSave={saveSpecialty}
             />
             <RateSection
-              initialHourlyRate={initRate}
-              onSave={saveRate}
+              hourlyRate={draftRate}
+              onHourlyRateChange={setDraftRate}
             />
             <CredentialsSection
               certificationStatus={certificationStatus}
@@ -1383,6 +1415,12 @@ export default function TrainerProfilePage() {
           />
         )}
       </motion.div>
+
+      <AnimatePresence>
+        {showSaveBar && (
+          <FloatingSaveBar status={saveBarStatus} error={saveBarError} onSave={handleSaveAll} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
