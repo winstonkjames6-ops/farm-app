@@ -548,7 +548,7 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
             setPrimarySport(KNOWN_SPORTS.has(sport) ? sport : 'turf-bg')
           }
           const onboarded = !!(data && data.years_experience != null && data.location && data.rate != null)
-          if (data && !onboarded) router.replace('/onboarding/trainer')
+          if (data && !onboarded) router.replace('/onboarding/setup')
         })
     })
   }, [])

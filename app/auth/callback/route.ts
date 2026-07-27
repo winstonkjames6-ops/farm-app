@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
             .single()
           const onboarded = !!(trainer && trainer.years_experience != null && trainer.location && trainer.rate != null)
           if (!onboarded) {
-            return NextResponse.redirect(`${origin}/onboarding/trainer`)
+            return NextResponse.redirect(`${origin}/onboarding/setup`)
           }
         }
       }
