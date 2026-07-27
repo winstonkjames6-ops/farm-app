@@ -170,14 +170,6 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function SaveButton({ onClick }: { onClick?: () => void }) {
-  return (
-    <button type="button" onClick={onClick} style={{ width: '100%', height: '44px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 500, fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', marginTop: '20px' }}>
-      Save changes
-    </button>
-  )
-}
-
 function FloatingSaveBar({
   status,
   error,
@@ -515,7 +507,6 @@ function SocialLinksSection() {
           </div>
         ))}
       </div>
-      <SaveButton />
     </SectionCard>
   )
 }
@@ -550,7 +541,6 @@ function IntroVideoSection() {
           </div>
         )}
       </div>
-      <SaveButton />
     </SectionCard>
   )
 }
@@ -561,10 +551,12 @@ function SpecialtiesSection({
   primarySport,
   setPrimarySport,
   initialSpecialty,
+  onPrimarySelect,
 }: {
   primarySport: string
   setPrimarySport: (s: string) => void
   initialSpecialty?: string
+  onPrimarySelect?: () => void
 }) {
   const [selectedSports, setSelectedSports] = useState<string[]>([])
   const [selectedAges, setSelectedAges] = useState<string[]>(['U9-U10', 'U11-U12'])
@@ -630,7 +622,7 @@ function SpecialtiesSection({
                   </motion.button>
                   {pillPopover === sport && (
                     <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: '#111827', color: '#FFFFFF', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', zIndex: 20, whiteSpace: 'nowrap', display: 'flex', gap: '12px' }}>
-                      <span style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setPrimarySport(sport.toLowerCase()); setPillPopover(null) }}>
+                      <span style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setPrimarySport(sport.toLowerCase()); onPrimarySelect?.(); setPillPopover(null) }}>
                         Set as primary
                       </span>
                       <span style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setSelectedSports((prev) => prev.filter((s) => s !== sport)); setPillPopover(null) }}>
@@ -870,7 +862,6 @@ function CredentialsSection({
         </div>
       )}
 
-      <SaveButton />
     </SectionCard>
   )
 }
@@ -963,7 +954,6 @@ function SessionSetupSection() {
           <textarea value={equipment} onChange={(e) => setEquipment(e.target.value)} placeholder="List any equipment you bring or require parents to have..." style={{ width: '100%', minHeight: '80px', borderRadius: '8px', border: '1px solid #E5E7EB', padding: '14px', fontSize: '16px', fontFamily: "'Hanken Grotesk', sans-serif", resize: 'vertical', outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF' }} />
         </div>
       </div>
-      <SaveButton />
     </SectionCard>
   )
 }
@@ -1026,7 +1016,6 @@ function NotificationsSection() {
           </div>
         </div>
       ))}
-      <SaveButton />
     </SectionCard>
   )
 }
@@ -1114,7 +1103,7 @@ export default function TrainerProfilePage() {
   const [draftLocation, setDraftLocation] = useState('')
   const [draftPhone, setDraftPhone] = useState('')
   const [draftRate, setDraftRate] = useState('')
-  const [savedSpecialty, setSavedSpecialty] = useState('')
+  const [specialtyTouched, setSpecialtyTouched] = useState(false)
   const [saveBarStatus, setSaveBarStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [saveBarError, setSaveBarError] = useState('')
 
@@ -1155,7 +1144,6 @@ export default function TrainerProfilePage() {
       setDraftLocation(loadedLocation)
       setDraftPhone(loadedPhone)
       setDraftRate(loadedRate)
-      setSavedSpecialty(loadedSpecialty.toLowerCase())
       setDataLoaded(true)
 
       const trainerRowId = trainerRes.data?.id
@@ -1226,7 +1214,7 @@ export default function TrainerProfilePage() {
     const { error } = await supabase.from('trainers').update({ specialty }).eq('profile_id', userId)
     if (error) throw new Error(error.message)
     setInitSpecialty(specialty)
-    setSavedSpecialty(specialty.toLowerCase())
+    setSpecialtyTouched(false)
   }
 
   async function handleSaveAll() {
@@ -1275,7 +1263,7 @@ export default function TrainerProfilePage() {
   const cardTokens = getProfileCardTokens(themePreference)
 
   const basicDirty = dataLoaded && (draftFullName !== initName || draftBio !== initBio || draftLocation !== initLocation || draftPhone !== initPhone)
-  const specialtyDirty = dataLoaded && primarySport !== savedSpecialty
+  const specialtyDirty = specialtyTouched
   const rateDirty = dataLoaded && draftRate !== initRate
   const anyDirty = basicDirty || specialtyDirty || rateDirty
   const showSaveBar = isEditing && (anyDirty || saveBarStatus === 'saving' || saveBarStatus === 'saved')
@@ -1370,6 +1358,7 @@ export default function TrainerProfilePage() {
               primarySport={primarySport}
               setPrimarySport={setPrimarySport}
               initialSpecialty={initSpecialty}
+              onPrimarySelect={() => setSpecialtyTouched(true)}
             />
             <RateSection
               hourlyRate={draftRate}

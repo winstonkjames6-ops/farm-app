@@ -32,12 +32,6 @@ const linkButtonStyle: React.CSSProperties = {
   color: T.cyan, fontSize: '13px', fontWeight: 600, fontFamily: "'Hanken Grotesk', sans-serif",
 }
 
-const primaryBtnStyle: React.CSSProperties = {
-  height: '36px', padding: '0 16px', borderRadius: '8px', border: 'none',
-  background: T.cyan, color: '#FFFFFF', fontSize: '13px', fontWeight: 700,
-  fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer',
-}
-
 const secondaryBtnStyle: React.CSSProperties = {
   height: '36px', padding: '0 16px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.12)',
   background: 'transparent', color: T.ink2, fontSize: '13px', fontWeight: 600,
@@ -369,21 +363,21 @@ function AccountSection({
             )}
           </div>
           {editingEmail ? (
-            <div style={{ marginTop: '8px' }}>
+            <form onSubmit={(e) => { e.preventDefault(); handleSaveEmail() }} style={{ marginTop: '8px' }}>
               <input
-                style={inputStyle} type="email" value={email}
+                style={inputStyle} type="email" value={email} autoFocus
+                disabled={savingEmail}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                <button onClick={handleSaveEmail} disabled={savingEmail} style={primaryBtnStyle}>
-                  {savingEmail ? 'Saving…' : 'Save'}
-                </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
+                <span style={{ ...pendingTextStyle, marginTop: 0 }}>{savingEmail ? 'Saving…' : 'Press Enter to save'}</span>
                 <button
+                  type="button"
                   onClick={() => { setEditingEmail(false); setEmail(initialEmail); setEmailError(null) }}
                   style={secondaryBtnStyle}
                 >Cancel</button>
               </div>
-            </div>
+            </form>
           ) : (
             <div style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
               {email}
@@ -414,27 +408,31 @@ function AccountSection({
             )}
           </div>
           {editingPassword && (
-            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSavePassword() }}
+              style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}
+            >
               <input
-                style={inputStyle} type="password" placeholder="New password"
+                style={inputStyle} type="password" placeholder="New password" autoFocus
+                disabled={savingPassword}
                 value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
               />
               <input
                 style={inputStyle} type="password" placeholder="Confirm new password"
+                disabled={savingPassword}
                 value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
               />
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={handleSavePassword} disabled={savingPassword} style={primaryBtnStyle}>
-                  {savingPassword ? 'Saving…' : 'Save'}
-                </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ ...pendingTextStyle, marginTop: 0 }}>{savingPassword ? 'Saving…' : 'Press Enter to save'}</span>
                 <button
+                  type="button"
                   onClick={() => {
                     setEditingPassword(false); setNewPassword(''); setConfirmPassword(''); setPasswordError(null)
                   }}
                   style={secondaryBtnStyle}
                 >Cancel</button>
               </div>
-            </div>
+            </form>
           )}
           {passwordError && <div style={errorTextStyle}>{passwordError}</div>}
           {passwordSaved && <div style={pendingTextStyle}>Password updated.</div>}

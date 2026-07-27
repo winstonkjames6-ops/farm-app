@@ -135,29 +135,50 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function SaveButton({
-  onClick, loading, disabled,
+function FloatingSaveBar({
+  status,
+  error,
+  onSave,
 }: {
-  onClick?: () => void; loading?: boolean; disabled?: boolean
+  status: 'idle' | 'saving' | 'saved' | 'error'
+  error: string
+  onSave: () => void
 }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled || loading}
-      style={{
-        width: '100%', height: '44px',
-        background: T.cyan, color: '#FFFFFF',
-        border: 'none', borderRadius: '8px',
-        fontSize: '15px', fontWeight: 600,
-        fontFamily: "'Hanken Grotesk', sans-serif",
-        cursor: (disabled || loading) ? 'not-allowed' : 'pointer',
-        marginTop: '20px',
-        letterSpacing: '.02em',
-        opacity: (disabled || loading) ? 0.7 : 1,
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 16 }}
+      transition={{ duration: 0.2 }}
+      style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}
     >
-      {loading ? 'Saving…' : 'Save changes'}
-    </button>
+      {status === 'error' && (
+        <div style={{ background: '#111827', color: '#FCA5A5', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", borderRadius: '8px', padding: '8px 14px', maxWidth: '280px' }}>
+          {error || 'Save failed'}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={status === 'saving'}
+        style={{
+          height: '48px', padding: '0 28px', borderRadius: '999px', border: 'none',
+          background: T.cyan, color: '#FFFFFF',
+          fontSize: '15px', fontWeight: 600, fontFamily: "'Hanken Grotesk', sans-serif",
+          cursor: status === 'saving' ? 'default' : 'pointer',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.22)',
+          display: 'flex', alignItems: 'center', gap: '8px',
+          opacity: status === 'saving' ? 0.85 : 1,
+        }}
+      >
+        {status === 'saving' && (
+          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }} style={{ display: 'flex' }}>
+            <Loader2 size={16} color="#FFFFFF" />
+          </motion.div>
+        )}
+        {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved' : 'Save changes'}
+      </button>
+    </motion.div>
   )
 }
 
@@ -420,81 +441,27 @@ function PhotoSection({
 // ── Section: Basic Info ────────────────────────────────────────────────────────
 
 function BasicInfoSection({
-  firstName: initFirst,
-  lastName: initLast,
-  email: confirmedEmail,
-  phone: initPhone,
-  userId,
-  onSave,
+  firstName,
+  onFirstNameChange,
+  lastName,
+  onLastNameChange,
+  email,
+  onEmailChange,
+  phone,
+  onPhoneChange,
+  emailPending,
 }: {
   firstName: string
+  onFirstNameChange: (v: string) => void
   lastName: string
+  onLastNameChange: (v: string) => void
   email: string
+  onEmailChange: (v: string) => void
   phone: string
-  userId: string
-  onSave: (updates: { firstName: string; lastName: string; phone: string }) => void
+  onPhoneChange: (v: string) => void
+  emailPending?: string | null
 }) {
-  const [firstName, setFirstName] = useState(initFirst)
-  const [lastName, setLastName]   = useState(initLast)
-  const [email, setEmail]         = useState(confirmedEmail)
-  const [phone, setPhone]         = useState(initPhone)
-  const [location, setLocation]   = useState('')
-
-  const [saving, setSaving]           = useState(false)
-  const [nameError, setNameError]     = useState<string | null>(null)
-  const [emailError, setEmailError]   = useState<string | null>(null)
-  const [emailPending, setEmailPending] = useState<string | null>(null)
-  const [nameSaved, setNameSaved]     = useState(false)
-
-  async function handleSave() {
-    setSaving(true)
-    setNameError(null)
-    setEmailError(null)
-    setEmailPending(null)
-    setNameSaved(false)
-
-    const supabase = createClient()
-    const nameChanged  = firstName !== initFirst || lastName !== initLast
-    const phoneChanged = phone !== initPhone
-    const emailChanged = email !== confirmedEmail
-
-    let nameOk = !nameChanged && !phoneChanged
-
-    if (nameChanged || phoneChanged) {
-      const fullName = `${firstName} ${lastName}`.trim()
-      const { error } = await supabase
-        .from('profiles')
-        .update({ name: fullName, phone })
-        .eq('id', userId)
-      if (error) {
-        setNameError(error.message)
-      } else {
-        onSave({ firstName, lastName, phone })
-        nameOk = true
-      }
-    }
-
-    if (emailChanged) {
-      const { error } = await supabase.auth.updateUser(
-        { email },
-        { emailRedirectTo: `${window.location.origin}/auth/callback` }
-      )
-      if (error) {
-        setEmailError(error.message)
-      } else {
-        setEmailPending(
-          `Confirmation email sent to ${email}. Your login email won't change until you click the link in that email.`
-        )
-        setEmail(confirmedEmail)
-      }
-    }
-
-    if (nameOk && !emailChanged) {
-      setNameSaved(true)
-    }
-
-    setSaving(false)
-  }
+  const [location, setLocation] = useState('')
 
   return (
     <SectionCard id="section-basic-info">
@@ -505,7 +472,7 @@ function BasicInfoSection({
             <FieldLabel>First name</FieldLabel>
             <input
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              onChange={(e) => onFirstNameChange(e.target.value)}
               style={inputBase}
             />
           </div>
@@ -513,34 +480,18 @@ function BasicInfoSection({
             <FieldLabel>Last name</FieldLabel>
             <input
               value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              onChange={(e) => onLastNameChange(e.target.value)}
               style={inputBase}
             />
           </div>
         </div>
-        {nameError && (
-          <div style={{
-            color: T.danger, fontSize: '13px',
-            fontFamily: "'Hanken Grotesk', sans-serif",
-          }}>
-            {nameError}
-          </div>
-        )}
         <div>
           <FieldLabel>Email</FieldLabel>
           <input
             value={email} type="email"
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => onEmailChange(e.target.value)}
             style={inputBase}
           />
-          {emailError && (
-            <div style={{
-              color: T.danger, fontSize: '13px', marginTop: '6px',
-              fontFamily: "'Hanken Grotesk', sans-serif",
-            }}>
-              {emailError}
-            </div>
-          )}
           {emailPending && (
             <div style={{
               color: '#059669', fontSize: '13px', marginTop: '6px',
@@ -554,7 +505,7 @@ function BasicInfoSection({
           <FieldLabel>Phone</FieldLabel>
           <input
             value={phone} type="tel"
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => onPhoneChange(e.target.value)}
             style={inputBase}
           />
         </div>
@@ -568,15 +519,6 @@ function BasicInfoSection({
           />
         </div>
       </div>
-      {nameSaved && (
-        <div style={{
-          color: '#059669', fontSize: '13px', marginTop: '12px',
-          fontFamily: "'Hanken Grotesk', sans-serif",
-        }}>
-          Changes saved.
-        </div>
-      )}
-      <SaveButton onClick={handleSave} loading={saving} disabled={saving} />
     </SectionCard>
   )
 }
@@ -1183,7 +1125,6 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
                           {saveError[athlete.id]}
                         </div>
                       )}
-                      <SaveButton />
                     </>
                   )}
                 </div>
@@ -1334,7 +1275,6 @@ function NotificationsSection() {
           </div>
         ))}
       </div>
-      <SaveButton />
     </SectionCard>
     </div>
   )
@@ -1406,16 +1346,21 @@ function DangerZoneSection({ onLogOut }: { onLogOut: () => void }) {
 // ── Edit mode ──────────────────────────────────────────────────────────────────
 
 function EditMode({
-  onBack, firstName, lastName, email, phone, userId, onProfileUpdate, athletes, onLogOut,
+  onBack, firstName, onFirstNameChange, lastName, onLastNameChange, email, onEmailChange,
+  phone, onPhoneChange, emailPending, userId, athletes, onLogOut,
   themePreference, backgroundMode, hasBannerImage, onSaveAppearance, avatarUrl, onAvatarChange,
 }: {
   onBack: () => void
   firstName: string
+  onFirstNameChange: (v: string) => void
   lastName: string
+  onLastNameChange: (v: string) => void
   email: string
+  onEmailChange: (v: string) => void
   phone: string
+  onPhoneChange: (v: string) => void
+  emailPending: string | null
   userId: string
-  onProfileUpdate: (updates: { firstName: string; lastName: string; phone: string }) => void
   athletes: AthleteRow[]
   onLogOut: () => void
   themePreference: ThemeSetting
@@ -1442,7 +1387,7 @@ function EditMode({
           <div style={{
             fontSize: '14px', color: T.ink2,
             fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px',
-          }}>Changes are saved per section</div>
+          }}>Your changes are saved together from the button below</div>
         </div>
         <button
           onClick={onBack}
@@ -1461,11 +1406,14 @@ function EditMode({
         <PhotoSection initials={initials} userId={userId} avatarUrl={avatarUrl} onAvatarChange={onAvatarChange} />
         <BasicInfoSection
           firstName={firstName}
+          onFirstNameChange={onFirstNameChange}
           lastName={lastName}
+          onLastNameChange={onLastNameChange}
           email={email}
+          onEmailChange={onEmailChange}
           phone={phone}
-          userId={userId}
-          onSave={onProfileUpdate}
+          onPhoneChange={onPhoneChange}
+          emailPending={emailPending}
         />
         <div id="section-appearance">
           <AppearanceSection
@@ -1530,6 +1478,14 @@ export default function ParentProfilePage() {
   const [messages, setMessages] = useState<MessageRow[]>([])
   const [activeTab, setActiveTab] = useState('activity')
 
+  const [draftFirstName, setDraftFirstName] = useState('')
+  const [draftLastName, setDraftLastName] = useState('')
+  const [draftPhone, setDraftPhone] = useState('')
+  const [draftEmail, setDraftEmail] = useState('')
+  const [emailPending, setEmailPending] = useState<string | null>(null)
+  const [saveBarStatus, setSaveBarStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [saveBarError, setSaveBarError] = useState('')
+
   useEffect(() => {
     async function loadProfile() {
       const supabase = createClient()
@@ -1557,6 +1513,10 @@ export default function ParentProfilePage() {
         themePreference: (profileData?.theme_preference as ThemeSetting) ?? 'light',
         backgroundMode: (profileData?.background_mode as BackgroundMode) ?? 'full',
       })
+      setDraftFirstName(firstName)
+      setDraftLastName(lastName)
+      setDraftPhone(profileData?.phone ?? '')
+      setDraftEmail(user.email ?? '')
 
       const { data: athleteData } = await supabase
         .from('athletes')
@@ -1624,8 +1584,42 @@ export default function ParentProfilePage() {
     loadProfile()
   }, [])
 
-  function handleProfileUpdate(updates: { firstName: string; lastName: string; phone: string }) {
-    setProfile((p) => p ? { ...p, ...updates } : p)
+  async function saveBasicInfo() {
+    if (!userId || !profile) throw new Error('Not authenticated')
+    const supabase = createClient()
+    const nameChanged = draftFirstName !== profile.firstName || draftLastName !== profile.lastName
+    const phoneChanged = draftPhone !== profile.phone
+    const emailChanged = draftEmail !== profile.email
+
+    if (nameChanged || phoneChanged) {
+      const fullName = `${draftFirstName} ${draftLastName}`.trim()
+      const { error } = await supabase.from('profiles').update({ name: fullName, phone: draftPhone }).eq('id', userId)
+      if (error) throw new Error(error.message)
+      setProfile((p) => p ? { ...p, firstName: draftFirstName, lastName: draftLastName, phone: draftPhone } : p)
+    }
+
+    if (emailChanged) {
+      const { error } = await supabase.auth.updateUser(
+        { email: draftEmail },
+        { emailRedirectTo: `${window.location.origin}/auth/callback` }
+      )
+      if (error) throw new Error(error.message)
+      setEmailPending(`Confirmation email sent to ${draftEmail}. Your login email won't change until you click the link in that email.`)
+      setDraftEmail(profile.email)
+    }
+  }
+
+  async function handleSaveAll() {
+    setSaveBarStatus('saving')
+    setSaveBarError('')
+    try {
+      if (basicDirty) await saveBasicInfo()
+      setSaveBarStatus('saved')
+      setTimeout(() => setSaveBarStatus('idle'), 1500)
+    } catch (e) {
+      setSaveBarError(e instanceof Error ? e.message : 'Save failed')
+      setSaveBarStatus('error')
+    }
   }
 
   function handleAvatarChange(url: string) {
@@ -1687,6 +1681,9 @@ export default function ParentProfilePage() {
   const displayName = `${profile.firstName} ${profile.lastName}`.trim()
   const sportsCount = new Set(athletes.map((a) => a.sport).filter(Boolean)).size
   const cardTokens = getProfileCardTokens(profile.themePreference)
+
+  const basicDirty = draftFirstName !== profile.firstName || draftLastName !== profile.lastName || draftPhone !== profile.phone || draftEmail !== profile.email
+  const showSaveBar = isEditing && (basicDirty || saveBarStatus === 'saving' || saveBarStatus === 'saved')
 
   const activityItems: ActivityItem[] = [
     ...bookings.map((b) => ({
@@ -1759,12 +1756,16 @@ export default function ParentProfilePage() {
           {isEditing ? (
             <EditMode
               onBack={() => setIsEditing(false)}
-              firstName={profile.firstName}
-              lastName={profile.lastName}
-              email={profile.email}
-              phone={profile.phone}
+              firstName={draftFirstName}
+              onFirstNameChange={setDraftFirstName}
+              lastName={draftLastName}
+              onLastNameChange={setDraftLastName}
+              email={draftEmail}
+              onEmailChange={setDraftEmail}
+              phone={draftPhone}
+              onPhoneChange={setDraftPhone}
+              emailPending={emailPending}
               userId={userId}
-              onProfileUpdate={handleProfileUpdate}
               athletes={athletes}
               onLogOut={handleLogOut}
               themePreference={profile.themePreference}
@@ -1804,6 +1805,12 @@ export default function ParentProfilePage() {
           )}
         </motion.div>
       </div>
+
+      <AnimatePresence>
+        {showSaveBar && (
+          <FloatingSaveBar status={saveBarStatus} error={saveBarError} onSave={handleSaveAll} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
