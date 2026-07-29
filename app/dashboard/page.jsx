@@ -434,7 +434,9 @@ export default function DashboardPage() {
         </motion.div>
 
         {isEmpty ? (
-          <EmptyState />
+          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px' }}>
+            <EmptyState />
+          </div>
         ) : (
           <div className="flex flex-col gap-10">
 

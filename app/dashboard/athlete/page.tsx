@@ -166,7 +166,7 @@ export default function AthletePage() {
         )}
 
         {/* Section 1 — Greeting */}
-        <div style={{ marginBottom: '24px' }}>
+        <div style={glassCard}>
           <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '32px', color: T.ink, margin: '0 0 6px', lineHeight: 1.1 }}>
             {getGreeting()}{firstName ? `, ${firstName}` : ''}
           </h1>

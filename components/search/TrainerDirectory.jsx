@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Star, Volleyball } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
+import { T } from '@/lib/theme'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -539,41 +540,43 @@ export default function TrainerDirectory() {
 
         {/* Right column */}
         <div>
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            gap: '16px', marginBottom: '20px', flexWrap: 'wrap',
-          }}>
-            <span style={{ fontFamily: hanken, fontSize: '14px', color: '#9A9A9A' }}>
-              {loading ? 'Loading trainers…' : (
-                <>
-                  <strong style={{ fontFamily: barlow, fontWeight: 700, fontSize: '16px', color: '#1A1A1A', letterSpacing: '.02em' }}>
-                    {filtered.length}
-                  </strong>{' '}trainer{filtered.length !== 1 ? 's' : ''} near you
-                </>
-              )}
-            </span>
-            <select
-              value={sort} onChange={(e) => setSort(e.target.value)}
-              style={{ ...selectStyle, width: 'auto', padding: '9px 32px 9px 12px' }}
-            >
-              {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+          <div style={{ background: T.card, borderRadius: '12px', padding: '16px 20px' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              gap: '16px', marginBottom: '20px', flexWrap: 'wrap',
+            }}>
+              <span style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3 }}>
+                {loading ? 'Loading trainers…' : (
+                  <>
+                    <strong style={{ fontFamily: barlow, fontWeight: 700, fontSize: '16px', color: '#1A1A1A', letterSpacing: '.02em' }}>
+                      {filtered.length}
+                    </strong>{' '}trainer{filtered.length !== 1 ? 's' : ''} near you
+                  </>
+                )}
+              </span>
+              <select
+                value={sort} onChange={(e) => setSort(e.target.value)}
+                style={{ ...selectStyle, width: 'auto', padding: '9px 32px 9px 12px' }}
+              >
+                {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '80px 24px' }}>
-              <p style={{ fontFamily: hanken, fontSize: '14px', color: '#9A9A9A', margin: 0 }}>
+            <div style={{ textAlign: 'center', padding: '80px 24px', background: T.card, borderRadius: '16px' }}>
+              <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>
                 Loading trainers&hellip;
               </p>
             </div>
           ) : filtered.length === 0 ? (
             <div style={{
               textAlign: 'center', padding: '80px 24px',
-              border: '1px solid rgba(0,0,0,0.08)',
+              border: '1px solid rgba(0,0,0,0.08)', background: T.card,
             }}>
               <p style={{
                 fontFamily: barlow, fontSize: '22px', fontWeight: 700,
-                color: '#9A9A9A', textTransform: 'uppercase',
+                color: T.ink3, textTransform: 'uppercase',
                 letterSpacing: '.06em', margin: '0 0 12px',
               }}>
                 No trainers match your filters
