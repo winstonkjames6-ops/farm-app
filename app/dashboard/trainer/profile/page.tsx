@@ -233,15 +233,19 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: () => void }) {
 // ── Section: Profile photo ─────────────────────────────────────────────────────
 
 function ProfilePhotoSection({
-  fullName, sport, userId, avatarUrl, onAvatarChange,
+  fullName, sport, userId, avatarUrl, onAvatarChange, credentials,
 }: {
   fullName: string
   sport: string
   userId: string
   avatarUrl: string | null
   onAvatarChange: (url: string) => void
+  credentials: string
 }) {
-  const profileStrength = PROFILE_ITEMS.filter((i) => i.completed).reduce((sum, i) => sum + parseInt(i.boost), 0)
+  const profileItems = PROFILE_ITEMS.map((item) =>
+    item.key === 'certification' ? { ...item, completed: !!credentials?.trim() } : item
+  )
+  const profileStrength = profileItems.filter((i) => i.completed).reduce((sum, i) => sum + parseInt(i.boost), 0)
   const [strengthExpanded, setStrengthExpanded] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
@@ -360,11 +364,11 @@ function ProfilePhotoSection({
                 style={{ overflow: 'hidden' }}
               >
                 <div style={{ width: '100%', maxWidth: '320px' }}>
-                  {PROFILE_ITEMS.map((item, i) => (
+                  {profileItems.map((item, i) => (
                     <div
                       key={item.key}
                       onClick={() => !item.completed && scrollTo(item.sectionId)}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0', borderBottom: i < PROFILE_ITEMS.length - 1 ? '1px solid #F3F4F6' : 'none', cursor: item.completed ? 'default' : 'pointer' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0', borderBottom: i < profileItems.length - 1 ? '1px solid #F3F4F6' : 'none', cursor: item.completed ? 'default' : 'pointer' }}
                     >
                       {item.completed
                         ? <CheckCircle size={16} color="#10B981" style={{ flexShrink: 0 }} />
@@ -1093,6 +1097,7 @@ export default function TrainerProfilePage() {
   const [isCertified, setIsCertified] = useState(false)
   const [certificationStatus, setCertificationStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none')
   const [certificationNotes, setCertificationNotes] = useState('')
+  const [credentials, setCredentials] = useState('')
   const [themePreference, setThemePreference] = useState<ThemeSetting>('light')
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>('full')
   const [bookings, setBookings] = useState<TrainerBookingRow[]>([])
@@ -1117,7 +1122,7 @@ export default function TrainerProfilePage() {
       setUserId(user.id)
       const [profileRes, trainerRes] = await Promise.all([
         supabase.from('profiles').select('name, avatar_url, banner_image_url, phone, verified, theme_preference, background_mode').eq('id', user.id).single(),
-        supabase.from('trainers').select('id, specialty, bio, rate, location, is_certified, certification_status, certification_notes').eq('profile_id', user.id).single(),
+        supabase.from('trainers').select('id, specialty, bio, rate, location, is_certified, certification_status, certification_notes, credentials').eq('profile_id', user.id).single(),
       ])
       const loadedName = profileRes.data?.name ?? ''
       const loadedPhone = profileRes.data?.phone ?? ''
@@ -1140,6 +1145,7 @@ export default function TrainerProfilePage() {
       setIsCertified((trainerRes.data as any)?.is_certified ?? false)
       setCertificationStatus(((trainerRes.data as any)?.certification_status as typeof certificationStatus) ?? 'none')
       setCertificationNotes((trainerRes.data as any)?.certification_notes ?? '')
+      setCredentials((trainerRes.data as any)?.credentials ?? '')
 
       setDraftFullName(loadedName)
       setDraftBio(loadedBio)
@@ -1335,7 +1341,7 @@ export default function TrainerProfilePage() {
                 style={{ border: '1px solid rgba(0,0,0,0.12)', color: T.ink2, background: 'transparent', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px', flexShrink: 0 }}
               >← Done editing</button>
             </div>
-            <ProfilePhotoSection fullName={initName} sport={sport} userId={userId ?? ''} avatarUrl={avatarUrl} onAvatarChange={setAvatarUrl} />
+            <ProfilePhotoSection fullName={initName} sport={sport} userId={userId ?? ''} avatarUrl={avatarUrl} onAvatarChange={setAvatarUrl} credentials={credentials} />
             <BasicInfoSection
               fullName={draftFullName}
               onFullNameChange={setDraftFullName}

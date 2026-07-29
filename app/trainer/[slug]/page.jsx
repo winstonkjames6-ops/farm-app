@@ -112,7 +112,7 @@ export default function TrainerProfile({ params: { slug } }) {
       const supabase = createClient()
       const { data } = await supabase
         .from('trainers')
-        .select('id, profile_id, specialty, bio, rate, location, active_preset_id, max_sessions_per_day, min_notice_hours, max_advance_days, standing_days_off, profiles(name, avatar_url)')
+        .select('id, profile_id, specialty, bio, rate, location, active_preset_id, max_sessions_per_day, min_notice_hours, max_advance_days, standing_days_off, is_certified, certification_status, credentials, years_experience, languages, profiles(name, avatar_url)')
         .eq('profile_id', slug)
         .single()
       if (!data) {
@@ -222,7 +222,10 @@ export default function TrainerProfile({ params: { slug } }) {
   // Derive name safely
   const name = trainer?.profiles?.name ?? ''
   const avatarUrl = trainer?.profiles?.avatar_url ?? null
-  const { profile_id, specialty, bio, rate, location } = trainer ?? {}
+  const { profile_id, specialty, bio, rate, location, is_certified, credentials, years_experience, languages } = trainer ?? {}
+  const languageList = Array.isArray(languages)
+    ? languages
+    : (languages ? String(languages).split(',').map((s) => s.trim()).filter(Boolean) : [])
   const displayRate = overrideRate ?? rate
 
   const bookingHref = trainer && selectedTime
@@ -427,6 +430,19 @@ export default function TrainerProfile({ params: { slug } }) {
                         padding: '4px 12px', borderRadius: '999px',
                       }}>{specialty}</span>
                     )}
+                    {is_certified && (
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '5px',
+                        background: 'rgba(0,188,200,0.10)',
+                        color: '#00838C', fontSize: '12.5px', fontWeight: 700,
+                        padding: '4px 12px', borderRadius: '999px',
+                      }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00838C" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Verified
+                      </span>
+                    )}
                   </div>
 
                   {location && (
@@ -448,6 +464,28 @@ export default function TrainerProfile({ params: { slug } }) {
               <div style={card}>
                 <h2 style={sectionHeading}>About</h2>
                 <p style={{ color: 'var(--ink-2)', fontSize: '15.5px', lineHeight: 1.7, margin: 0 }}>{bio}</p>
+              </div>
+            )}
+
+            {/* Experience */}
+            {(years_experience != null || languageList.length > 0 || (credentials && credentials.trim())) && (
+              <div style={card}>
+                <h2 style={sectionHeading}>Experience</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {years_experience != null && (
+                    <p style={{ color: 'var(--ink-2)', fontSize: '15.5px', lineHeight: 1.7, margin: 0 }}>
+                      {years_experience} year{years_experience === 1 ? '' : 's'} coaching
+                    </p>
+                  )}
+                  {languageList.length > 0 && (
+                    <p style={{ color: 'var(--ink-2)', fontSize: '15.5px', lineHeight: 1.7, margin: 0 }}>
+                      Speaks: {languageList.join(', ')}
+                    </p>
+                  )}
+                  {credentials && credentials.trim() && (
+                    <p style={{ color: 'var(--ink-2)', fontSize: '15.5px', lineHeight: 1.7, margin: 0 }}>{credentials}</p>
+                  )}
+                </div>
               </div>
             )}
 
