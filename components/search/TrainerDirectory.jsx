@@ -261,6 +261,7 @@ export default function TrainerDirectory() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSports, setSelectedSports] = useState([])
+  const [selectedTags, setSelectedTags] = useState([])
   const [maxRateIdx, setMaxRateIdx] = useState(0)
   const [sort, setSort] = useState('price_asc')
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
@@ -272,13 +273,20 @@ export default function TrainerDirectory() {
         .from('trainers')
         .select('id, profile_id, specialty, bio, rate, location, is_certified, active_preset_id, profiles(name, avatar_url)'),
       supabase.from('reviews').select('trainer_id, rating'),
-    ]).then(([{ data }, { data: reviewData }]) => {
+      supabase.from('trainer_tags').select('trainer_id, tags(name)'),
+    ]).then(([{ data }, { data: reviewData }, { data: tagData }]) => {
       if (data) {
         const ratingsByTrainer = {}
         for (const r of reviewData ?? []) {
           const bucket = ratingsByTrainer[r.trainer_id] ?? (ratingsByTrainer[r.trainer_id] = { sum: 0, count: 0 })
           bucket.sum += r.rating
           bucket.count += 1
+        }
+
+        const tagsByTrainer = {}
+        for (const t of tagData ?? []) {
+          const bucket = tagsByTrainer[t.trainer_id] ?? (tagsByTrainer[t.trainer_id] = [])
+          if (t.tags?.name) bucket.push(t.tags.name)
         }
 
         setTrainers(data.map((row) => {
@@ -297,6 +305,7 @@ export default function TrainerDirectory() {
             initials: getInitials(row.profiles?.name ?? ''),
             avgRating: ratings ? Math.round((ratings.sum / ratings.count) * 10) / 10 : null,
             reviewCount: ratings?.count ?? 0,
+            tags: tagsByTrainer[row.id] ?? [],
           }
         }))
       }
@@ -308,13 +317,23 @@ export default function TrainerDirectory() {
     setSelectedSports((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s])
   }
 
+  const toggleTag = (tag) => {
+    setSelectedTags((prev) => prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag])
+  }
+
   const clearFilters = () => {
     setSearchQuery('')
     setSelectedSports([])
+    setSelectedTags([])
     setMaxRateIdx(0)
   }
 
   const rateOpt = RATE_OPTIONS[maxRateIdx]
+
+  const allTags = useMemo(
+    () => Array.from(new Set(trainers.flatMap((t) => t.tags))).sort(),
+    [trainers]
+  )
 
   const filtered = useMemo(() => {
     let list = trainers.filter((t) => {
@@ -323,6 +342,7 @@ export default function TrainerDirectory() {
         if (!t.name.toLowerCase().includes(q) && !t.specialty.toLowerCase().includes(q)) return false
       }
       if (selectedSports.length && !selectedSports.includes(t.sport)) return false
+      if (selectedTags.length && !selectedTags.every((tag) => t.tags.includes(tag))) return false
       if (rateOpt.min && t.rate < rateOpt.min) return false
       if (rateOpt.max !== Infinity && t.rate > rateOpt.max) return false
       return true
@@ -331,10 +351,11 @@ export default function TrainerDirectory() {
     if (sort === 'price_desc') list = [...list].sort((a, b) => b.rate - a.rate)
     if (sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name))
     return list
-  }, [trainers, searchQuery, selectedSports, maxRateIdx, sort, rateOpt])
+  }, [trainers, searchQuery, selectedSports, selectedTags, maxRateIdx, sort, rateOpt])
 
-  const hasFilters = !!searchQuery || selectedSports.length > 0 || maxRateIdx !== 0
-  const activeFilterCount = (searchQuery ? 1 : 0) + selectedSports.length + (maxRateIdx > 0 ? 1 : 0)
+  const hasFilters = !!searchQuery || selectedSports.length > 0 || selectedTags.length > 0 || maxRateIdx !== 0
+  const activeFilterCount = (searchQuery ? 1 : 0) + selectedSports.length + selectedTags.length + (maxRateIdx > 0 ? 1 : 0)
+  const distinctLocationCount = new Set(filtered.map((t) => t.location).filter(Boolean)).size
 
   const sidebar = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -369,6 +390,40 @@ export default function TrainerDirectory() {
       </div>
 
       <div style={divider} />
+
+      {/* Specialty */}
+      {allTags.length > 0 && (
+        <>
+          <div>
+            <div style={labelStyle}>Specialty</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {allTags.map((tag) => {
+                const active = selectedTags.includes(tag)
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '5px',
+                      borderRadius: '999px', padding: '6px 14px',
+                      fontFamily: hanken, fontSize: '13px', fontWeight: active ? 600 : 400,
+                      border: active ? '1px solid rgba(0,188,200,0.3)' : '1px solid rgba(0,0,0,0.12)',
+                      background: active ? 'rgba(0,188,200,0.10)' : 'transparent',
+                      color: active ? '#00BCC8' : '#4A4A4A',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {tag}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <div style={divider} />
+        </>
+      )}
 
       {/* Max Rate */}
       <div>
@@ -406,7 +461,9 @@ export default function TrainerDirectory() {
           Find a trainer
         </h1>
         <p style={{ fontFamily: hanken, fontSize: '15px', color: '#9A9A9A', margin: '0 0 20px' }}>
-          Austin, TX · All sports
+          {distinctLocationCount > 0
+            ? `${distinctLocationCount} location${distinctLocationCount === 1 ? '' : 's'} · All sports`
+            : 'Trainers near you'}
         </p>
 
         {/* Search input */}
