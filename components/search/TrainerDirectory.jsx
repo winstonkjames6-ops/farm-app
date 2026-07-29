@@ -540,10 +540,11 @@ export default function TrainerDirectory() {
 
         {/* Right column */}
         <div>
-          <div style={{ background: T.card, borderRadius: '12px', padding: '16px 20px' }}>
+          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', overflow: 'hidden' }}>
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              gap: '16px', marginBottom: '20px', flexWrap: 'wrap',
+              gap: '16px', flexWrap: 'wrap',
+              padding: '20px 24px', borderBottom: `1px solid ${T.line}`,
             }}>
               <span style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3 }}>
                 {loading ? 'Loading trainers…' : (
@@ -561,46 +562,45 @@ export default function TrainerDirectory() {
                 {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
-          </div>
 
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '80px 24px', background: T.card, borderRadius: '16px' }}>
-              <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>
-                Loading trainers&hellip;
-              </p>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div style={{
-              textAlign: 'center', padding: '80px 24px',
-              border: '1px solid rgba(0,0,0,0.08)', background: T.card,
-            }}>
-              <p style={{
-                fontFamily: barlow, fontSize: '22px', fontWeight: 700,
-                color: T.ink3, textTransform: 'uppercase',
-                letterSpacing: '.06em', margin: '0 0 12px',
-              }}>
-                No trainers match your filters
-              </p>
-              <button
-                onClick={clearFilters}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontFamily: barlow, fontWeight: 700, fontSize: '14px',
-                  letterSpacing: '.1em', textTransform: 'uppercase', color: '#00BCC8', padding: 0,
-                }}
-              >
-                Clear filters
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
-              {filtered.map((trainer, i) => (
-                <div key={trainer.id} id={i === 0 ? 'tour-search-first-card' : undefined}>
-                  <TrainerCard trainer={trainer} index={i} />
+            <div style={{ padding: '24px' }}>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+                  <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>
+                    Loading trainers&hellip;
+                  </p>
                 </div>
-              ))}
+              ) : filtered.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+                  <p style={{
+                    fontFamily: barlow, fontSize: '22px', fontWeight: 700,
+                    color: T.ink3, textTransform: 'uppercase',
+                    letterSpacing: '.06em', margin: '0 0 12px',
+                  }}>
+                    No trainers match your filters
+                  </p>
+                  <button
+                    onClick={clearFilters}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontFamily: barlow, fontWeight: 700, fontSize: '14px',
+                      letterSpacing: '.1em', textTransform: 'uppercase', color: '#00BCC8', padding: 0,
+                    }}
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+                  {filtered.map((trainer, i) => (
+                    <div key={trainer.id} id={i === 0 ? 'tour-search-first-card' : undefined}>
+                      <TrainerCard trainer={trainer} index={i} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
 

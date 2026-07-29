@@ -88,7 +88,7 @@ export default function NotFound() {
             onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(0.92)' }}
             onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
           >
-            Find a trainer
+            Find a Winston
           </Link>
         </div>
       </motion.div>

@@ -29,7 +29,7 @@ export default function SearchPage() {
             FARM
           </Link>
           <Link
-            href="/signup"
+            href="/login"
             style={{
               fontFamily: barlow, fontWeight: 700, fontSize: '13px',
               letterSpacing: '.1em', textTransform: 'uppercase',

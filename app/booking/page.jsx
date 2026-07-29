@@ -755,7 +755,7 @@ function BookingPageInner() {
   }, [])
 
   useEffect(() => {
-    if (paramsReady && !trainerId) router.push('/search')
+    if (paramsReady && !trainerId) router.push('/dashboard/search')
   }, [paramsReady, trainerId, router])
 
   useEffect(() => {
