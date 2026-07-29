@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/utils/supabase/client'
 import { useTrainerSport } from '../sport-context'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -179,13 +180,13 @@ function FloatingSaveBar({
   error: string
   onSave: () => void
 }) {
-  return (
+  return createPortal(
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 16 }}
       transition={{ duration: 0.2 }}
-      style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}
+      style={{ position: 'fixed', bottom: '24px', right: '92px', zIndex: 105, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}
     >
       {status === 'error' && (
         <div style={{ background: '#111827', color: '#FCA5A5', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", borderRadius: '8px', padding: '8px 14px', maxWidth: '280px' }}>
@@ -213,7 +214,8 @@ function FloatingSaveBar({
         )}
         {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved' : 'Save changes'}
       </button>
-    </motion.div>
+    </motion.div>,
+    document.body
   )
 }
 
