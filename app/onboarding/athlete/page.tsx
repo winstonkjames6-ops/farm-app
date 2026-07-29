@@ -145,7 +145,7 @@ function InviteGate({ onSubmit, error, submitting }: {
 
   return (
     <div style={{ background: T.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ maxWidth: '400px', width: '100%' }}>
+      <div style={{ maxWidth: '480px', width: '100%' }}>
         <div style={{
           fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '26px', color: T.ink, marginBottom: '4px',
         }}>Set up your account</div>
@@ -434,7 +434,7 @@ function MinorNotificationsStep({
 function ConfirmationScreen({ onDone }: { onDone: () => void }) {
   return (
     <div style={{ background: T.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
+      <div style={{ maxWidth: '480px', width: '100%', textAlign: 'center' }}>
         <div style={{
           width: '56px', height: '56px', borderRadius: '999px', background: 'rgba(0,188,200,0.1)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px',
