@@ -546,15 +546,29 @@ export default function TrainerDirectory() {
               gap: '16px', flexWrap: 'wrap',
               padding: '20px 24px', borderBottom: `1px solid ${T.line}`,
             }}>
-              <span style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3 }}>
-                {loading ? 'Loading trainers…' : (
-                  <>
-                    <strong style={{ fontFamily: barlow, fontWeight: 700, fontSize: '16px', color: '#1A1A1A', letterSpacing: '.02em' }}>
-                      {filtered.length}
-                    </strong>{' '}trainer{filtered.length !== 1 ? 's' : ''} near you
-                  </>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3 }}>
+                  {loading ? 'Loading trainers…' : (
+                    <>
+                      <strong style={{ fontFamily: barlow, fontWeight: 700, fontSize: '16px', color: '#1A1A1A', letterSpacing: '.02em' }}>
+                        {filtered.length}
+                      </strong>{' '}trainer{filtered.length !== 1 ? 's' : ''} near you
+                    </>
+                  )}
+                </span>
+                {hasFilters && (
+                  <button
+                    onClick={clearFilters}
+                    style={{
+                      background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                      fontFamily: barlow, fontWeight: 700, fontSize: '13px',
+                      letterSpacing: '.08em', textTransform: 'uppercase', color: '#00BCC8',
+                    }}
+                  >
+                    Clear filters
+                  </button>
                 )}
-              </span>
+              </div>
               <select
                 value={sort} onChange={(e) => setSort(e.target.value)}
                 style={{ ...selectStyle, width: 'auto', padding: '9px 32px 9px 12px' }}
