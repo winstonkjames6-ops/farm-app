@@ -43,6 +43,7 @@ interface AthleteRow {
   sport: string
   initials: string
   waiver_signed_at: string | null
+  profile_id: string | null
 }
 
 // ── Static data ────────────────────────────────────────────────────────────────
@@ -848,6 +849,13 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
   const [pendingDmAthlete, setPendingDmAthlete] = useState<AthleteRow | null>(null)
   const [dmPending, setDmPending] = useState<Record<string, boolean>>({})
 
+  // Invite-code reveal — per athlete, fetched lazily on first "View invite code" click.
+  const [inviteCodeOpen, setInviteCodeOpen] = useState<Record<string, boolean>>({})
+  const [inviteCodeLoading, setInviteCodeLoading] = useState<Record<string, boolean>>({})
+  const [inviteCodes, setInviteCodes] = useState<Record<string, string>>({})
+  const [inviteCodeError, setInviteCodeError] = useState<Record<string, string | null>>({})
+  const [inviteCodeCopied, setInviteCodeCopied] = useState<Record<string, boolean>>({})
+
   function handleChange(id: string, field: string, value: string | number) {
     setAthletes((prev) =>
       prev.map((a) => a.id === id ? { ...a, [field]: value } : a)
@@ -879,6 +887,34 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
       ...prev,
       [athleteId]: { ...prev[athleteId], [key]: !prev[athleteId][key] },
     }))
+  }
+
+  async function handleViewInviteCode(athleteId: string) {
+    setInviteCodeOpen((prev) => ({ ...prev, [athleteId]: true }))
+    if (inviteCodes[athleteId]) return
+    setInviteCodeLoading((prev) => ({ ...prev, [athleteId]: true }))
+    setInviteCodeError((prev) => ({ ...prev, [athleteId]: null }))
+    const supabase = createClient()
+    const { data, error } = await supabase.rpc('get_child_invite_code', { p_athlete_id: athleteId })
+    setInviteCodeLoading((prev) => ({ ...prev, [athleteId]: false }))
+    if (error) {
+      setInviteCodeError((prev) => ({ ...prev, [athleteId]: 'This invite code has expired — contact support' }))
+      return
+    }
+    setInviteCodes((prev) => ({ ...prev, [athleteId]: data as string }))
+  }
+
+  function closeInviteCode(athleteId: string) {
+    setInviteCodeOpen((prev) => ({ ...prev, [athleteId]: false }))
+  }
+
+  function copyInviteCode(athleteId: string) {
+    const code = inviteCodes[athleteId]
+    if (!code) return
+    navigator.clipboard.writeText(code).then(() => {
+      setInviteCodeCopied((prev) => ({ ...prev, [athleteId]: true }))
+      setTimeout(() => setInviteCodeCopied((prev) => ({ ...prev, [athleteId]: false })), 2000)
+    })
   }
 
   // Persists the messaging waiver (sign or revoke) and only flips the toggle
@@ -1151,6 +1187,78 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
                       fontFamily: "'Hanken Grotesk', sans-serif",
                       fontSize: '13px', color: T.ink3,
                     }}>Age {athlete.age} · {athlete.sport}</div>
+
+                    {athlete.profile_id ? (
+                      <div style={{
+                        marginTop: '4px', fontSize: '12px', fontWeight: 600, color: '#10B981',
+                        fontFamily: "'Hanken Grotesk', sans-serif",
+                      }}>Linked</div>
+                    ) : (
+                      <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{
+                          fontSize: '12px', fontWeight: 600, color: T.ink3,
+                          fontFamily: "'Hanken Grotesk', sans-serif",
+                        }}>Not yet linked</span>
+                        <button
+                          onClick={() => handleViewInviteCode(athlete.id)}
+                          style={{
+                            background: 'transparent', border: 'none', cursor: 'pointer',
+                            color: T.cyan, fontSize: '12px', fontWeight: 600,
+                            fontFamily: "'Hanken Grotesk', sans-serif", padding: 0,
+                          }}
+                        >View invite code</button>
+                      </div>
+                    )}
+
+                    <AnimatePresence>
+                      {inviteCodeOpen[athlete.id] && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          style={{ overflow: 'hidden' }}
+                        >
+                          <div style={{
+                            marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px',
+                            background: T.surface2, borderRadius: '8px', padding: '8px 12px',
+                          }}>
+                            {inviteCodeLoading[athlete.id] ? (
+                              <span style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                                Loading&hellip;
+                              </span>
+                            ) : inviteCodeError[athlete.id] ? (
+                              <span style={{ fontSize: '13px', color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                                {inviteCodeError[athlete.id]}
+                              </span>
+                            ) : (
+                              <>
+                                <code style={{
+                                  fontFamily: "'Courier New', monospace", fontSize: '14px',
+                                  fontWeight: 700, color: T.ink, letterSpacing: '0.04em',
+                                }}>{inviteCodes[athlete.id]}</code>
+                                <button
+                                  onClick={() => copyInviteCode(athlete.id)}
+                                  style={{
+                                    background: 'transparent', border: 'none', cursor: 'pointer',
+                                    color: T.cyan, fontSize: '12px', fontWeight: 600,
+                                    fontFamily: "'Hanken Grotesk', sans-serif", padding: 0,
+                                  }}
+                                >{inviteCodeCopied[athlete.id] ? 'Copied!' : 'Copy'}</button>
+                              </>
+                            )}
+                            <button
+                              onClick={() => closeInviteCode(athlete.id)}
+                              style={{
+                                marginLeft: 'auto', background: 'transparent', border: 'none',
+                                cursor: 'pointer', color: T.ink3, fontSize: '12px',
+                                fontFamily: "'Hanken Grotesk', sans-serif", padding: 0,
+                              }}
+                            >Close</button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                   <button
                     onClick={() => {
@@ -1161,7 +1269,7 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
                       background: 'transparent', border: 'none',
                       cursor: 'pointer', color: T.cyan, fontSize: '13px',
                       fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600,
-                      minHeight: '44px', padding: '0 4px',
+                      minHeight: '44px', padding: '0 4px', alignSelf: 'flex-start',
                     }}
                   >Edit</button>
                 </div>
@@ -1521,7 +1629,7 @@ export default function ParentProfilePage() {
 
       const { data: athleteData } = await supabase
         .from('athletes')
-        .select('id, name, dob, sport, waiver_signed_at')
+        .select('id, name, dob, sport, waiver_signed_at, profile_id')
         .eq('parent_id', user.id)
 
       setAthletes(
@@ -1533,6 +1641,7 @@ export default function ParentProfilePage() {
           sport: a.sport as string,
           initials: getInitials(a.name as string),
           waiver_signed_at: a.waiver_signed_at as string | null,
+          profile_id: a.profile_id as string | null,
         }))
       )
 
