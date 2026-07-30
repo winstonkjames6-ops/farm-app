@@ -82,6 +82,7 @@ export function PostUploadForm({ role }: { role: Role }) {
   const [caption, setCaption] = useState('')
   const [sport, setSport] = useState('')
   const [bookingId, setBookingId] = useState('')
+  const [feedbackRequested, setFeedbackRequested] = useState(false)
 
   const [status, setStatus] = useState<SubmitStatus>('idle')
   const [errorMessage, setErrorMessage] = useState('')
@@ -194,6 +195,7 @@ export function PostUploadForm({ role }: { role: Role }) {
       caption: caption.trim() || null,
       sport: sport || null,
       booking_id: bookingId || null,
+      feedback_requested: feedbackRequested,
     })
 
     if (insertErr) {
@@ -207,6 +209,7 @@ export function PostUploadForm({ role }: { role: Role }) {
     setCaption('')
     setSport('')
     setBookingId('')
+    setFeedbackRequested(false)
   }
 
   return (
@@ -286,6 +289,15 @@ export function PostUploadForm({ role }: { role: Role }) {
                 {bookings.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
               </select>
             </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={feedbackRequested}
+                onChange={(e) => setFeedbackRequested(e.target.checked)}
+                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: T.cyan }}
+              />
+              <span style={{ fontSize: '14px', color: T.ink, fontFamily: hanken }}>Request feedback on this clip</span>
+            </label>
           </div>
         </SectionCard>
 
