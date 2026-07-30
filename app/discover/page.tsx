@@ -1,133 +1,176 @@
 'use client'
 
-import { Search, Bell } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { Play } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
+import { T } from '@/lib/theme'
 
 const barlow = "'Barlow Condensed', sans-serif"
+const hanken = "'Hanken Grotesk', sans-serif"
 
-// ── Hardcoded placeholder data ─────────────────────────────────────────────
+type Post = {
+  id: string
+  authorType: 'trainer' | 'athlete'
+  authorName: string
+  avatarUrl: string | null
+  videoUrl: string
+  thumbnailUrl: string | null
+  caption: string | null
+  sport: string | null
+  bookingId: string | null
+}
 
-const SPORTS = ['All', 'Basketball', 'Soccer', 'Track', 'Baseball', 'Tennis']
+// ── Post card ───────────────────────────────────────────────────────────────
 
-const AVATAR_GRADIENTS = [
-  'from-orange-primary to-[#00E0EE]',
-  'from-[#F59E0B] to-[#F97316]',
-  'from-[#8B5CF6] to-[#6366F1]',
-  'from-[#10B981] to-[#059669]',
-  'from-[#EC4899] to-[#DB2777]',
-]
+function PostCard({ post, index }: { post: Post; index: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1], delay: index * 0.05 }}
+      onClick={() => console.log('open post', post.id)}
+      style={{
+        background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px',
+        overflow: 'hidden', cursor: 'pointer',
+      }}
+    >
+      {/* Thumbnail */}
+      <div style={{ position: 'relative', width: '100%', height: '220px', background: '#111827' }}>
+        {post.thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={post.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(140deg, #2A2E37 0%, #171A21 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <div style={{
+              width: '52px', height: '52px', borderRadius: '999px',
+              background: 'rgba(255,255,255,0.15)', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Play size={22} color="#FFFFFF" fill="#FFFFFF" style={{ marginLeft: '2px' }} />
+            </div>
+          </div>
+        )}
 
-const TRAINERS_TO_WATCH = [
-  { name: 'Marcus Reed' },
-  { name: 'Elena Cruz' },
-  { name: 'Jordan Blake' },
-  { name: 'Priya Shah' },
-  { name: 'Devon Lee' },
-]
+        {post.bookingId && (
+          <span style={{
+            position: 'absolute', top: '12px', left: '12px',
+            fontFamily: barlow, fontWeight: 700, fontSize: '11px',
+            letterSpacing: '.08em', textTransform: 'uppercase',
+            background: 'rgba(0,0,0,0.75)', color: '#FFFFFF',
+            padding: '4px 10px', borderRadius: '999px',
+          }}>
+            Session progress
+          </span>
+        )}
+      </div>
 
-const LATEST_CARDS = [
-  { title: 'Building explosive first-step speed', byline: 'Coach Marcus Reed · Verified' },
-  { title: 'My road to the state finals', byline: 'Elena Cruz · Athlete' },
-  { title: '5 drills every point guard needs', byline: 'Coach Jordan Blake · Verified' },
-  { title: 'Recovering from a hamstring pull', byline: 'Priya Shah · Athlete' },
-  { title: 'Off-season strength fundamentals', byline: 'Coach Devon Lee · Verified' },
-  { title: 'Finding your swing under pressure', byline: 'Amara Johnson · Athlete' },
-]
+      {/* Body */}
+      <div style={{ padding: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+          {post.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={post.avatarUrl} alt="" style={{ width: '36px', height: '36px', borderRadius: '999px', objectFit: 'cover', flexShrink: 0 }} />
+          ) : (
+            <div style={{
+              width: '36px', height: '36px', borderRadius: '999px', flexShrink: 0,
+              background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: barlow, fontWeight: 700, fontSize: '13px', color: '#FFFFFF',
+            }}>
+              {post.authorName.slice(0, 1).toUpperCase()}
+            </div>
+          )}
+          <div>
+            <div style={{ fontFamily: hanken, fontWeight: 600, fontSize: '14px', color: T.ink, lineHeight: 1.3 }}>{post.authorName}</div>
+            <div style={{ fontFamily: hanken, fontSize: '12px', color: T.ink3 }}>{post.authorType === 'trainer' ? 'Trainer' : 'Athlete'}</div>
+          </div>
+        </div>
+
+        {post.caption && (
+          <p style={{ fontFamily: hanken, fontSize: '14px', color: '#374151', margin: '0 0 12px', lineHeight: 1.5 }}>
+            {post.caption}
+          </p>
+        )}
+
+        {post.sport && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center',
+            fontFamily: barlow, fontSize: '11px', fontWeight: 700,
+            letterSpacing: '.08em', textTransform: 'uppercase',
+            background: 'rgba(0,188,200,0.10)', color: T.cyan,
+            border: `1px solid ${T.cyanBorder}`, padding: '3px 10px', borderRadius: '999px',
+          }}>
+            {post.sport}
+          </span>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function DiscoverPage() {
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('posts')
+      .select('id, author_type, author_id, video_url, thumbnail_url, caption, sport, created_at, booking_id, profiles!author_id(name, avatar_url)')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('[discover] posts fetch:', error.message)
+          setLoading(false)
+          return
+        }
+        setPosts(
+          (data ?? []).map((row: any) => ({
+            id: row.id,
+            authorType: row.author_type,
+            authorName: row.profiles?.name ?? 'Unknown',
+            avatarUrl: row.profiles?.avatar_url ?? null,
+            videoUrl: row.video_url,
+            thumbnailUrl: row.thumbnail_url,
+            caption: row.caption,
+            sport: row.sport,
+            bookingId: row.booking_id,
+          }))
+        )
+        setLoading(false)
+      })
+  }, [])
+
   return (
-    <div className="min-h-screen bg-[#F8F8F6] text-black" style={{ fontFamily: "'Hanken Grotesk', sans-serif" }}>
-      <div className="max-w-[560px] mx-auto px-4 pt-8 pb-16">
+    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: hanken, WebkitFontSmoothing: 'antialiased' }}>
+      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '40px 24px 80px' }}>
+        <h1 style={{
+          fontFamily: barlow, fontWeight: 900, fontSize: 'clamp(32px, 5vw, 44px)',
+          letterSpacing: '0em', textTransform: 'uppercase', margin: '0 0 20px', color: T.ink, lineHeight: 0.98,
+        }}>
+          Discover
+        </h1>
 
-        {/* Header row */}
-        <div className="flex items-center justify-between mb-6">
-          <h1
-            className="font-black uppercase text-4xl leading-none"
-            style={{ fontFamily: barlow }}
-          >
-            Discover
-          </h1>
-          <div className="flex items-center gap-4">
-            <button type="button" aria-label="Search" className="text-black">
-              <Search size={22} strokeWidth={2} />
-            </button>
-            <button type="button" aria-label="Notifications" className="text-black">
-              <Bell size={22} strokeWidth={2} />
-            </button>
+        {loading ? (
+          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Loading posts&hellip;</p>
           </div>
-        </div>
-
-        {/* Sport tab row */}
-        <div className="flex gap-2 overflow-x-auto pb-1 mb-6 -mx-4 px-4 scrollbar-none">
-          {SPORTS.map((sport, i) => {
-            const active = i === 0
-            return (
-              <button
-                key={sport}
-                type="button"
-                className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap ${
-                  active
-                    ? 'bg-orange-primary text-white'
-                    : 'border border-black/10 text-text-tertiary'
-                }`}
-              >
-                {sport}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Featured card */}
-        <div className="rounded-2xl overflow-hidden relative h-[200px] bg-gradient-to-br from-[#e8e6de] to-[#d8d5ca]">
-          <span
-            className="absolute top-3 left-3 bg-black/80 text-white text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-full"
-            style={{ fontFamily: barlow }}
-          >
-            Featured
-          </span>
-          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-            <h2 className="text-white font-bold text-lg leading-tight" style={{ fontFamily: barlow }}>
-              Rising talent: Amara Johnson
-            </h2>
-            <p className="text-white/80 text-sm mt-0.5">Track &amp; Field · Watch her journey</p>
+        ) : posts.length === 0 ? (
+          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No posts yet</p>
           </div>
-        </div>
-        <p className="text-xs text-gray-400 mt-2 mb-8">Featured spot — rotation logic TBD</p>
-
-        {/* Trainers to watch */}
-        <h3
-          className="uppercase font-bold text-sm mb-3"
-          style={{ fontFamily: barlow }}
-        >
-          Trainers to watch
-        </h3>
-        <div className="flex gap-4 overflow-x-auto pb-1 mb-8 -mx-4 px-4 scrollbar-none">
-          {TRAINERS_TO_WATCH.map((trainer, i) => (
-            <div key={trainer.name} className="shrink-0 w-16 flex flex-col items-center gap-1.5">
-              <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length]}`} />
-              <span className="text-xs text-center leading-tight truncate w-full">{trainer.name}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Latest */}
-        <h3
-          className="uppercase font-bold text-sm mb-3"
-          style={{ fontFamily: barlow }}
-        >
-          Latest
-        </h3>
-        <div className="grid grid-cols-2 gap-3">
-          {LATEST_CARDS.map((card) => (
-            <div key={card.title} className="rounded-2xl border border-black/10 bg-white overflow-hidden">
-              <div className="h-24 bg-gradient-to-br from-gray-200 to-gray-300" />
-              <div className="p-3">
-                <p className="text-sm font-semibold leading-snug">{card.title}</p>
-                <p className="text-xs text-text-tertiary mt-1">{card.byline}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {posts.map((post, i) => <PostCard key={post.id} post={post} index={i} />)}
+          </div>
+        )}
       </div>
     </div>
   )
