@@ -218,6 +218,21 @@ export default function AthleteLoginPage() {
               Log in here
             </Link>
           </p>
+
+          {/* First-time athlete — separated from the sign-in form above */}
+          <div style={{ height: '1px', background: 'rgba(0,0,0,0.08)', margin: '20px 0' }} />
+          <p style={{ textAlign: 'center', fontSize: '14px', color: '#9A9A9A', margin: 0 }}>
+            First time signing in?{' '}
+            <Link href="/onboarding/athlete" style={{
+              color: '#00BCC8', textDecoration: 'none', fontWeight: 700,
+              transition: 'opacity .15s ease',
+            }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8' }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '1' }}
+            >
+              Enter your invite code
+            </Link>
+          </p>
         </motion.div>
       </div>
     </div>
