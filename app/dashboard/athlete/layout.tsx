@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageSquare, Compass } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
@@ -74,6 +74,7 @@ const IconX = () => (
 
 const NAV_ITEMS = [
   { key: 'home',     label: 'Home',     Icon: IconHome,      badge: false },
+  { key: 'discover', label: 'Discover', Icon: Compass,       badge: false },
   { key: 'sessions', label: 'Sessions', Icon: IconCalendar,  badge: false },
   { key: 'messages', label: 'Messages', Icon: MessageSquare, badge: true  },
   { key: 'profile',  label: 'Profile',  Icon: IconUser,      badge: false },
@@ -81,6 +82,7 @@ const NAV_ITEMS = [
 
 const NAV_HREFS: Record<string, string> = {
   home:     '/dashboard/athlete',
+  discover: '/discover',
   sessions: '/dashboard/athlete/sessions',
   messages: '/dashboard/athlete/messages',
   profile:  '/dashboard/athlete/profile',

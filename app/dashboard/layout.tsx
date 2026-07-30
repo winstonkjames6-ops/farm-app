@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageSquare, Compass } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { TourProvider, useTour } from './tour-context'
@@ -105,6 +105,7 @@ const IconX = () => (
 
 const NAV_ITEMS = [
   { key: 'home',     label: 'Home',     Icon: IconHome,      badge: false },
+  { key: 'discover', label: 'Discover', Icon: Compass,       badge: false },
   { key: 'search',   label: 'Search',   Icon: IconSearch,    badge: false },
   { key: 'calendar', label: 'Calendar', Icon: IconCalendar,  badge: false },
   { key: 'messages', label: 'Messages', Icon: MessageSquare, badge: true  },
@@ -114,6 +115,7 @@ const NAV_ITEMS = [
 
 const NAV_HREFS: Record<string, string> = {
   home:     '/dashboard',
+  discover: '/discover',
   search:   '/dashboard/search',
   calendar: '/dashboard/calendar',
   messages: '/dashboard/messages',
