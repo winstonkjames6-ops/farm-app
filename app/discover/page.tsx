@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Play } from 'lucide-react'
+import { Play, X } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 
@@ -23,21 +23,51 @@ type Post = {
 
 // ── Post card ───────────────────────────────────────────────────────────────
 
-function PostCard({ post, index }: { post: Post; index: number }) {
+function PostCard({
+  post, index, isPlaying, onPlay, onClose,
+}: {
+  post: Post
+  index: number
+  isPlaying: boolean
+  onPlay: () => void
+  onClose: () => void
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1], delay: index * 0.05 }}
-      onClick={() => console.log('open post', post.id)}
+      onClick={onPlay}
       style={{
         background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px',
         overflow: 'hidden', cursor: 'pointer',
       }}
     >
-      {/* Thumbnail */}
+      {/* Thumbnail / player */}
       <div style={{ position: 'relative', width: '100%', height: '220px', background: '#111827' }}>
-        {post.thumbnailUrl ? (
+        {isPlaying ? (
+          <>
+            <video
+              src={post.videoUrl}
+              controls
+              autoPlay
+              playsInline
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onClose() }}
+              style={{
+                position: 'absolute', top: '12px', right: '12px', zIndex: 1,
+                width: '28px', height: '28px', borderRadius: '999px',
+                background: 'rgba(0,0,0,0.6)', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+              }}
+            >
+              <X size={16} color="#FFFFFF" />
+            </button>
+          </>
+        ) : post.thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={post.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
@@ -118,6 +148,7 @@ function PostCard({ post, index }: { post: Post; index: number }) {
 export default function DiscoverPage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
+  const [playingPostId, setPlayingPostId] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -168,7 +199,16 @@ export default function DiscoverPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {posts.map((post, i) => <PostCard key={post.id} post={post} index={i} />)}
+            {posts.map((post, i) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                index={i}
+                isPlaying={playingPostId === post.id}
+                onPlay={() => setPlayingPostId(post.id)}
+                onClose={() => setPlayingPostId(null)}
+              />
+            ))}
           </div>
         )}
       </div>
