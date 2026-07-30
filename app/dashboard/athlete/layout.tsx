@@ -82,7 +82,7 @@ const NAV_ITEMS = [
 
 const NAV_HREFS: Record<string, string> = {
   home:     '/dashboard/athlete',
-  discover: '/discover',
+  discover: '/dashboard/athlete/discover',
   sessions: '/dashboard/athlete/sessions',
   messages: '/dashboard/athlete/messages',
   profile:  '/dashboard/athlete/profile',
@@ -416,6 +416,7 @@ export default function AthleteLayout({ children }: { children: React.ReactNode 
 
   const getActiveNav = () => {
     if (pathname === '/dashboard/athlete') return 'home'
+    if (pathname.startsWith('/dashboard/athlete/discover')) return 'discover'
     if (pathname.startsWith('/dashboard/athlete/sessions')) return 'sessions'
     if (pathname.startsWith('/dashboard/athlete/messages')) return 'messages'
     if (pathname.startsWith('/dashboard/athlete/profile')) return 'profile'

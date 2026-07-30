@@ -115,7 +115,7 @@ const NAV_ITEMS = [
 
 const NAV_HREFS: Record<string, string> = {
   home:     '/dashboard',
-  discover: '/discover',
+  discover: '/dashboard/discover',
   search:   '/dashboard/search',
   calendar: '/dashboard/calendar',
   messages: '/dashboard/messages',
@@ -614,6 +614,7 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
 
   const getActiveNav = () => {
     if (pathname === '/dashboard') return 'home'
+    if (pathname.startsWith('/dashboard/discover')) return 'discover'
     if (pathname.startsWith('/dashboard/search')) return 'search'
     if (pathname.startsWith('/dashboard/calendar')) return 'calendar'
     if (pathname.startsWith('/dashboard/messages')) return 'messages'

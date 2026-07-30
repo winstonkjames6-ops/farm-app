@@ -143,9 +143,9 @@ function PostCard({
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Feed ──────────────────────────────────────────────────────────────────────
 
-export default function DiscoverPage() {
+export default function DiscoverFeed() {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [playingPostId, setPlayingPostId] = useState<string | null>(null)

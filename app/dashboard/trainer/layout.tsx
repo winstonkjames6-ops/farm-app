@@ -108,7 +108,7 @@ const NAV_ITEMS = [
 
 const NAV_HREFS: Record<string, string> = {
   home:     '/dashboard/trainer',
-  discover: '/discover',
+  discover: '/dashboard/trainer/discover',
   schedule: '/dashboard/trainer/schedule',
   earnings: '/dashboard/trainer/earnings',
   messages: '/dashboard/trainer/messages',
@@ -557,6 +557,7 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
 
   const getActiveNav = () => {
     if (pathname === '/dashboard/trainer') return 'home'
+    if (pathname.includes('/discover')) return 'discover'
     if (pathname.includes('/schedule')) return 'schedule'
     if (pathname.includes('/earnings')) return 'earnings'
     if (pathname.includes('/messages')) return 'messages'
