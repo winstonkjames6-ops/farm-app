@@ -83,17 +83,23 @@ const MOCK_REVIEWS = [
   },
 ]
 
+// Base completion values here are placeholders for the keys that get overridden with
+// live data in TrainerProfilePage's `profileItems` (photo, bio, specialties, availability,
+// rate, certification, location). video/social/notifications have no backing database
+// field yet — IntroVideoSection, SocialLinksSection, and NotificationsSection are all
+// local-state-only with no persistence — so they stay hardcoded false until those
+// sections are wired to the database.
 const PROFILE_ITEMS = [
-  { key: 'photo',         label: 'Profile photo',                boost: '+10%', sectionId: 'section-photo',         completed: true  },
-  { key: 'bio',           label: 'Bio',                          boost: '+15%', sectionId: 'section-basic-info',     completed: true  },
-  { key: 'specialties',   label: 'Specialties set',              boost: '+10%', sectionId: 'section-specialties',    completed: true  },
-  { key: 'availability',  label: 'Availability set',             boost: '+20%', sectionId: 'section-availability',   completed: true  },
-  { key: 'rate',          label: 'Rate set',                     boost: '+10%', sectionId: 'section-rate',           completed: true  },
-  { key: 'certification', label: 'At least 1 certification',     boost: '+10%', sectionId: 'section-credentials',    completed: true  },
-  { key: 'video',         label: 'Intro video added',            boost: '+10%', sectionId: 'section-intro-video',    completed: false },
-  { key: 'social',        label: 'Social link added',            boost: '+5%',  sectionId: 'section-social',         completed: true  },
-  { key: 'notifications', label: 'Notification preferences set', boost: '+5%',  sectionId: 'section-notifications',  completed: false },
-  { key: 'location',      label: 'Location set',                 boost: '+5%',  sectionId: 'section-basic-info',     completed: true  },
+  { key: 'photo',         label: 'Profile photo',                boost: '+10%', sectionId: 'section-photo',         completed: false },
+  { key: 'bio',           label: 'Bio',                          boost: '+15%', sectionId: 'section-basic-info',     completed: false },
+  { key: 'specialties',   label: 'Specialties set',              boost: '+10%', sectionId: 'section-specialties',    completed: false },
+  { key: 'availability',  label: 'Availability set',             boost: '+20%', sectionId: 'section-availability',   completed: false },
+  { key: 'rate',          label: 'Rate set',                     boost: '+10%', sectionId: 'section-rate',           completed: false },
+  { key: 'certification', label: 'At least 1 certification',     boost: '+10%', sectionId: 'section-credentials',    completed: false },
+  { key: 'video',         label: 'Intro video added',            boost: '+10%', sectionId: 'section-intro-video',    completed: false }, // no backend field — IntroVideoSection isn't wired
+  { key: 'social',        label: 'Social link added',            boost: '+5%',  sectionId: 'section-social',         completed: false }, // no backend field — SocialLinksSection isn't wired
+  { key: 'notifications', label: 'Notification preferences set', boost: '+5%',  sectionId: 'section-notifications',  completed: false }, // no backend field — NotificationsSection isn't wired
+  { key: 'location',      label: 'Location set',                 boost: '+5%',  sectionId: 'section-basic-info',     completed: false },
 ]
 
 const NOTIF_ROWS = [
@@ -233,18 +239,15 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: () => void }) {
 // ── Section: Profile photo ─────────────────────────────────────────────────────
 
 function ProfilePhotoSection({
-  fullName, sport, userId, avatarUrl, onAvatarChange, credentials,
+  fullName, sport, userId, avatarUrl, onAvatarChange, profileItems,
 }: {
   fullName: string
   sport: string
   userId: string
   avatarUrl: string | null
   onAvatarChange: (url: string) => void
-  credentials: string
+  profileItems: typeof PROFILE_ITEMS
 }) {
-  const profileItems = PROFILE_ITEMS.map((item) =>
-    item.key === 'certification' ? { ...item, completed: !!credentials?.trim() } : item
-  )
   const profileStrength = profileItems.filter((i) => i.completed).reduce((sum, i) => sum + parseInt(i.boost), 0)
   const [strengthExpanded, setStrengthExpanded] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -1098,6 +1101,7 @@ export default function TrainerProfilePage() {
   const [certificationStatus, setCertificationStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none')
   const [certificationNotes, setCertificationNotes] = useState('')
   const [credentials, setCredentials] = useState('')
+  const [activePresetId, setActivePresetId] = useState<string | null>(null)
   const [themePreference, setThemePreference] = useState<ThemeSetting>('light')
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>('full')
   const [bookings, setBookings] = useState<TrainerBookingRow[]>([])
@@ -1122,7 +1126,7 @@ export default function TrainerProfilePage() {
       setUserId(user.id)
       const [profileRes, trainerRes] = await Promise.all([
         supabase.from('profiles').select('name, avatar_url, banner_image_url, phone, verified, theme_preference, background_mode').eq('id', user.id).single(),
-        supabase.from('trainers').select('id, specialty, bio, rate, location, is_certified, certification_status, certification_notes, credentials').eq('profile_id', user.id).single(),
+        supabase.from('trainers').select('id, specialty, bio, rate, location, is_certified, certification_status, certification_notes, credentials, active_preset_id').eq('profile_id', user.id).single(),
       ])
       const loadedName = profileRes.data?.name ?? ''
       const loadedPhone = profileRes.data?.phone ?? ''
@@ -1146,6 +1150,7 @@ export default function TrainerProfilePage() {
       setCertificationStatus(((trainerRes.data as any)?.certification_status as typeof certificationStatus) ?? 'none')
       setCertificationNotes((trainerRes.data as any)?.certification_notes ?? '')
       setCredentials((trainerRes.data as any)?.credentials ?? '')
+      setActivePresetId((trainerRes.data as any)?.active_preset_id ?? null)
 
       setDraftFullName(loadedName)
       setDraftBio(loadedBio)
@@ -1270,6 +1275,21 @@ export default function TrainerProfilePage() {
   const sport = SPORTS.find((s) => s.toLowerCase() === primarySport) ?? primarySport
   const cardTokens = getProfileCardTokens(themePreference)
 
+  const profileItems = PROFILE_ITEMS.map((item) => {
+    switch (item.key) {
+      case 'photo': return { ...item, completed: !!avatarUrl }
+      case 'bio': return { ...item, completed: !!initBio.trim() }
+      case 'specialties': return { ...item, completed: !!initSpecialty.trim() }
+      case 'availability': return { ...item, completed: !!activePresetId }
+      case 'rate': return { ...item, completed: Number(initRate) > 0 }
+      case 'certification': return { ...item, completed: !!credentials?.trim() }
+      case 'location': return { ...item, completed: !!initLocation.trim() }
+      // video, social, notifications intentionally left at their base `completed: false` —
+      // no backend field exists for any of them yet, see the comment on PROFILE_ITEMS.
+      default: return item
+    }
+  })
+
   const basicDirty = dataLoaded && (draftFullName !== initName || draftBio !== initBio || draftLocation !== initLocation || draftPhone !== initPhone)
   const specialtyDirty = specialtyTouched
   const rateDirty = dataLoaded && draftRate !== initRate
@@ -1341,7 +1361,7 @@ export default function TrainerProfilePage() {
                 style={{ border: '1px solid rgba(0,0,0,0.12)', color: T.ink2, background: 'transparent', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px', flexShrink: 0 }}
               >← Done editing</button>
             </div>
-            <ProfilePhotoSection fullName={initName} sport={sport} userId={userId ?? ''} avatarUrl={avatarUrl} onAvatarChange={setAvatarUrl} credentials={credentials} />
+            <ProfilePhotoSection fullName={initName} sport={sport} userId={userId ?? ''} avatarUrl={avatarUrl} onAvatarChange={setAvatarUrl} profileItems={profileItems} />
             <BasicInfoSection
               fullName={draftFullName}
               onFullNameChange={setDraftFullName}

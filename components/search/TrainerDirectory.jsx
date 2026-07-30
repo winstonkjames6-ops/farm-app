@@ -9,7 +9,7 @@ import { T } from '@/lib/theme'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const SPORTS = ['Soccer', 'Basketball', 'Tennis', 'Volleyball', 'Lacrosse', 'Baseball']
+export const SPORTS = ['Soccer', 'Basketball', 'Tennis', 'Volleyball', 'Lacrosse', 'Baseball']
 const RATE_OPTIONS = [
   { label: 'Any price', max: Infinity },
   { label: 'Up to $40/hr', max: 40 },
