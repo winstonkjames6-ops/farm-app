@@ -61,6 +61,7 @@ export async function middleware(request: NextRequest) {
     if (
       !pathname.startsWith('/dashboard/trainer') &&
       !pathname.startsWith('/dashboard/athlete') &&
+      !pathname.startsWith('/dashboard/admin') &&
       role !== 'parent'
     ) {
       return NextResponse.redirect(new URL(roleHome, request.url))
