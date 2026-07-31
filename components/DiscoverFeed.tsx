@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { Plus } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 import { PostCard, Post } from '@/components/post/PostCard'
@@ -204,15 +205,39 @@ export default function DiscoverFeed() {
     ? posts.filter((p) => followingIds.has(p.authorId))
     : posts
 
+  const newPostHref = pathname.startsWith('/dashboard/trainer')
+    ? '/dashboard/trainer/post/new'
+    : pathname.startsWith('/dashboard/athlete')
+    ? '/dashboard/athlete/post/new'
+    : null
+
   return (
     <div style={{ minHeight: '100vh', background: T.bg, fontFamily: hanken, WebkitFontSmoothing: 'antialiased' }}>
       <div style={{ maxWidth: '560px', margin: '0 auto', padding: '40px 24px 80px' }}>
-        <h1 style={{
-          fontFamily: barlow, fontWeight: 900, fontSize: 'clamp(32px, 5vw, 44px)',
-          letterSpacing: '0em', textTransform: 'uppercase', margin: '0 0 20px', color: T.ink, lineHeight: 0.98,
-        }}>
-          Discover
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '20px' }}>
+          <h1 style={{
+            fontFamily: barlow, fontWeight: 900, fontSize: 'clamp(32px, 5vw, 44px)',
+            letterSpacing: '0em', textTransform: 'uppercase', margin: 0, color: T.ink, lineHeight: 0.98,
+          }}>
+            Discover
+          </h1>
+
+          {newPostHref && (
+            <button
+              type="button"
+              onClick={() => router.push(newPostHref)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
+                height: '40px', padding: '0 18px', borderRadius: '999px', border: 'none',
+                background: T.cyan, color: '#FFFFFF', fontFamily: hanken, fontWeight: 600, fontSize: '13px',
+                cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,188,200,0.25)',
+              }}
+            >
+              <Plus size={16} />
+              New post
+            </button>
+          )}
+        </div>
 
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
           {(['all', 'following'] as const).map((tab) => (
