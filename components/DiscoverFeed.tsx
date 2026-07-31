@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Play, X, Heart, Bookmark } from 'lucide-react'
+import { Play, X, Heart, Bookmark, Eye } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 
@@ -22,6 +22,7 @@ type Post = {
   sport: string | null
   bookingId: string | null
   feedbackRequested: boolean
+  viewCount: number
 }
 
 // ── Follow button ────────────────────────────────────────────────────────────
@@ -49,7 +50,7 @@ function FollowButton({ following, onClick }: { following: boolean; onClick: (e:
 
 function PostCard({
   post, index, isPlaying, onPlay, onClose,
-  currentUserId, liked, likeCount, bookmarked, isFollowing,
+  currentUserId, liked, likeCount, bookmarked, isFollowing, viewCount,
   onToggleLike, onToggleFollow, onToggleBookmark, onGiveFeedback,
 }: {
   post: Post
@@ -66,6 +67,7 @@ function PostCard({
   onToggleFollow: () => void
   onToggleBookmark: () => void
   onGiveFeedback: () => void
+  viewCount: number
 }) {
   const isOwnPost = currentUserId != null && post.authorId === currentUserId
 
@@ -207,6 +209,11 @@ function PostCard({
             <span style={{ fontFamily: hanken, fontSize: '13px', fontWeight: 600 }}>{likeCount}</span>
           </button>
 
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: T.ink3 }}>
+            <Eye size={18} />
+            <span style={{ fontFamily: hanken, fontSize: '13px', fontWeight: 600 }}>{viewCount}</span>
+          </div>
+
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onToggleBookmark() }}
@@ -251,6 +258,7 @@ export default function DiscoverFeed() {
   const [loading, setLoading] = useState(true)
   const [playingPostId, setPlayingPostId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'all' | 'following'>('all')
 
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set())
@@ -267,7 +275,7 @@ export default function DiscoverFeed() {
 
       const { data, error } = await supabase
         .from('posts')
-        .select('id, author_type, author_id, video_url, thumbnail_url, caption, sport, created_at, booking_id, feedback_requested, profiles!author_id(name, avatar_url)')
+        .select('id, author_type, author_id, video_url, thumbnail_url, caption, sport, created_at, booking_id, feedback_requested, view_count, profiles!author_id(name, avatar_url)')
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -288,6 +296,7 @@ export default function DiscoverFeed() {
         sport: row.sport,
         bookingId: row.booking_id,
         feedbackRequested: !!row.feedback_requested,
+        viewCount: row.view_count ?? 0,
       }))
       setPosts(mapped)
       setLoading(false)
@@ -399,6 +408,17 @@ export default function DiscoverFeed() {
     }
   }
 
+  function openPost(postId: string) {
+    if (playingPostId === postId) return
+    setPlayingPostId(postId)
+    setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, viewCount: p.viewCount + 1 } : p)))
+
+    const supabase = createClient()
+    supabase.rpc('increment_post_view', { p_post_id: postId }).then(({ error }) => {
+      if (error) console.error('[discover] view increment:', error.message)
+    })
+  }
+
   function giveFeedback(authorId: string) {
     const messagesBase = pathname.startsWith('/dashboard/trainer')
       ? '/dashboard/trainer/messages'
@@ -407,6 +427,10 @@ export default function DiscoverFeed() {
       : '/dashboard/messages'
     router.push(`${messagesBase}?withId=${authorId}`)
   }
+
+  const visiblePosts = activeTab === 'following'
+    ? posts.filter((p) => followingIds.has(p.authorId))
+    : posts
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, fontFamily: hanken, WebkitFontSmoothing: 'antialiased' }}>
@@ -418,6 +442,25 @@ export default function DiscoverFeed() {
           Discover
         </h1>
 
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+          {(['all', 'following'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              style={{
+                fontFamily: hanken, fontWeight: 600, fontSize: '13px',
+                padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
+                border: activeTab === tab ? 'none' : `1px solid ${T.line}`,
+                background: activeTab === tab ? T.cyan : 'transparent',
+                color: activeTab === tab ? '#FFFFFF' : T.ink2,
+              }}
+            >
+              {tab === 'all' ? 'All' : 'Following'}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Loading posts&hellip;</p>
@@ -426,21 +469,26 @@ export default function DiscoverFeed() {
           <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No posts yet</p>
           </div>
+        ) : visiblePosts.length === 0 ? (
+          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Follow some trainers or athletes to see their posts here</p>
+          </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {posts.map((post, i) => (
+            {visiblePosts.map((post, i) => (
               <PostCard
                 key={post.id}
                 post={post}
                 index={i}
                 isPlaying={playingPostId === post.id}
-                onPlay={() => setPlayingPostId(post.id)}
+                onPlay={() => openPost(post.id)}
                 onClose={() => setPlayingPostId(null)}
                 currentUserId={currentUserId}
                 liked={likedPostIds.has(post.id)}
                 likeCount={likeCounts[post.id] ?? 0}
                 bookmarked={bookmarkedPostIds.has(post.id)}
                 isFollowing={followingIds.has(post.authorId)}
+                viewCount={post.viewCount}
                 onToggleLike={() => toggleLike(post.id)}
                 onToggleFollow={() => toggleFollow(post.authorId)}
                 onToggleBookmark={() => toggleBookmark(post.id)}
