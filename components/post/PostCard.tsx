@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Play, X, Heart, Bookmark, Eye, Trash2 } from 'lucide-react'
+import { Play, X, Heart, Bookmark, Eye, Trash2, MoreVertical } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 
 const barlow = "'Barlow Condensed', sans-serif"
@@ -69,12 +71,35 @@ export function PostCard({
 }) {
   const isOwnPost = currentUserId != null && post.authorId === currentUserId
 
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reportStatus, setReportStatus] = useState<'idle' | 'submitting' | 'submitted' | 'error'>('idle')
+
+  async function submitReport() {
+    if (!currentUserId || !reportReason.trim()) return
+    setReportStatus('submitting')
+    const supabase = createClient()
+    const { error } = await supabase.from('post_reports').insert({
+      post_id: post.id,
+      reporter_id: currentUserId,
+      reason: reportReason.trim(),
+    })
+    if (error) {
+      console.error('[post-card] report submit:', error.message)
+      setReportStatus('error')
+      return
+    }
+    setReportStatus('submitted')
+    setTimeout(() => { setReportOpen(false); setReportReason(''); setReportStatus('idle') }, 1500)
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1], delay: index * 0.05 }}
-      onClick={onPlay}
+      onClick={() => { setMenuOpen(false); onPlay() }}
       style={{
         background: '#FFFFFF',
         border: post.feedbackRequested ? `1.5px dashed ${T.cyanBorder}` : '1px solid rgba(0,0,0,0.08)',
@@ -160,22 +185,57 @@ export function PostCard({
               <div style={{ fontFamily: hanken, fontSize: '12px', color: T.ink3 }}>{post.authorType === 'trainer' ? 'Trainer' : 'Athlete'}</div>
             </div>
           </div>
-          {!isOwnPost && currentUserId && (
-            <FollowButton
-              following={isFollowing}
-              onClick={(e) => { e.stopPropagation(); onToggleFollow() }}
-            />
-          )}
-          {isOwnPost && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onDelete() }}
-              aria-label="Delete post"
-              style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', padding: 0 }}
-            >
-              <Trash2 size={18} />
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            {!isOwnPost && currentUserId && (
+              <FollowButton
+                following={isFollowing}
+                onClick={(e) => { e.stopPropagation(); onToggleFollow() }}
+              />
+            )}
+            {isOwnPost && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onDelete() }}
+                aria-label="Delete post"
+                style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', padding: 0 }}
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
+
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o) }}
+                aria-label="More options"
+                style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', padding: 0 }}
+              >
+                <MoreVertical size={18} />
+              </button>
+              {menuOpen && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: 'absolute', top: '100%', right: 0, marginTop: '6px', zIndex: 5,
+                    minWidth: '120px', background: '#FFFFFF', border: `1px solid ${T.line}`,
+                    borderRadius: '10px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpen(false); setReportOpen(true); setReportStatus('idle'); setReportReason('') }}
+                    style={{
+                      width: '100%', textAlign: 'left', padding: '10px 14px',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontFamily: hanken, fontSize: '13px', color: T.ink,
+                    }}
+                  >
+                    Report
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {post.caption && (
@@ -236,6 +296,62 @@ export function PostCard({
             <Bookmark size={18} fill={bookmarked ? T.cyan : 'none'} />
           </button>
         </div>
+
+        {reportOpen && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${T.line}` }}
+          >
+            {reportStatus === 'submitted' ? (
+              <p style={{ fontFamily: hanken, fontSize: '13px', color: T.ink2, margin: 0 }}>Report submitted</p>
+            ) : (
+              <>
+                <textarea
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  placeholder="Why are you reporting this post?"
+                  required
+                  style={{
+                    width: '100%', minHeight: '72px', borderRadius: '8px', border: '1px solid #E5E7EB',
+                    padding: '10px 12px', fontSize: '13px', fontFamily: hanken, resize: 'vertical',
+                    outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF',
+                  }}
+                />
+                {reportStatus === 'error' && (
+                  <p style={{ fontFamily: hanken, fontSize: '12px', color: '#EF4444', margin: '6px 0 0' }}>
+                    Something went wrong. Try again.
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={submitReport}
+                    disabled={!currentUserId || !reportReason.trim() || reportStatus === 'submitting'}
+                    style={{
+                      height: '34px', padding: '0 16px', borderRadius: '999px', border: 'none',
+                      background: T.cyan, color: '#FFFFFF', fontFamily: hanken, fontWeight: 600,
+                      fontSize: '12px', cursor: 'pointer',
+                      opacity: !currentUserId || !reportReason.trim() || reportStatus === 'submitting' ? 0.6 : 1,
+                    }}
+                  >
+                    {reportStatus === 'submitting' ? 'Submitting…' : 'Submit report'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setReportOpen(false); setReportReason(''); setReportStatus('idle') }}
+                    style={{
+                      height: '34px', padding: '0 16px', borderRadius: '999px',
+                      border: `1px solid ${T.line}`, background: 'transparent', color: T.ink2,
+                      fontFamily: hanken, fontWeight: 600, fontSize: '12px', cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {post.feedbackRequested && !isOwnPost && (
           <button
