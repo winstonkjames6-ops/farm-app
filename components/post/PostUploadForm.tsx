@@ -72,6 +72,68 @@ function formatBookingDate(sessionTime: string): string {
   return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+// Best-effort client-side thumbnail: grabs a frame ~1s in (or 10% in for very short
+// clips) via an off-screen <video>/<canvas>. Resolves null on any failure — callers
+// must treat that as "no thumbnail" rather than an upload-blocking error.
+function generateThumbnail(file: File): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    let settled = false
+    let objectUrl: string | null = null
+
+    function finish(blob: Blob | null) {
+      if (settled) return
+      settled = true
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+      resolve(blob)
+    }
+
+    try {
+      const video = document.createElement('video')
+      video.muted = true
+      video.playsInline = true
+      objectUrl = URL.createObjectURL(file)
+      video.src = objectUrl
+
+      video.addEventListener('error', () => finish(null))
+
+      video.addEventListener('loadedmetadata', () => {
+        const duration = video.duration
+        const seekTime = !isFinite(duration) || duration <= 0
+          ? 0
+          : duration < 2
+          ? duration * 0.1
+          : 1
+        try {
+          video.currentTime = seekTime
+        } catch {
+          finish(null)
+        }
+      })
+
+      video.addEventListener('seeked', () => {
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = video.videoWidth
+          canvas.height = video.videoHeight
+          const ctx = canvas.getContext('2d')
+          if (!ctx || canvas.width === 0 || canvas.height === 0) {
+            finish(null)
+            return
+          }
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          canvas.toBlob((blob) => finish(blob), 'image/jpeg', 0.8)
+        } catch {
+          finish(null)
+        }
+      })
+
+      setTimeout(() => finish(null), 8000)
+    } catch {
+      finish(null)
+    }
+  })
+}
+
 // ── Component ───────────────────────────────────────────────────────────────
 
 export function PostUploadForm({ role }: { role: Role }) {
@@ -179,9 +241,10 @@ export function PostUploadForm({ role }: { role: Role }) {
     const ext = videoFile.name.includes('.') ? videoFile.name.split('.').pop() : 'mp4'
     const path = `${userId}/${crypto.randomUUID()}.${ext}`
 
-    const { error: uploadErr } = await supabase.storage
-      .from('post-videos')
-      .upload(path, videoFile, { contentType: videoFile.type })
+    const [{ error: uploadErr }, thumbnailBlob] = await Promise.all([
+      supabase.storage.from('post-videos').upload(path, videoFile, { contentType: videoFile.type }),
+      generateThumbnail(videoFile),
+    ])
 
     if (uploadErr) {
       setStatus('error')
@@ -191,10 +254,25 @@ export function PostUploadForm({ role }: { role: Role }) {
 
     const { data: { publicUrl } } = supabase.storage.from('post-videos').getPublicUrl(path)
 
+    let thumbnailUrl: string | null = null
+    if (thumbnailBlob) {
+      const thumbPath = `${userId}/${crypto.randomUUID()}.jpg`
+      const { error: thumbErr } = await supabase.storage
+        .from('post-thumbnails')
+        .upload(thumbPath, thumbnailBlob, { contentType: 'image/jpeg' })
+
+      if (thumbErr) {
+        console.error('[post-upload] thumbnail upload failed:', thumbErr.message)
+      } else {
+        thumbnailUrl = supabase.storage.from('post-thumbnails').getPublicUrl(thumbPath).data.publicUrl
+      }
+    }
+
     const { error: insertErr } = await supabase.from('posts').insert({
       author_type: role,
       author_id: userId,
       video_url: publicUrl,
+      thumbnail_url: thumbnailUrl,
       caption: caption.trim() || null,
       sport: sport || null,
       booking_id: bookingId || null,
