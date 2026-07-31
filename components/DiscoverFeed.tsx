@@ -1,14 +1,42 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 import { PostCard, Post } from '@/components/post/PostCard'
+import { SPORTS } from '@/components/search/TrainerDirectory'
 
 const barlow = "'Barlow Condensed', sans-serif"
 const hanken = "'Hanken Grotesk', sans-serif"
+
+// Best-effort "home sport" for the viewer: trainer specialty (falling back to their
+// first trainer tag), or the sport of the viewer's own/first linked athlete.
+async function loadHomeSport(
+  supabase: ReturnType<typeof createClient>,
+  uid: string,
+  isTrainer: boolean,
+  isAthlete: boolean
+): Promise<string | null> {
+  if (isTrainer) {
+    const { data: trainerRow } = await supabase.from('trainers').select('id, specialty').eq('profile_id', uid).single()
+    if (trainerRow?.specialty) return trainerRow.specialty as string
+    if (trainerRow?.id) {
+      const { data: tagRows } = await supabase.from('trainer_tags').select('tags(name)').eq('trainer_id', trainerRow.id).limit(1)
+      const tagName = (tagRows?.[0] as any)?.tags?.name
+      if (tagName) return tagName as string
+    }
+    return null
+  }
+  if (isAthlete) {
+    const { data: athleteRow } = await supabase.from('athletes').select('sport').eq('profile_id', uid).single()
+    return (athleteRow?.sport as string) ?? null
+  }
+  // Parent — use their first athlete's sport.
+  const { data: athleteRows } = await supabase.from('athletes').select('sport').eq('parent_id', uid).limit(1)
+  return (athleteRows?.[0]?.sport as string) ?? null
+}
 
 // ── Feed ──────────────────────────────────────────────────────────────────────
 
@@ -17,10 +45,13 @@ export default function DiscoverFeed() {
   const router = useRouter()
 
   const [posts, setPosts] = useState<Post[]>([])
+  const [postCreatedAt, setPostCreatedAt] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [playingPostId, setPlayingPostId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'all' | 'following'>('all')
+  const [activeTab, setActiveTab] = useState<'all' | 'following' | 'trending'>('all')
+  const [trendingSportFilter, setTrendingSportFilter] = useState('')
+  const [homeSport, setHomeSport] = useState<string | null>(null)
 
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set())
@@ -65,6 +96,10 @@ export default function DiscoverFeed() {
       setPosts(mapped)
       setLoading(false)
 
+      const createdAtMap: Record<string, string> = {}
+      ;(data ?? []).forEach((row: any) => { createdAtMap[row.id] = row.created_at })
+      setPostCreatedAt(createdAtMap)
+
       const postIds = mapped.map((p) => p.id)
 
       if (postIds.length > 0) {
@@ -95,12 +130,17 @@ export default function DiscoverFeed() {
       }
 
       if (uid) {
-        const [{ data: followRows }, { data: bookmarkRows }] = await Promise.all([
+        const isTrainer = pathname.startsWith('/dashboard/trainer')
+        const isAthlete = pathname.startsWith('/dashboard/athlete')
+
+        const [{ data: followRows }, { data: bookmarkRows }, homeSportValue] = await Promise.all([
           supabase.from('follows').select('followed_id').eq('follower_id', uid),
           supabase.from('post_bookmarks').select('post_id').eq('profile_id', uid),
+          loadHomeSport(supabase, uid, isTrainer, isAthlete),
         ])
         setFollowingIds(new Set((followRows ?? []).map((r: any) => r.followed_id)))
         setBookmarkedPostIds(new Set((bookmarkRows ?? []).map((r: any) => r.post_id)))
+        setHomeSport(homeSportValue)
       }
     }
 
@@ -212,8 +252,38 @@ export default function DiscoverFeed() {
     setPosts((prev) => prev.filter((p) => p.id !== postId))
   }
 
+  // Blended client-side ranking: recency + home-sport match + prior engagement
+  // affinity (liked/bookmarked sports, followed authors) + a light popularity nudge.
+  // Post volume is tiny right now, so this is computed in the browser rather than
+  // via a database-side ranking function.
+  const trendingPosts = useMemo(() => {
+    const engagedSports = new Set<string>()
+    posts.forEach((p) => {
+      if (p.sport && (likedPostIds.has(p.id) || bookmarkedPostIds.has(p.id))) engagedSports.add(p.sport)
+    })
+
+    const now = Date.now()
+    return posts
+      .filter((p) => !trendingSportFilter || p.sport === trendingSportFilter)
+      .map((p) => {
+        const createdAt = postCreatedAt[p.id]
+        const hoursSince = createdAt ? (now - new Date(createdAt).getTime()) / 3_600_000 : 0
+        const recencyScore = 1 / (1 + hoursSince / 24)
+        const homeSportScore = homeSport && p.sport === homeSport ? 2 : 0
+        const engagementSportScore = p.sport && engagedSports.has(p.sport) ? 1 : 0
+        const followScore = followingIds.has(p.authorId) ? 1 : 0
+        const popularityScore = Math.log10((likeCounts[p.id] ?? 0) + p.viewCount + 1) * 0.5
+        const score = recencyScore + homeSportScore + engagementSportScore + followScore + popularityScore
+        return { post: p, score }
+      })
+      .sort((a, b) => b.score - a.score)
+      .map((s) => s.post)
+  }, [posts, trendingSportFilter, postCreatedAt, homeSport, followingIds, likedPostIds, bookmarkedPostIds, likeCounts])
+
   const visiblePosts = activeTab === 'following'
     ? posts.filter((p) => followingIds.has(p.authorId))
+    : activeTab === 'trending'
+    ? trendingPosts
     : posts
 
   const newPostHref = pathname.startsWith('/dashboard/trainer')
@@ -251,7 +321,7 @@ export default function DiscoverFeed() {
         </div>
 
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          {(['all', 'following'] as const).map((tab) => (
+          {(['all', 'following', 'trending'] as const).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -264,10 +334,31 @@ export default function DiscoverFeed() {
                 color: activeTab === tab ? '#FFFFFF' : T.ink2,
               }}
             >
-              {tab === 'all' ? 'All' : 'Following'}
+              {tab === 'all' ? 'All' : tab === 'following' ? 'Following' : 'Trending'}
             </button>
           ))}
         </div>
+
+        {activeTab === 'trending' && (
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            {['', ...SPORTS].map((sportOption) => (
+              <button
+                key={sportOption || 'all-sports'}
+                type="button"
+                onClick={() => setTrendingSportFilter(sportOption)}
+                style={{
+                  fontFamily: hanken, fontWeight: 600, fontSize: '12px',
+                  padding: '6px 14px', borderRadius: '999px', cursor: 'pointer',
+                  border: trendingSportFilter === sportOption ? 'none' : `1px solid ${T.line}`,
+                  background: trendingSportFilter === sportOption ? T.cyan : 'transparent',
+                  color: trendingSportFilter === sportOption ? '#FFFFFF' : T.ink2,
+                }}
+              >
+                {sportOption || 'All sports'}
+              </button>
+            ))}
+          </div>
+        )}
 
         {loading ? (
           <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
@@ -279,7 +370,13 @@ export default function DiscoverFeed() {
           </div>
         ) : visiblePosts.length === 0 ? (
           <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
-            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Follow some trainers or athletes to see their posts here</p>
+            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>
+              {activeTab === 'following'
+                ? 'Follow some trainers or athletes to see their posts here'
+                : activeTab === 'trending'
+                ? 'No posts match this filter'
+                : 'No posts yet'}
+            </p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
