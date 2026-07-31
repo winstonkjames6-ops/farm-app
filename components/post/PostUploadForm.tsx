@@ -79,48 +79,61 @@ function generateThumbnail(file: File): Promise<Blob | null> {
   return new Promise((resolve) => {
     let settled = false
     let objectUrl: string | null = null
+    let video: HTMLVideoElement | null = null
 
     function finish(blob: Blob | null) {
       if (settled) return
       settled = true
       if (objectUrl) URL.revokeObjectURL(objectUrl)
+      if (video?.parentNode) video.parentNode.removeChild(video)
       resolve(blob)
     }
 
     try {
-      const video = document.createElement('video')
+      video = document.createElement('video')
       video.muted = true
       video.playsInline = true
       objectUrl = URL.createObjectURL(file)
       video.src = objectUrl
 
+      // Must be genuinely attached (off-screen, not display:none/visibility:hidden) —
+      // otherwise some browsers never decode a paintable frame for drawImage to capture.
+      video.style.position = 'fixed'
+      video.style.left = '-9999px'
+      video.style.width = '1px'
+      video.style.height = '1px'
+      document.body.appendChild(video)
+
       video.addEventListener('error', () => finish(null))
 
       video.addEventListener('loadedmetadata', () => {
-        const duration = video.duration
+        const duration = video!.duration
         const seekTime = !isFinite(duration) || duration <= 0
           ? 0
           : duration < 2
           ? duration * 0.1
           : 1
         try {
-          video.currentTime = seekTime
+          video!.currentTime = seekTime
         } catch {
           finish(null)
         }
       })
 
-      video.addEventListener('seeked', () => {
+      video.addEventListener('seeked', async () => {
         try {
+          // Give the browser a paint cycle to actually commit the seeked frame
+          // before capturing it — otherwise drawImage can grab a black frame.
+          await new Promise((r) => requestAnimationFrame(r))
           const canvas = document.createElement('canvas')
-          canvas.width = video.videoWidth
-          canvas.height = video.videoHeight
+          canvas.width = video!.videoWidth
+          canvas.height = video!.videoHeight
           const ctx = canvas.getContext('2d')
           if (!ctx || canvas.width === 0 || canvas.height === 0) {
             finish(null)
             return
           }
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          ctx.drawImage(video!, 0, 0, canvas.width, canvas.height)
           canvas.toBlob((blob) => finish(blob), 'image/jpeg', 0.8)
         } catch {
           finish(null)
