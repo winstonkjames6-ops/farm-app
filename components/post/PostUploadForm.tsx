@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { UploadCloud, Film, Loader2, CheckCircle2, AlertCircle, X as XIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
@@ -74,6 +75,7 @@ function formatBookingDate(sessionTime: string): string {
 // ── Component ───────────────────────────────────────────────────────────────
 
 export function PostUploadForm({ role }: { role: Role }) {
+  const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
   const [bookings, setBookings] = useState<BookingOption[]>([])
   const [loadError, setLoadError] = useState('')
@@ -210,6 +212,9 @@ export function PostUploadForm({ role }: { role: Role }) {
     setSport('')
     setBookingId('')
     setFeedbackRequested(false)
+
+    const discoverPath = role === 'trainer' ? '/dashboard/trainer/discover' : '/dashboard/athlete/discover'
+    setTimeout(() => router.push(discoverPath), 900)
   }
 
   return (
