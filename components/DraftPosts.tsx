@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Plus } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 import { PostCard, Post } from '@/components/post/PostCard'
@@ -10,9 +9,11 @@ import { PostCard, Post } from '@/components/post/PostCard'
 const barlow = "'Barlow Condensed', sans-serif"
 const hanken = "'Hanken Grotesk', sans-serif"
 
-// ── Feed ──────────────────────────────────────────────────────────────────────
+// ── Draft posts feed ─────────────────────────────────────────────────────────────
+// Own unpublished posts only — the follow button never applies here (isOwnPost is
+// always true), so following state is stubbed out rather than fetched.
 
-export default function DiscoverFeed() {
+export default function DraftPosts() {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -20,12 +21,10 @@ export default function DiscoverFeed() {
   const [loading, setLoading] = useState(true)
   const [playingPostId, setPlayingPostId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'all' | 'following'>('all')
 
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({})
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set())
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set())
-  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const supabase = createClient()
@@ -35,14 +34,20 @@ export default function DiscoverFeed() {
       const uid = user?.id ?? null
       setCurrentUserId(uid)
 
+      if (!uid) {
+        setLoading(false)
+        return
+      }
+
       const { data, error } = await supabase
         .from('posts')
         .select('id, author_type, author_id, video_url, thumbnail_url, caption, sport, created_at, booking_id, feedback_requested, view_count, profiles!author_id(name, avatar_url)')
-        .eq('published', true)
+        .eq('author_id', uid)
+        .eq('published', false)
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('[discover] posts fetch:', error.message)
+        console.error('[drafts] posts fetch:', error.message)
         setLoading(false)
         return
       }
@@ -67,29 +72,21 @@ export default function DiscoverFeed() {
       const postIds = mapped.map((p) => p.id)
 
       if (postIds.length > 0) {
-        const { data: likeRows, error: likeErr } = await supabase
-          .from('post_likes')
-          .select('post_id, profile_id')
-          .in('post_id', postIds)
+        const [{ data: likeRows, error: likeErr }, { data: bookmarkRows }] = await Promise.all([
+          supabase.from('post_likes').select('post_id, profile_id').in('post_id', postIds),
+          supabase.from('post_bookmarks').select('post_id').eq('profile_id', uid),
+        ])
 
         if (!likeErr) {
           const counts: Record<string, number> = {}
           const likedByMe = new Set<string>()
           ;(likeRows ?? []).forEach((r: any) => {
             counts[r.post_id] = (counts[r.post_id] ?? 0) + 1
-            if (uid && r.profile_id === uid) likedByMe.add(r.post_id)
+            if (r.profile_id === uid) likedByMe.add(r.post_id)
           })
           setLikeCounts(counts)
           setLikedPostIds(likedByMe)
         }
-      }
-
-      if (uid) {
-        const [{ data: followRows }, { data: bookmarkRows }] = await Promise.all([
-          supabase.from('follows').select('followed_id').eq('follower_id', uid),
-          supabase.from('post_bookmarks').select('post_id').eq('profile_id', uid),
-        ])
-        setFollowingIds(new Set((followRows ?? []).map((r: any) => r.followed_id)))
         setBookmarkedPostIds(new Set((bookmarkRows ?? []).map((r: any) => r.post_id)))
       }
     }
@@ -147,30 +144,6 @@ export default function DiscoverFeed() {
     }
   }
 
-  async function toggleFollow(authorId: string) {
-    if (!currentUserId || authorId === currentUserId) return
-    const wasFollowing = followingIds.has(authorId)
-
-    setFollowingIds((prev) => {
-      const next = new Set(prev)
-      wasFollowing ? next.delete(authorId) : next.add(authorId)
-      return next
-    })
-
-    const supabase = createClient()
-    const { error } = wasFollowing
-      ? await supabase.from('follows').delete().eq('follower_id', currentUserId).eq('followed_id', authorId)
-      : await supabase.from('follows').insert({ follower_id: currentUserId, followed_id: authorId })
-
-    if (error) {
-      setFollowingIds((prev) => {
-        const next = new Set(prev)
-        wasFollowing ? next.add(authorId) : next.delete(authorId)
-        return next
-      })
-    }
-  }
-
   function openPost(postId: string) {
     if (playingPostId === postId) return
     setPlayingPostId(postId)
@@ -178,7 +151,7 @@ export default function DiscoverFeed() {
 
     const supabase = createClient()
     supabase.rpc('increment_post_view', { p_post_id: postId }).then(({ error }) => {
-      if (error) console.error('[discover] view increment:', error.message)
+      if (error) console.error('[drafts] view increment:', error.message)
     })
   }
 
@@ -196,84 +169,43 @@ export default function DiscoverFeed() {
     const supabase = createClient()
     const { error } = await supabase.from('posts').delete().eq('id', postId)
     if (error) {
-      console.error('[discover] delete post:', error.message)
+      console.error('[drafts] delete post:', error.message)
       return
     }
     setPosts((prev) => prev.filter((p) => p.id !== postId))
   }
 
-  const visiblePosts = activeTab === 'following'
-    ? posts.filter((p) => followingIds.has(p.authorId))
-    : posts
-
-  const newPostHref = pathname.startsWith('/dashboard/trainer')
-    ? '/dashboard/trainer/post/new'
-    : pathname.startsWith('/dashboard/athlete')
-    ? '/dashboard/athlete/post/new'
-    : null
+  async function publishPost(postId: string) {
+    const supabase = createClient()
+    const { error } = await supabase.from('posts').update({ published: true }).eq('id', postId)
+    if (error) {
+      console.error('[drafts] publish post:', error.message)
+      return
+    }
+    setPosts((prev) => prev.filter((p) => p.id !== postId))
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, fontFamily: hanken, WebkitFontSmoothing: 'antialiased' }}>
       <div style={{ maxWidth: '560px', margin: '0 auto', padding: '40px 24px 80px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '20px' }}>
-          <h1 style={{
-            fontFamily: barlow, fontWeight: 900, fontSize: 'clamp(32px, 5vw, 44px)',
-            letterSpacing: '0em', textTransform: 'uppercase', margin: 0, color: T.ink, lineHeight: 0.98,
-          }}>
-            Discover
-          </h1>
-
-          {newPostHref && (
-            <button
-              type="button"
-              onClick={() => router.push(newPostHref)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
-                height: '40px', padding: '0 18px', borderRadius: '999px', border: 'none',
-                background: T.cyan, color: '#FFFFFF', fontFamily: hanken, fontWeight: 600, fontSize: '13px',
-                cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,188,200,0.25)',
-              }}
-            >
-              <Plus size={16} />
-              New post
-            </button>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          {(['all', 'following'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              style={{
-                fontFamily: hanken, fontWeight: 600, fontSize: '13px',
-                padding: '8px 16px', borderRadius: '999px', cursor: 'pointer',
-                border: activeTab === tab ? 'none' : `1px solid ${T.line}`,
-                background: activeTab === tab ? T.cyan : 'transparent',
-                color: activeTab === tab ? '#FFFFFF' : T.ink2,
-              }}
-            >
-              {tab === 'all' ? 'All' : 'Following'}
-            </button>
-          ))}
-        </div>
+        <h1 style={{
+          fontFamily: barlow, fontWeight: 900, fontSize: 'clamp(32px, 5vw, 44px)',
+          letterSpacing: '0em', textTransform: 'uppercase', margin: '0 0 20px', color: T.ink, lineHeight: 0.98,
+        }}>
+          My Drafts
+        </h1>
 
         {loading ? (
           <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
-            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Loading posts&hellip;</p>
+            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Loading drafts&hellip;</p>
           </div>
         ) : posts.length === 0 ? (
           <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
-            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No posts yet</p>
-          </div>
-        ) : visiblePosts.length === 0 ? (
-          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
-            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Follow some trainers or athletes to see their posts here</p>
+            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No drafts yet</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {visiblePosts.map((post, i) => (
+            {posts.map((post, i) => (
               <PostCard
                 key={post.id}
                 post={post}
@@ -285,13 +217,14 @@ export default function DiscoverFeed() {
                 liked={likedPostIds.has(post.id)}
                 likeCount={likeCounts[post.id] ?? 0}
                 bookmarked={bookmarkedPostIds.has(post.id)}
-                isFollowing={followingIds.has(post.authorId)}
+                isFollowing={false}
                 viewCount={post.viewCount}
                 onToggleLike={() => toggleLike(post.id)}
-                onToggleFollow={() => toggleFollow(post.authorId)}
+                onToggleFollow={() => {}}
                 onToggleBookmark={() => toggleBookmark(post.id)}
                 onGiveFeedback={() => giveFeedback(post.authorId)}
                 onDelete={() => deletePost(post.id)}
+                onPublish={() => publishPost(post.id)}
               />
             ))}
           </div>

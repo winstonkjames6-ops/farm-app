@@ -50,7 +50,7 @@ function FollowButton({ following, onClick }: { following: boolean; onClick: (e:
 export function PostCard({
   post, index, isPlaying, onPlay, onClose,
   currentUserId, liked, likeCount, bookmarked, isFollowing, viewCount,
-  onToggleLike, onToggleFollow, onToggleBookmark, onGiveFeedback, onDelete,
+  onToggleLike, onToggleFollow, onToggleBookmark, onGiveFeedback, onDelete, onPublish,
 }: {
   post: Post
   index: number
@@ -68,6 +68,7 @@ export function PostCard({
   onToggleBookmark: () => void
   onGiveFeedback: () => void
   onDelete: () => void
+  onPublish?: () => void
 }) {
   const isOwnPost = currentUserId != null && post.authorId === currentUserId
 
@@ -296,6 +297,21 @@ export function PostCard({
             <Bookmark size={18} fill={bookmarked ? T.cyan : 'none'} />
           </button>
         </div>
+
+        {onPublish && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onPublish() }}
+            style={{
+              marginTop: '12px', width: '100%', height: '38px', borderRadius: '10px',
+              border: 'none', background: T.cyan, color: '#FFFFFF',
+              fontFamily: hanken, fontWeight: 600, fontSize: '13px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+            }}
+          >
+            Publish
+          </button>
+        )}
 
         {reportOpen && (
           <div

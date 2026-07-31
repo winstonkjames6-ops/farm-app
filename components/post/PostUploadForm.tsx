@@ -88,6 +88,7 @@ export function PostUploadForm({ role }: { role: Role }) {
 
   const [status, setStatus] = useState<SubmitStatus>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [submitAction, setSubmitAction] = useState<'publish' | 'draft' | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -158,8 +159,7 @@ export function PostUploadForm({ role }: { role: Role }) {
     setVideoFile(file)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleSubmit(publish: boolean) {
     if (!userId) {
       setStatus('error')
       setErrorMessage('Not authenticated. Please refresh and try again.')
@@ -171,6 +171,7 @@ export function PostUploadForm({ role }: { role: Role }) {
       return
     }
 
+    setSubmitAction(publish ? 'publish' : 'draft')
     setStatus('uploading')
     setErrorMessage('')
 
@@ -198,6 +199,7 @@ export function PostUploadForm({ role }: { role: Role }) {
       sport: sport || null,
       booking_id: bookingId || null,
       feedback_requested: feedbackRequested,
+      published: publish,
     })
 
     if (insertErr) {
@@ -213,8 +215,10 @@ export function PostUploadForm({ role }: { role: Role }) {
     setBookingId('')
     setFeedbackRequested(false)
 
-    const discoverPath = role === 'trainer' ? '/dashboard/trainer/discover' : '/dashboard/athlete/discover'
-    setTimeout(() => router.push(discoverPath), 900)
+    const redirectPath = publish
+      ? (role === 'trainer' ? '/dashboard/trainer/discover' : '/dashboard/athlete/discover')
+      : (role === 'trainer' ? '/dashboard/trainer/drafts' : '/dashboard/athlete/drafts')
+    setTimeout(() => router.push(redirectPath), 900)
   }
 
   return (
@@ -228,7 +232,7 @@ export function PostUploadForm({ role }: { role: Role }) {
         <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: hanken }}>{loadError}</div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <SectionCard>
           <CardLabel>Video</CardLabel>
           <input
@@ -316,28 +320,53 @@ export function PostUploadForm({ role }: { role: Role }) {
         {status === 'success' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '8px', padding: '12px 14px' }}>
             <CheckCircle2 size={16} color="#10B981" style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: '13px', color: '#047857', fontFamily: hanken }}>Post uploaded successfully.</span>
+            <span style={{ fontSize: '13px', color: '#047857', fontFamily: hanken }}>
+              {submitAction === 'draft' ? 'Saved as draft.' : 'Post uploaded successfully.'}
+            </span>
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={status === 'uploading'}
-          style={{
-            height: '48px', padding: '0 28px', borderRadius: '999px', border: 'none',
-            background: T.cyan, color: '#FFFFFF', fontSize: '15px', fontWeight: 600, fontFamily: hanken,
-            cursor: status === 'uploading' ? 'default' : 'pointer',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.16)', display: 'flex', alignItems: 'center',
-            justifyContent: 'center', gap: '8px', opacity: status === 'uploading' ? 0.85 : 1, alignSelf: 'flex-start',
-          }}
-        >
-          {status === 'uploading' && (
-            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }} style={{ display: 'flex' }}>
-              <Loader2 size={16} color="#FFFFFF" />
-            </motion.div>
-          )}
-          {status === 'uploading' ? 'Uploading…' : 'Share post'}
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            type="button"
+            onClick={() => handleSubmit(true)}
+            disabled={status === 'uploading'}
+            style={{
+              height: '48px', padding: '0 28px', borderRadius: '999px', border: 'none',
+              background: T.cyan, color: '#FFFFFF', fontSize: '15px', fontWeight: 600, fontFamily: hanken,
+              cursor: status === 'uploading' ? 'default' : 'pointer',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.16)', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: '8px', opacity: status === 'uploading' ? 0.85 : 1,
+            }}
+          >
+            {status === 'uploading' && submitAction === 'publish' && (
+              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }} style={{ display: 'flex' }}>
+                <Loader2 size={16} color="#FFFFFF" />
+              </motion.div>
+            )}
+            {status === 'uploading' && submitAction === 'publish' ? 'Uploading…' : 'Publish now'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSubmit(false)}
+            disabled={status === 'uploading'}
+            style={{
+              height: '48px', padding: '0 28px', borderRadius: '999px', border: `1px solid ${T.line}`,
+              background: 'transparent', color: T.ink2, fontSize: '15px', fontWeight: 600, fontFamily: hanken,
+              cursor: status === 'uploading' ? 'default' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              opacity: status === 'uploading' ? 0.85 : 1,
+            }}
+          >
+            {status === 'uploading' && submitAction === 'draft' && (
+              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }} style={{ display: 'flex' }}>
+                <Loader2 size={16} color={T.ink2} />
+              </motion.div>
+            )}
+            {status === 'uploading' && submitAction === 'draft' ? 'Saving…' : 'Save as draft'}
+          </button>
+        </div>
       </form>
     </div>
   )

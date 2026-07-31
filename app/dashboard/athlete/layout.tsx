@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, MessageSquare, Compass, Bookmark } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageSquare, Compass, Bookmark, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
@@ -76,6 +76,7 @@ const NAV_ITEMS = [
   { key: 'home',     label: 'Home',     Icon: IconHome,      badge: false },
   { key: 'discover', label: 'Discover', Icon: Compass,       badge: false },
   { key: 'saved',    label: 'Saved',    Icon: Bookmark,      badge: false },
+  { key: 'drafts',   label: 'Drafts',   Icon: FileText,      badge: false },
   { key: 'sessions', label: 'Sessions', Icon: IconCalendar,  badge: false },
   { key: 'messages', label: 'Messages', Icon: MessageSquare, badge: true  },
   { key: 'profile',  label: 'Profile',  Icon: IconUser,      badge: false },
@@ -85,6 +86,7 @@ const NAV_HREFS: Record<string, string> = {
   home:     '/dashboard/athlete',
   discover: '/dashboard/athlete/discover',
   saved:    '/dashboard/athlete/saved',
+  drafts:   '/dashboard/athlete/drafts',
   sessions: '/dashboard/athlete/sessions',
   messages: '/dashboard/athlete/messages',
   profile:  '/dashboard/athlete/profile',
@@ -420,6 +422,7 @@ export default function AthleteLayout({ children }: { children: React.ReactNode 
     if (pathname === '/dashboard/athlete') return 'home'
     if (pathname.startsWith('/dashboard/athlete/discover')) return 'discover'
     if (pathname.startsWith('/dashboard/athlete/saved')) return 'saved'
+    if (pathname.startsWith('/dashboard/athlete/drafts')) return 'drafts'
     if (pathname.startsWith('/dashboard/athlete/sessions')) return 'sessions'
     if (pathname.startsWith('/dashboard/athlete/messages')) return 'messages'
     if (pathname.startsWith('/dashboard/athlete/profile')) return 'profile'
