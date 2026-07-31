@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Play, X, Heart, Bookmark, Eye, Trash2, MoreVertical } from 'lucide-react'
+import { Play, X, Heart, Bookmark, Eye, Trash2, MoreVertical, MessageCircle } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
+import { PostComments } from './PostComments'
 
 const barlow = "'Barlow Condensed', sans-serif"
 const hanken = "'Hanken Grotesk', sans-serif"
@@ -22,6 +23,7 @@ export type Post = {
   bookingId: string | null
   feedbackRequested: boolean
   viewCount: number
+  commentsEnabled: boolean
 }
 
 // ── Follow button ────────────────────────────────────────────────────────────
@@ -73,6 +75,7 @@ export function PostCard({
   const isOwnPost = currentUserId != null && post.authorId === currentUserId
 
   const [menuOpen, setMenuOpen] = useState(false)
+  const [commentsOpen, setCommentsOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
   const [reportReason, setReportReason] = useState('')
   const [reportStatus, setReportStatus] = useState<'idle' | 'submitting' | 'submitted' | 'error'>('idle')
@@ -283,6 +286,20 @@ export function PostCard({
             <span style={{ fontFamily: hanken, fontSize: '13px', fontWeight: 600 }}>{viewCount}</span>
           </div>
 
+          {post.commentsEnabled && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setCommentsOpen((o) => !o) }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                background: 'none', border: 'none', padding: 0,
+                cursor: 'pointer', color: commentsOpen ? T.cyan : T.ink3,
+              }}
+            >
+              <MessageCircle size={18} />
+            </button>
+          )}
+
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onToggleBookmark() }}
@@ -297,6 +314,10 @@ export function PostCard({
             <Bookmark size={18} fill={bookmarked ? T.cyan : 'none'} />
           </button>
         </div>
+
+        {post.commentsEnabled && commentsOpen && (
+          <PostComments postId={post.id} currentUserId={currentUserId} />
+        )}
 
         {onPublish && (
           <button

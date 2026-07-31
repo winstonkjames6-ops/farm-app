@@ -44,6 +44,7 @@ interface AthleteRow {
   initials: string
   waiver_signed_at: string | null
   profile_id: string | null
+  comments_enabled: boolean
 }
 
 // ── Static data ────────────────────────────────────────────────────────────────
@@ -849,6 +850,12 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
   const [pendingDmAthlete, setPendingDmAthlete] = useState<AthleteRow | null>(null)
   const [dmPending, setDmPending] = useState<Record<string, boolean>>({})
 
+  // Account-wide comment permission per athlete — backed by athletes.comments_enabled.
+  const [commentsEnabledMap, setCommentsEnabledMap] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(initialAthletes.map((a) => [a.id, a.comments_enabled]))
+  )
+  const [commentsEnabledPending, setCommentsEnabledPending] = useState<Record<string, boolean>>({})
+
   // Invite-code reveal — per athlete, fetched lazily on first "View invite code" click.
   const [inviteCodeOpen, setInviteCodeOpen] = useState<Record<string, boolean>>({})
   const [inviteCodeLoading, setInviteCodeLoading] = useState<Record<string, boolean>>({})
@@ -976,6 +983,23 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
 
   function cancelDirectMessage() {
     setPendingDmAthlete(null)
+  }
+
+  async function toggleCommentsEnabled(athleteId: string) {
+    const next = !(commentsEnabledMap[athleteId] ?? false)
+    setCommentsEnabledPending((prev) => ({ ...prev, [athleteId]: true }))
+    setSaveError((prev) => ({ ...prev, [athleteId]: null }))
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('athletes')
+      .update({ comments_enabled: next })
+      .eq('id', athleteId)
+    setCommentsEnabledPending((prev) => ({ ...prev, [athleteId]: false }))
+    if (error) {
+      setSaveError((prev) => ({ ...prev, [athleteId]: error.message }))
+      return
+    }
+    setCommentsEnabledMap((prev) => ({ ...prev, [athleteId]: next }))
   }
 
   function setTab(athleteId: string, tab: 'details' | 'permissions') {
@@ -1154,6 +1178,50 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
                           ))}
                         </div>
                       ))}
+                      <div>
+                        <div style={{
+                          fontSize: '11px',
+                          fontFamily: "'Hanken Grotesk', sans-serif",
+                          fontWeight: 700,
+                          color: '#9CA3AF',
+                          textTransform: 'uppercase' as const,
+                          letterSpacing: '0.1em',
+                          paddingTop: '16px',
+                          paddingBottom: '8px',
+                        }}>
+                          Comments
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '14px 0',
+                          borderBottom: '1px solid rgba(0,0,0,0.08)',
+                        }}>
+                          <span style={{
+                            fontSize: '14px',
+                            color: '#111827',
+                            fontFamily: "'Hanken Grotesk', sans-serif",
+                            paddingRight: '16px',
+                          }}>
+                            {`Allow comments on ${athlete.name}'s posts`}
+                          </span>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: '44px',
+                            minHeight: '44px',
+                            flexShrink: 0,
+                          }}>
+                            <ToggleSwitch
+                              on={commentsEnabledMap[athlete.id] ?? false}
+                              disabled={commentsEnabledPending[athlete.id]}
+                              onChange={() => toggleCommentsEnabled(athlete.id)}
+                            />
+                          </div>
+                        </div>
+                      </div>
                       {saveError[athlete.id] && (
                         <div style={{
                           fontSize: '13px', color: T.danger, marginTop: '12px',
@@ -1629,7 +1697,7 @@ export default function ParentProfilePage() {
 
       const { data: athleteData } = await supabase
         .from('athletes')
-        .select('id, name, dob, sport, waiver_signed_at, profile_id')
+        .select('id, name, dob, sport, waiver_signed_at, profile_id, comments_enabled')
         .eq('parent_id', user.id)
 
       setAthletes(
@@ -1642,6 +1710,7 @@ export default function ParentProfilePage() {
           initials: getInitials(a.name as string),
           waiver_signed_at: a.waiver_signed_at as string | null,
           profile_id: a.profile_id as string | null,
+          comments_enabled: !!a.comments_enabled,
         }))
       )
 

@@ -25,11 +25,22 @@ type Report = {
   postAuthorName: string
 }
 
+type CommentReport = {
+  id: string
+  reason: string
+  createdAt: string
+  reporterName: string
+  commentId: string | null
+  commentBody: string | null
+  commentAuthorName: string
+}
+
 export default function AdminReports() {
   const [checking, setChecking] = useState(true)
   const [authorized, setAuthorized] = useState(false)
   const [loading, setLoading] = useState(true)
   const [reports, setReports] = useState<Report[]>([])
+  const [commentReports, setCommentReports] = useState<CommentReport[]>([])
 
   useEffect(() => {
     const supabase = createClient()
@@ -86,6 +97,34 @@ export default function AdminReports() {
         postAuthorName: row.post?.author?.name ?? 'Unknown',
       }))
       setReports(mapped)
+
+      const { data: commentData, error: commentErr } = await supabase
+        .from('comment_reports')
+        .select(`
+          id,
+          reason,
+          created_at,
+          reporter:profiles!reporter_id(name),
+          comment:comments!comment_id(id, body, author:profiles!author_id(name))
+        `)
+        .order('created_at', { ascending: false })
+
+      if (commentErr) {
+        console.error('[admin-reports] comment reports fetch:', commentErr.message)
+        setLoading(false)
+        return
+      }
+
+      const mappedComments: CommentReport[] = (commentData ?? []).map((row: any) => ({
+        id: row.id,
+        reason: row.reason,
+        createdAt: row.created_at,
+        reporterName: row.reporter?.name ?? 'Unknown',
+        commentId: row.comment?.id ?? null,
+        commentBody: row.comment?.body ?? null,
+        commentAuthorName: row.comment?.author?.name ?? 'Unknown',
+      }))
+      setCommentReports(mappedComments)
       setLoading(false)
     }
 
@@ -100,6 +139,16 @@ export default function AdminReports() {
       return
     }
     setReports((prev) => prev.filter((r) => r.id !== reportId))
+  }
+
+  async function dismissCommentReport(reportId: string) {
+    const supabase = createClient()
+    const { error } = await supabase.from('comment_reports').delete().eq('id', reportId)
+    if (error) {
+      console.error('[admin-reports] dismiss comment report:', error.message)
+      return
+    }
+    setCommentReports((prev) => prev.filter((r) => r.id !== reportId))
   }
 
   if (checking) return null
@@ -119,8 +168,15 @@ export default function AdminReports() {
           fontFamily: barlow, fontWeight: 900, fontSize: 'clamp(32px, 5vw, 44px)',
           letterSpacing: '0em', textTransform: 'uppercase', margin: '0 0 20px', color: T.ink, lineHeight: 0.98,
         }}>
-          Post Reports
+          Reports
         </h1>
+
+        <h2 style={{
+          fontFamily: barlow, fontWeight: 700, fontSize: '20px',
+          textTransform: 'uppercase', margin: '0 0 16px', color: T.ink,
+        }}>
+          Post Reports
+        </h2>
 
         {loading ? (
           <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
@@ -181,6 +237,70 @@ export default function AdminReports() {
                 <button
                   type="button"
                   onClick={() => dismissReport(report.id)}
+                  style={{
+                    flexShrink: 0, alignSelf: 'flex-start',
+                    height: '32px', padding: '0 14px', borderRadius: '999px',
+                    border: `1px solid ${T.line}`, background: 'transparent', color: T.ink2,
+                    fontFamily: hanken, fontWeight: 600, fontSize: '12px', cursor: 'pointer',
+                  }}
+                >
+                  Dismiss
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <h2 style={{
+          fontFamily: barlow, fontWeight: 700, fontSize: '20px',
+          textTransform: 'uppercase', margin: '40px 0 16px', color: T.ink,
+        }}>
+          Comment Reports
+        </h2>
+
+        {loading ? (
+          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Loading reports&hellip;</p>
+          </div>
+        ) : commentReports.length === 0 ? (
+          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No reports</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {commentReports.map((report) => (
+              <div
+                key={report.id}
+                style={{
+                  display: 'flex', gap: '16px',
+                  background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', padding: '16px',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: hanken, fontSize: '13px', color: T.ink2, margin: '0 0 4px' }}>
+                    Reported by <strong style={{ color: T.ink }}>{report.reporterName}</strong>
+                    {' — comment by '}
+                    <strong style={{ color: T.ink }}>{report.commentAuthorName}</strong>
+                  </p>
+
+                  {report.commentBody && (
+                    <p style={{ fontFamily: hanken, fontSize: '13px', color: T.ink3, margin: '0 0 8px', fontStyle: 'italic' }}>
+                      &ldquo;{report.commentBody}&rdquo;
+                    </p>
+                  )}
+
+                  <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink, margin: '0 0 8px', lineHeight: 1.4 }}>
+                    {report.reason}
+                  </p>
+
+                  <p style={{ fontFamily: hanken, fontSize: '12px', color: T.ink3, margin: 0 }}>
+                    {new Date(report.createdAt).toLocaleString()}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => dismissCommentReport(report.id)}
                   style={{
                     flexShrink: 0, alignSelf: 'flex-start',
                     height: '32px', padding: '0 14px', borderRadius: '999px',

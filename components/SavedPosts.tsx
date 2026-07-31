@@ -66,6 +66,7 @@ export default function SavedPosts() {
             bookingId: p.booking_id,
             feedbackRequested: !!p.feedback_requested,
             viewCount: p.view_count ?? 0,
+            commentsEnabled: false,
           }
         })
       setPosts(mapped)
@@ -88,6 +89,15 @@ export default function SavedPosts() {
           })
           setLikeCounts(counts)
           setLikedPostIds(likedByMe)
+        }
+
+        const { data: commentsEnabledRows, error: commentsEnabledErr } = await supabase
+          .rpc('get_posts_comments_enabled', { p_post_ids: postIds })
+
+        if (!commentsEnabledErr) {
+          const enabledMap: Record<string, boolean> = {}
+          ;(commentsEnabledRows ?? []).forEach((r: any) => { enabledMap[r.post_id] = !!r.comments_enabled })
+          setPosts((prev) => prev.map((p) => ({ ...p, commentsEnabled: enabledMap[p.id] ?? false })))
         }
       }
 

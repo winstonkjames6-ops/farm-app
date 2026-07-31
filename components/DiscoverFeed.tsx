@@ -60,6 +60,7 @@ export default function DiscoverFeed() {
         bookingId: row.booking_id,
         feedbackRequested: !!row.feedback_requested,
         viewCount: row.view_count ?? 0,
+        commentsEnabled: false,
       }))
       setPosts(mapped)
       setLoading(false)
@@ -81,6 +82,15 @@ export default function DiscoverFeed() {
           })
           setLikeCounts(counts)
           setLikedPostIds(likedByMe)
+        }
+
+        const { data: commentsEnabledRows, error: commentsEnabledErr } = await supabase
+          .rpc('get_posts_comments_enabled', { p_post_ids: postIds })
+
+        if (!commentsEnabledErr) {
+          const enabledMap: Record<string, boolean> = {}
+          ;(commentsEnabledRows ?? []).forEach((r: any) => { enabledMap[r.post_id] = !!r.comments_enabled })
+          setPosts((prev) => prev.map((p) => ({ ...p, commentsEnabled: enabledMap[p.id] ?? false })))
         }
       }
 

@@ -160,6 +160,7 @@ export function PostUploadForm({ role }: { role: Role }) {
   const [sport, setSport] = useState('')
   const [bookingId, setBookingId] = useState('')
   const [feedbackRequested, setFeedbackRequested] = useState(false)
+  const [commentsEnabled, setCommentsEnabled] = useState(true)
 
   const [status, setStatus] = useState<SubmitStatus>('idle')
   const [errorMessage, setErrorMessage] = useState('')
@@ -291,6 +292,7 @@ export function PostUploadForm({ role }: { role: Role }) {
       booking_id: bookingId || null,
       feedback_requested: feedbackRequested,
       published: publish,
+      ...(role === 'trainer' ? { comments_enabled: commentsEnabled } : {}),
     })
 
     if (insertErr) {
@@ -305,6 +307,7 @@ export function PostUploadForm({ role }: { role: Role }) {
     setSport('')
     setBookingId('')
     setFeedbackRequested(false)
+    setCommentsEnabled(true)
 
     const redirectPath = publish
       ? (role === 'trainer' ? '/dashboard/trainer/discover' : '/dashboard/athlete/discover')
@@ -398,6 +401,17 @@ export function PostUploadForm({ role }: { role: Role }) {
               />
               <span style={{ fontSize: '14px', color: T.ink, fontFamily: hanken }}>Request feedback on this clip</span>
             </label>
+            {role === 'trainer' && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={commentsEnabled}
+                  onChange={(e) => setCommentsEnabled(e.target.checked)}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: T.cyan }}
+                />
+                <span style={{ fontSize: '14px', color: T.ink, fontFamily: hanken }}>Allow comments on this post</span>
+              </label>
+            )}
           </div>
         </SectionCard>
 

@@ -65,6 +65,7 @@ export default function DraftPosts() {
         bookingId: row.booking_id,
         feedbackRequested: !!row.feedback_requested,
         viewCount: row.view_count ?? 0,
+        commentsEnabled: false,
       }))
       setPosts(mapped)
       setLoading(false)
@@ -72,9 +73,10 @@ export default function DraftPosts() {
       const postIds = mapped.map((p) => p.id)
 
       if (postIds.length > 0) {
-        const [{ data: likeRows, error: likeErr }, { data: bookmarkRows }] = await Promise.all([
+        const [{ data: likeRows, error: likeErr }, { data: bookmarkRows }, { data: commentsEnabledRows, error: commentsEnabledErr }] = await Promise.all([
           supabase.from('post_likes').select('post_id, profile_id').in('post_id', postIds),
           supabase.from('post_bookmarks').select('post_id').eq('profile_id', uid),
+          supabase.rpc('get_posts_comments_enabled', { p_post_ids: postIds }),
         ])
 
         if (!likeErr) {
@@ -88,6 +90,12 @@ export default function DraftPosts() {
           setLikedPostIds(likedByMe)
         }
         setBookmarkedPostIds(new Set((bookmarkRows ?? []).map((r: any) => r.post_id)))
+
+        if (!commentsEnabledErr) {
+          const enabledMap: Record<string, boolean> = {}
+          ;(commentsEnabledRows ?? []).forEach((r: any) => { enabledMap[r.post_id] = !!r.comments_enabled })
+          setPosts((prev) => prev.map((p) => ({ ...p, commentsEnabled: enabledMap[p.id] ?? false })))
+        }
       }
     }
 
