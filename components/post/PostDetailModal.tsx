@@ -10,7 +10,7 @@ import { Post, PostCardBody } from './PostCard'
 // around a full, controllable video — no action logic is duplicated here.
 export function PostDetailModal({
   post, currentUserId, liked, likeCount, bookmarked, isFollowing, viewCount,
-  onToggleLike, onToggleFollow, onToggleBookmark, onGiveFeedback, onDelete, onClose,
+  onToggleLike, onToggleFollow, onToggleBookmark, onGiveFeedback, onDelete, onPublish, onClose,
 }: {
   post: Post
   currentUserId: string | null
@@ -24,6 +24,7 @@ export function PostDetailModal({
   onToggleBookmark: () => void
   onGiveFeedback: () => void
   onDelete: () => void
+  onPublish?: () => void
   onClose: () => void
 }) {
   useEffect(() => {
@@ -91,6 +92,7 @@ export function PostDetailModal({
             onToggleBookmark={onToggleBookmark}
             onGiveFeedback={onGiveFeedback}
             onDelete={onDelete}
+            onPublish={onPublish}
           />
         </div>
       </div>

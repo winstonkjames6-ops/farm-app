@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
-import { PostCard, Post } from '@/components/post/PostCard'
+import { Post } from '@/components/post/PostCard'
+import { PostGridTile } from '@/components/post/PostGridTile'
+import { PostDetailModal } from '@/components/post/PostDetailModal'
 
 const barlow = "'Barlow Condensed', sans-serif"
 const hanken = "'Hanken Grotesk', sans-serif"
@@ -193,6 +195,8 @@ export default function DraftPosts() {
     setPosts((prev) => prev.filter((p) => p.id !== postId))
   }
 
+  const activePost = playingPostId ? posts.find((p) => p.id === playingPostId) ?? null : null
+
   return (
     <div style={{ minHeight: '100vh', background: T.bg, fontFamily: hanken, WebkitFontSmoothing: 'antialiased' }}>
       <div style={{ maxWidth: '560px', margin: '0 auto', padding: '40px 24px 80px' }}>
@@ -212,32 +216,38 @@ export default function DraftPosts() {
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No drafts yet</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {posts.map((post, i) => (
-              <PostCard
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+            {posts.map((post) => (
+              <PostGridTile
                 key={post.id}
                 post={post}
-                index={i}
-                isPlaying={playingPostId === post.id}
-                onPlay={() => openPost(post.id)}
-                onClose={() => setPlayingPostId(null)}
-                currentUserId={currentUserId}
-                liked={likedPostIds.has(post.id)}
                 likeCount={likeCounts[post.id] ?? 0}
-                bookmarked={bookmarkedPostIds.has(post.id)}
-                isFollowing={false}
-                viewCount={post.viewCount}
-                onToggleLike={() => toggleLike(post.id)}
-                onToggleFollow={() => {}}
-                onToggleBookmark={() => toggleBookmark(post.id)}
-                onGiveFeedback={() => giveFeedback(post.authorId)}
-                onDelete={() => deletePost(post.id)}
-                onPublish={() => publishPost(post.id)}
+                showTrendingBadge={false}
+                onOpen={() => openPost(post.id)}
               />
             ))}
           </div>
         )}
       </div>
+
+      {activePost && (
+        <PostDetailModal
+          post={activePost}
+          currentUserId={currentUserId}
+          liked={likedPostIds.has(activePost.id)}
+          likeCount={likeCounts[activePost.id] ?? 0}
+          bookmarked={bookmarkedPostIds.has(activePost.id)}
+          isFollowing={false}
+          viewCount={activePost.viewCount}
+          onToggleLike={() => toggleLike(activePost.id)}
+          onToggleFollow={() => {}}
+          onToggleBookmark={() => toggleBookmark(activePost.id)}
+          onGiveFeedback={() => giveFeedback(activePost.authorId)}
+          onDelete={() => { setPlayingPostId(null); deletePost(activePost.id) }}
+          onPublish={() => { setPlayingPostId(null); publishPost(activePost.id) }}
+          onClose={() => setPlayingPostId(null)}
+        />
+      )}
     </div>
   )
 }
