@@ -45,6 +45,7 @@ function PostGridTile({
       ([entry]) => {
         if (entry.isIntersecting) {
           video.muted = true
+          if (video.readyState === 0) video.load()
           video.currentTime = 0
           video.play().catch(() => {})
         } else {
@@ -85,10 +86,13 @@ function PostGridTile({
         <video
           ref={videoRef}
           src={post.videoUrl}
+          poster={post.thumbnailUrl || undefined}
+          preload="metadata"
           muted
           loop
           playsInline
           onTimeUpdate={handleTimeUpdate}
+          onError={() => {}}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
       )}
