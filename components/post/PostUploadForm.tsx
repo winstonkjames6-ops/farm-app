@@ -20,6 +20,13 @@ type SubmitStatus = 'idle' | 'uploading' | 'success' | 'error'
 const barlow = "'Barlow Condensed', sans-serif"
 const hanken = "'Hanken Grotesk', sans-serif"
 
+// Matches the post-videos storage bucket's file_size_limit.
+const MAX_VIDEO_BYTES = 200 * 1024 * 1024
+
+function formatMb(bytes: number): string {
+  return (bytes / (1024 * 1024)).toFixed(1)
+}
+
 // ── Shared UI (mirrors app/dashboard/trainer/profile/page.tsx) ────────────────
 
 function SectionCard({ children }: { children: React.ReactNode }) {
@@ -157,6 +164,7 @@ export function PostUploadForm({ role }: { role: Role }) {
 
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null)
+  const [videoSizeError, setVideoSizeError] = useState('')
   const [caption, setCaption] = useState('')
   const [sport, setSport] = useState('')
   const [bookingId, setBookingId] = useState('')
@@ -243,6 +251,12 @@ export function PostUploadForm({ role }: { role: Role }) {
       setErrorMessage('Please choose a video file.')
       return
     }
+    if (file.size > MAX_VIDEO_BYTES) {
+      setVideoSizeError(`This video is too large (${formatMb(file.size)}mb). Please choose a clip under 200MB.`)
+      setVideoFile(file)
+      return
+    }
+    setVideoSizeError('')
     setErrorMessage('')
     setVideoFile(file)
   }
@@ -327,6 +341,9 @@ export function PostUploadForm({ role }: { role: Role }) {
     setTimeout(() => router.push(redirectPath), 900)
   }
 
+  const isOversized = !!videoSizeError
+  const submitDisabled = status === 'uploading' || isOversized
+
   return (
     <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '672px', margin: '0 auto' }}>
       <div>
@@ -365,12 +382,18 @@ export function PostUploadForm({ role }: { role: Role }) {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setVideoFile(null)}
+                  onClick={() => { setVideoFile(null); setVideoSizeError('') }}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', padding: 0 }}
                 >
                   <XIcon size={16} />
                 </button>
               </div>
+              {videoSizeError && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', padding: '10px 12px' }}>
+                  <AlertCircle size={16} color="#EF4444" style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: '13px', color: '#DC2626', fontFamily: hanken }}>{videoSizeError}</span>
+                </div>
+              )}
             </div>
           ) : (
             <button
@@ -457,13 +480,13 @@ export function PostUploadForm({ role }: { role: Role }) {
           <button
             type="button"
             onClick={() => handleSubmit(true)}
-            disabled={status === 'uploading'}
+            disabled={submitDisabled}
             style={{
               height: '48px', padding: '0 28px', borderRadius: '999px', border: 'none',
               background: T.cyan, color: '#FFFFFF', fontSize: '15px', fontWeight: 600, fontFamily: hanken,
-              cursor: status === 'uploading' ? 'default' : 'pointer',
+              cursor: submitDisabled ? 'default' : 'pointer',
               boxShadow: '0 8px 24px rgba(0,0,0,0.16)', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', gap: '8px', opacity: status === 'uploading' ? 0.85 : 1,
+              justifyContent: 'center', gap: '8px', opacity: submitDisabled ? 0.85 : 1,
             }}
           >
             {status === 'uploading' && submitAction === 'publish' && (
@@ -477,13 +500,13 @@ export function PostUploadForm({ role }: { role: Role }) {
           <button
             type="button"
             onClick={() => handleSubmit(false)}
-            disabled={status === 'uploading'}
+            disabled={submitDisabled}
             style={{
               height: '48px', padding: '0 28px', borderRadius: '999px', border: `1px solid ${T.line}`,
               background: 'transparent', color: T.ink2, fontSize: '15px', fontWeight: 600, fontFamily: hanken,
-              cursor: status === 'uploading' ? 'default' : 'pointer',
+              cursor: submitDisabled ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              opacity: status === 'uploading' ? 0.85 : 1,
+              opacity: submitDisabled ? 0.85 : 1,
             }}
           >
             {status === 'uploading' && submitAction === 'draft' && (
