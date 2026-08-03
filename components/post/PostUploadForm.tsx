@@ -156,6 +156,7 @@ export function PostUploadForm({ role }: { role: Role }) {
   const [loadError, setLoadError] = useState('')
 
   const [videoFile, setVideoFile] = useState<File | null>(null)
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null)
   const [caption, setCaption] = useState('')
   const [sport, setSport] = useState('')
   const [bookingId, setBookingId] = useState('')
@@ -222,6 +223,17 @@ export function PostUploadForm({ role }: { role: Role }) {
     }
     load()
   }, [role])
+
+  // Object-URL preview of the selected file, independent of thumbnail generation.
+  useEffect(() => {
+    if (!videoFile) {
+      setVideoPreviewUrl(null)
+      return
+    }
+    const url = URL.createObjectURL(videoFile)
+    setVideoPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [videoFile])
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -337,18 +349,28 @@ export function PostUploadForm({ role }: { role: Role }) {
             style={{ display: 'none' }}
           />
           {videoFile ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: '8px' }}>
-              <Film size={18} color={T.cyan} style={{ flexShrink: 0 }} />
-              <span style={{ flex: 1, fontFamily: hanken, fontSize: '14px', color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {videoFile.name}
-              </span>
-              <button
-                type="button"
-                onClick={() => setVideoFile(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', padding: 0 }}
-              >
-                <XIcon size={16} />
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {videoPreviewUrl && (
+                <video
+                  src={videoPreviewUrl}
+                  controls
+                  playsInline
+                  style={{ width: '100%', maxHeight: '320px', borderRadius: '8px', background: '#000000', display: 'block' }}
+                />
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: '8px' }}>
+                <Film size={18} color={T.cyan} style={{ flexShrink: 0 }} />
+                <span style={{ flex: 1, fontFamily: hanken, fontSize: '14px', color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {videoFile.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setVideoFile(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', padding: 0 }}
+                >
+                  <XIcon size={16} />
+                </button>
+              </div>
             </div>
           ) : (
             <button

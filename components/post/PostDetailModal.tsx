@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { X, Heart } from 'lucide-react'
 import { Post, PostCardBody } from './PostCard'
+
+const HEART_BURST_MS = 600
 
 // Instagram-style overlay for a single post's full detail. Composes the
 // already-built like/bookmark/follow/comments/report logic in PostCardBody
@@ -34,6 +36,45 @@ export function PostDetailModal({
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [onClose])
+
+  const [burstKey, setBurstKey] = useState(0)
+  const [showBurst, setShowBurst] = useState(false)
+  const burstTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => {
+    if (burstTimeoutRef.current) clearTimeout(burstTimeoutRef.current)
+  }, [])
+
+  function triggerHeartBurst() {
+    setBurstKey((k) => k + 1)
+    setShowBurst(true)
+    if (burstTimeoutRef.current) clearTimeout(burstTimeoutRef.current)
+    burstTimeoutRef.current = setTimeout(() => setShowBurst(false), HEART_BURST_MS)
+  }
+
+  // Heart-icon button: preserves the original like/unlike toggle, only bursts
+  // when the action results in a fresh like (never on unlike).
+  function handleHeartButtonToggle() {
+    if (!liked) triggerHeartBurst()
+    onToggleLike()
+  }
+
+  // Double-tap: standard convention is like-only, never unlike — a double-tap
+  // on an already-liked post is a no-op. preventDefault + the exitFullscreen
+  // fallback stop Chrome's native double-click-to-fullscreen gesture on
+  // <video controls> from hijacking the tap (it would hide the burst overlay,
+  // which lives outside the fullscreened element).
+  function handleVideoDoubleClick(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
+    setTimeout(() => {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
+    }, 50)
+    if (liked) return
+    triggerHeartBurst()
+    onToggleLike()
+  }
 
   return createPortal(
     <div
@@ -67,16 +108,39 @@ export function PostDetailModal({
           <X size={18} color="#FFFFFF" />
         </button>
 
-        <div style={{ width: '100%', background: '#000000', flexShrink: 0 }}>
+        <div
+          style={{ position: 'relative', width: '100%', background: '#000000', flexShrink: 0 }}
+        >
           <video
             key={post.id}
             src={post.videoUrl}
             controls
             autoPlay
             playsInline
+            onDoubleClick={handleVideoDoubleClick}
             style={{ width: '100%', maxHeight: '60vh', display: 'block', objectFit: 'contain' }}
           />
+          {showBurst && (
+            <div
+              key={burstKey}
+              style={{
+                position: 'absolute', inset: 0, display: 'flex', alignItems: 'center',
+                justifyContent: 'center', pointerEvents: 'none',
+                animation: `postDetailHeartBurst ${HEART_BURST_MS}ms ease-out forwards`,
+              }}
+            >
+              <Heart size={96} color="#FFFFFF" fill="#FFFFFF" style={{ filter: 'drop-shadow(0 2px 14px rgba(0,0,0,0.5))' }} />
+            </div>
+          )}
         </div>
+
+        <style>{`
+          @keyframes postDetailHeartBurst {
+            0% { opacity: 0; transform: scale(0.5); }
+            30% { opacity: 1; transform: scale(1.15); }
+            100% { opacity: 0; transform: scale(1.4); }
+          }
+        `}</style>
 
         <div style={{ overflowY: 'auto' }}>
           <PostCardBody
@@ -87,7 +151,7 @@ export function PostDetailModal({
             bookmarked={bookmarked}
             isFollowing={isFollowing}
             viewCount={viewCount}
-            onToggleLike={onToggleLike}
+            onToggleLike={handleHeartButtonToggle}
             onToggleFollow={onToggleFollow}
             onToggleBookmark={onToggleBookmark}
             onGiveFeedback={onGiveFeedback}
