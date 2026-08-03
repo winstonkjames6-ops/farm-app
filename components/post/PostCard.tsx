@@ -47,18 +47,16 @@ function FollowButton({ following, onClick }: { following: boolean; onClick: (e:
   )
 }
 
-// ── Post card ───────────────────────────────────────────────────────────────
+// ── Post card body (shared by the feed card and the detail modal) ───────────
+// Holds all the author/follow/report/like/bookmark/comments/give-feedback
+// logic so it can be composed around different media presentations without
+// being duplicated.
 
-export function PostCard({
-  post, index, isPlaying, onPlay, onClose,
-  currentUserId, liked, likeCount, bookmarked, isFollowing, viewCount,
+export function PostCardBody({
+  post, currentUserId, liked, likeCount, bookmarked, isFollowing, viewCount,
   onToggleLike, onToggleFollow, onToggleBookmark, onGiveFeedback, onDelete, onPublish,
 }: {
   post: Post
-  index: number
-  isPlaying: boolean
-  onPlay: () => void
-  onClose: () => void
   currentUserId: string | null
   liked: boolean
   likeCount: number
@@ -99,11 +97,277 @@ export function PostCard({
   }
 
   return (
+    <div style={{ padding: '16px' }} onClick={() => { if (menuOpen) setMenuOpen(false) }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+          {post.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={post.avatarUrl} alt="" style={{ width: '36px', height: '36px', borderRadius: '999px', objectFit: 'cover', flexShrink: 0 }} />
+          ) : (
+            <div style={{
+              width: '36px', height: '36px', borderRadius: '999px', flexShrink: 0,
+              background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: barlow, fontWeight: 700, fontSize: '13px', color: '#FFFFFF',
+            }}>
+              {post.authorName.slice(0, 1).toUpperCase()}
+            </div>
+          )}
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: hanken, fontWeight: 600, fontSize: '14px', color: T.ink, lineHeight: 1.3 }}>{post.authorName}</div>
+            <div style={{ fontFamily: hanken, fontSize: '12px', color: T.ink3 }}>{post.authorType === 'trainer' ? 'Trainer' : 'Athlete'}</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          {!isOwnPost && currentUserId && (
+            <FollowButton
+              following={isFollowing}
+              onClick={(e) => { e.stopPropagation(); onToggleFollow() }}
+            />
+          )}
+          {isOwnPost && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onDelete() }}
+              aria-label="Delete post"
+              style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', padding: 0 }}
+            >
+              <Trash2 size={18} />
+            </button>
+          )}
+
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o) }}
+              aria-label="More options"
+              style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', padding: 0 }}
+            >
+              <MoreVertical size={18} />
+            </button>
+            {menuOpen && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  position: 'absolute', top: '100%', right: 0, marginTop: '6px', zIndex: 5,
+                  minWidth: '120px', background: '#FFFFFF', border: `1px solid ${T.line}`,
+                  borderRadius: '10px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => { setMenuOpen(false); setReportOpen(true); setReportStatus('idle'); setReportReason('') }}
+                  style={{
+                    width: '100%', textAlign: 'left', padding: '10px 14px',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontFamily: hanken, fontSize: '13px', color: T.ink,
+                  }}
+                >
+                  Report
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {post.caption && (
+        <p style={{ fontFamily: hanken, fontSize: '14px', color: '#374151', margin: '0 0 12px', lineHeight: 1.5 }}>
+          {post.caption}
+        </p>
+      )}
+
+      {post.sport && (
+        <span style={{
+          display: 'inline-flex', alignItems: 'center',
+          fontFamily: barlow, fontSize: '11px', fontWeight: 700,
+          letterSpacing: '.08em', textTransform: 'uppercase',
+          background: 'rgba(0,188,200,0.10)', color: T.cyan,
+          border: `1px solid ${T.cyanBorder}`, padding: '3px 10px', borderRadius: '999px',
+          marginBottom: '4px',
+        }}>
+          {post.sport}
+        </span>
+      )}
+
+      {/* Actions: like / views / bookmark */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '16px',
+        marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${T.line}`,
+      }}>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onToggleLike() }}
+          disabled={!currentUserId}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            background: 'none', border: 'none', padding: 0,
+            cursor: currentUserId ? 'pointer' : 'default',
+            color: liked ? '#EF4444' : T.ink3,
+          }}
+        >
+          <Heart size={18} fill={liked ? '#EF4444' : 'none'} />
+          <span style={{ fontFamily: hanken, fontSize: '13px', fontWeight: 600 }}>{likeCount}</span>
+        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: T.ink3 }}>
+          <Eye size={18} />
+          <span style={{ fontFamily: hanken, fontSize: '13px', fontWeight: 600 }}>{viewCount}</span>
+        </div>
+
+        {post.commentsEnabled && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setCommentsOpen((o) => !o) }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: 'none', border: 'none', padding: 0,
+              cursor: 'pointer', color: commentsOpen ? T.cyan : T.ink3,
+            }}
+          >
+            <MessageCircle size={18} />
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onToggleBookmark() }}
+          disabled={!currentUserId}
+          style={{
+            display: 'flex', alignItems: 'center',
+            background: 'none', border: 'none', padding: 0, marginLeft: 'auto',
+            cursor: currentUserId ? 'pointer' : 'default',
+            color: bookmarked ? T.cyan : T.ink3,
+          }}
+        >
+          <Bookmark size={18} fill={bookmarked ? T.cyan : 'none'} />
+        </button>
+      </div>
+
+      {post.commentsEnabled && commentsOpen && (
+        <PostComments postId={post.id} currentUserId={currentUserId} />
+      )}
+
+      {onPublish && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onPublish() }}
+          style={{
+            marginTop: '12px', width: '100%', height: '38px', borderRadius: '10px',
+            border: 'none', background: T.cyan, color: '#FFFFFF',
+            fontFamily: hanken, fontWeight: 600, fontSize: '13px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+          }}
+        >
+          Publish
+        </button>
+      )}
+
+      {reportOpen && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${T.line}` }}
+        >
+          {reportStatus === 'submitted' ? (
+            <p style={{ fontFamily: hanken, fontSize: '13px', color: T.ink2, margin: 0 }}>Report submitted</p>
+          ) : (
+            <>
+              <textarea
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Why are you reporting this post?"
+                required
+                style={{
+                  width: '100%', minHeight: '72px', borderRadius: '8px', border: '1px solid #E5E7EB',
+                  padding: '10px 12px', fontSize: '13px', fontFamily: hanken, resize: 'vertical',
+                  outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF',
+                }}
+              />
+              {reportStatus === 'error' && (
+                <p style={{ fontFamily: hanken, fontSize: '12px', color: '#EF4444', margin: '6px 0 0' }}>
+                  Something went wrong. Try again.
+                </p>
+              )}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <button
+                  type="button"
+                  onClick={submitReport}
+                  disabled={!currentUserId || !reportReason.trim() || reportStatus === 'submitting'}
+                  style={{
+                    height: '34px', padding: '0 16px', borderRadius: '999px', border: 'none',
+                    background: T.cyan, color: '#FFFFFF', fontFamily: hanken, fontWeight: 600,
+                    fontSize: '12px', cursor: 'pointer',
+                    opacity: !currentUserId || !reportReason.trim() || reportStatus === 'submitting' ? 0.6 : 1,
+                  }}
+                >
+                  {reportStatus === 'submitting' ? 'Submitting…' : 'Submit report'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setReportOpen(false); setReportReason(''); setReportStatus('idle') }}
+                  style={{
+                    height: '34px', padding: '0 16px', borderRadius: '999px',
+                    border: `1px solid ${T.line}`, background: 'transparent', color: T.ink2,
+                    fontFamily: hanken, fontWeight: 600, fontSize: '12px', cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {post.feedbackRequested && !isOwnPost && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onGiveFeedback() }}
+          style={{
+            marginTop: '12px', width: '100%', height: '38px', borderRadius: '10px',
+            border: 'none', background: T.cyan, color: '#FFFFFF',
+            fontFamily: hanken, fontWeight: 600, fontSize: '13px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+          }}
+        >
+          Give feedback
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── Post card ───────────────────────────────────────────────────────────────
+
+export function PostCard({
+  post, index, isPlaying, onPlay, onClose,
+  currentUserId, liked, likeCount, bookmarked, isFollowing, viewCount,
+  onToggleLike, onToggleFollow, onToggleBookmark, onGiveFeedback, onDelete, onPublish,
+}: {
+  post: Post
+  index: number
+  isPlaying: boolean
+  onPlay: () => void
+  onClose: () => void
+  currentUserId: string | null
+  liked: boolean
+  likeCount: number
+  bookmarked: boolean
+  isFollowing: boolean
+  viewCount: number
+  onToggleLike: () => void
+  onToggleFollow: () => void
+  onToggleBookmark: () => void
+  onGiveFeedback: () => void
+  onDelete: () => void
+  onPublish?: () => void
+}) {
+  return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1], delay: index * 0.05 }}
-      onClick={() => { setMenuOpen(false); onPlay() }}
+      onClick={() => onPlay()}
       style={{
         background: '#FFFFFF',
         border: post.feedbackRequested ? `1.5px dashed ${T.cyanBorder}` : '1px solid rgba(0,0,0,0.08)',
@@ -167,244 +431,21 @@ export function PostCard({
         )}
       </div>
 
-      {/* Body */}
-      <div style={{ padding: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-            {post.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={post.avatarUrl} alt="" style={{ width: '36px', height: '36px', borderRadius: '999px', objectFit: 'cover', flexShrink: 0 }} />
-            ) : (
-              <div style={{
-                width: '36px', height: '36px', borderRadius: '999px', flexShrink: 0,
-                background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: barlow, fontWeight: 700, fontSize: '13px', color: '#FFFFFF',
-              }}>
-                {post.authorName.slice(0, 1).toUpperCase()}
-              </div>
-            )}
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontFamily: hanken, fontWeight: 600, fontSize: '14px', color: T.ink, lineHeight: 1.3 }}>{post.authorName}</div>
-              <div style={{ fontFamily: hanken, fontSize: '12px', color: T.ink3 }}>{post.authorType === 'trainer' ? 'Trainer' : 'Athlete'}</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            {!isOwnPost && currentUserId && (
-              <FollowButton
-                following={isFollowing}
-                onClick={(e) => { e.stopPropagation(); onToggleFollow() }}
-              />
-            )}
-            {isOwnPost && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onDelete() }}
-                aria-label="Delete post"
-                style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', padding: 0 }}
-              >
-                <Trash2 size={18} />
-              </button>
-            )}
-
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o) }}
-                aria-label="More options"
-                style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', padding: 0 }}
-              >
-                <MoreVertical size={18} />
-              </button>
-              {menuOpen && (
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  style={{
-                    position: 'absolute', top: '100%', right: 0, marginTop: '6px', zIndex: 5,
-                    minWidth: '120px', background: '#FFFFFF', border: `1px solid ${T.line}`,
-                    borderRadius: '10px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden',
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => { setMenuOpen(false); setReportOpen(true); setReportStatus('idle'); setReportReason('') }}
-                    style={{
-                      width: '100%', textAlign: 'left', padding: '10px 14px',
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontFamily: hanken, fontSize: '13px', color: T.ink,
-                    }}
-                  >
-                    Report
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {post.caption && (
-          <p style={{ fontFamily: hanken, fontSize: '14px', color: '#374151', margin: '0 0 12px', lineHeight: 1.5 }}>
-            {post.caption}
-          </p>
-        )}
-
-        {post.sport && (
-          <span style={{
-            display: 'inline-flex', alignItems: 'center',
-            fontFamily: barlow, fontSize: '11px', fontWeight: 700,
-            letterSpacing: '.08em', textTransform: 'uppercase',
-            background: 'rgba(0,188,200,0.10)', color: T.cyan,
-            border: `1px solid ${T.cyanBorder}`, padding: '3px 10px', borderRadius: '999px',
-            marginBottom: '4px',
-          }}>
-            {post.sport}
-          </span>
-        )}
-
-        {/* Actions: like / views / bookmark */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '16px',
-          marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${T.line}`,
-        }}>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onToggleLike() }}
-            disabled={!currentUserId}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              background: 'none', border: 'none', padding: 0,
-              cursor: currentUserId ? 'pointer' : 'default',
-              color: liked ? '#EF4444' : T.ink3,
-            }}
-          >
-            <Heart size={18} fill={liked ? '#EF4444' : 'none'} />
-            <span style={{ fontFamily: hanken, fontSize: '13px', fontWeight: 600 }}>{likeCount}</span>
-          </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: T.ink3 }}>
-            <Eye size={18} />
-            <span style={{ fontFamily: hanken, fontSize: '13px', fontWeight: 600 }}>{viewCount}</span>
-          </div>
-
-          {post.commentsEnabled && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setCommentsOpen((o) => !o) }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                background: 'none', border: 'none', padding: 0,
-                cursor: 'pointer', color: commentsOpen ? T.cyan : T.ink3,
-              }}
-            >
-              <MessageCircle size={18} />
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onToggleBookmark() }}
-            disabled={!currentUserId}
-            style={{
-              display: 'flex', alignItems: 'center',
-              background: 'none', border: 'none', padding: 0, marginLeft: 'auto',
-              cursor: currentUserId ? 'pointer' : 'default',
-              color: bookmarked ? T.cyan : T.ink3,
-            }}
-          >
-            <Bookmark size={18} fill={bookmarked ? T.cyan : 'none'} />
-          </button>
-        </div>
-
-        {post.commentsEnabled && commentsOpen && (
-          <PostComments postId={post.id} currentUserId={currentUserId} />
-        )}
-
-        {onPublish && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onPublish() }}
-            style={{
-              marginTop: '12px', width: '100%', height: '38px', borderRadius: '10px',
-              border: 'none', background: T.cyan, color: '#FFFFFF',
-              fontFamily: hanken, fontWeight: 600, fontSize: '13px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-            }}
-          >
-            Publish
-          </button>
-        )}
-
-        {reportOpen && (
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${T.line}` }}
-          >
-            {reportStatus === 'submitted' ? (
-              <p style={{ fontFamily: hanken, fontSize: '13px', color: T.ink2, margin: 0 }}>Report submitted</p>
-            ) : (
-              <>
-                <textarea
-                  value={reportReason}
-                  onChange={(e) => setReportReason(e.target.value)}
-                  placeholder="Why are you reporting this post?"
-                  required
-                  style={{
-                    width: '100%', minHeight: '72px', borderRadius: '8px', border: '1px solid #E5E7EB',
-                    padding: '10px 12px', fontSize: '13px', fontFamily: hanken, resize: 'vertical',
-                    outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF',
-                  }}
-                />
-                {reportStatus === 'error' && (
-                  <p style={{ fontFamily: hanken, fontSize: '12px', color: '#EF4444', margin: '6px 0 0' }}>
-                    Something went wrong. Try again.
-                  </p>
-                )}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={submitReport}
-                    disabled={!currentUserId || !reportReason.trim() || reportStatus === 'submitting'}
-                    style={{
-                      height: '34px', padding: '0 16px', borderRadius: '999px', border: 'none',
-                      background: T.cyan, color: '#FFFFFF', fontFamily: hanken, fontWeight: 600,
-                      fontSize: '12px', cursor: 'pointer',
-                      opacity: !currentUserId || !reportReason.trim() || reportStatus === 'submitting' ? 0.6 : 1,
-                    }}
-                  >
-                    {reportStatus === 'submitting' ? 'Submitting…' : 'Submit report'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setReportOpen(false); setReportReason(''); setReportStatus('idle') }}
-                    style={{
-                      height: '34px', padding: '0 16px', borderRadius: '999px',
-                      border: `1px solid ${T.line}`, background: 'transparent', color: T.ink2,
-                      fontFamily: hanken, fontWeight: 600, fontSize: '12px', cursor: 'pointer',
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {post.feedbackRequested && !isOwnPost && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onGiveFeedback() }}
-            style={{
-              marginTop: '12px', width: '100%', height: '38px', borderRadius: '10px',
-              border: 'none', background: T.cyan, color: '#FFFFFF',
-              fontFamily: hanken, fontWeight: 600, fontSize: '13px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-            }}
-          >
-            Give feedback
-          </button>
-        )}
-      </div>
+      <PostCardBody
+        post={post}
+        currentUserId={currentUserId}
+        liked={liked}
+        likeCount={likeCount}
+        bookmarked={bookmarked}
+        isFollowing={isFollowing}
+        viewCount={viewCount}
+        onToggleLike={onToggleLike}
+        onToggleFollow={onToggleFollow}
+        onToggleBookmark={onToggleBookmark}
+        onGiveFeedback={onGiveFeedback}
+        onDelete={onDelete}
+        onPublish={onPublish}
+      />
     </motion.div>
   )
 }
