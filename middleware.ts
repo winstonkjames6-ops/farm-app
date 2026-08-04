@@ -30,7 +30,16 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  if (pathname.startsWith('/dashboard') && !user) {
+  const gatedPrefixes = [
+    '/dashboard',
+    '/onboarding-athlete-preview-tmp',
+    '/onboarding-parent-preview-tmp',
+    '/onboarding-preview-tmp',
+    '/pc-preview-tmp',
+    '/settings-preview-tmp',
+  ]
+
+  if (gatedPrefixes.some((prefix) => pathname.startsWith(prefix)) && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
