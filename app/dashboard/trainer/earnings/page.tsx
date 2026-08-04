@@ -323,7 +323,7 @@ export default function TrainerEarningsPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '32px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: '#9CA3AF' }}>
+      <div style={{ padding: '32px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3, background: T.card, borderRadius: '14px', border: `1px solid ${T.border}` }}>
         Loading earnings...
       </div>
     )
