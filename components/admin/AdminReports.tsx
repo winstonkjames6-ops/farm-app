@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 
@@ -129,12 +130,24 @@ export default function AdminReports() {
   return (
     <div style={{ minHeight: '100vh', background: T.bg, fontFamily: hanken, WebkitFontSmoothing: 'antialiased' }}>
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '40px 24px 80px' }}>
-        <h1 style={{
-          fontFamily: barlow, fontWeight: 900, fontSize: 'clamp(32px, 5vw, 44px)',
-          letterSpacing: '0em', textTransform: 'uppercase', margin: '0 0 20px', color: T.ink, lineHeight: 0.98,
-        }}>
-          Reports
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
+          <h1 style={{
+            fontFamily: barlow, fontWeight: 900, fontSize: 'clamp(32px, 5vw, 44px)',
+            letterSpacing: '0em', textTransform: 'uppercase', margin: 0, color: T.ink, lineHeight: 0.98,
+          }}>
+            Reports
+          </h1>
+          <Link
+            href="/dashboard/admin/certifications"
+            style={{
+              flexShrink: 0,
+              fontFamily: hanken, fontWeight: 600, fontSize: '13px', color: T.ink2, textDecoration: 'none',
+              border: `1px solid ${T.line}`, borderRadius: '999px', padding: '8px 16px',
+            }}
+          >
+            Certifications →
+          </Link>
+        </div>
 
         <h2 style={{
           fontFamily: barlow, fontWeight: 700, fontSize: '20px',
