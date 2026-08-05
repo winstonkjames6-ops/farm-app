@@ -356,67 +356,13 @@ function ConfirmScreen({ trainer, format, setFormat, sessionDate, sessionTime, a
   )
 }
 
-// ── Input field component ────────────────────────────────────────────────────
+// ── Screen 2: Request booking ────────────────────────────────────────────────
 
-function CardInput({ label, placeholder, value, onChange, maxLength }) {
-  const [focused, setFocused] = useState(false)
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-      <label style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: T.ink3 }}>
-        {label}
-      </label>
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        maxLength={maxLength}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={{
-          padding: '12px 14px', borderRadius: '10px',
-          border: `1.5px solid ${focused ? T.ink : T.line}`,
-          background: T.surface, color: T.ink, outline: 'none',
-          fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '16px',
-          transition: 'border-color .15s ease',
-          boxShadow: focused ? `0 0 0 3px rgba(0,0,0,0.06)` : 'none',
-        }}
-      />
-    </div>
-  )
-}
-
-// ── Screen 2: Payment ────────────────────────────────────────────────────────
-
-function PaymentScreen({ trainer, format, sessionDate, sessionTime, onPay, onNext, onBack }) {
-  const [cardNum, setCardNum] = useState('')
-  const [expiry, setExpiry] = useState('')
-  const [cvc, setCvc] = useState('')
-  const [cardName, setCardName] = useState('')
+function RequestBookingScreen({ trainer, format, sessionDate, sessionTime, onPay, onNext, onBack }) {
   const [submitting, setSubmitting] = useState(false)
   const [payError, setPayError] = useState(null)
-  const [showCardError, setShowCardError] = useState(false)
-
-  const cardValid =
-    cardNum.replace(/\D/g, '').length >= 12 &&
-    /^\d{2} \/ \d{2}$/.test(expiry) &&
-    /^\d{3,4}$/.test(cvc)
-
-  const formatCardNum = (v) => {
-    const digits = v.replace(/\D/g, '').slice(0, 16)
-    return digits.replace(/(.{4})/g, '$1 ').trim()
-  }
-  const formatExpiry = (v) => {
-    const digits = v.replace(/\D/g, '').slice(0, 4)
-    return digits.length > 2 ? digits.slice(0, 2) + ' / ' + digits.slice(2) : digits
-  }
 
   async function handleSubmit() {
-    if (!cardValid) {
-      setShowCardError(true)
-      return
-    }
-    setShowCardError(false)
     setSubmitting(true)
     setPayError(null)
     try {
@@ -444,56 +390,17 @@ function PaymentScreen({ trainer, format, sessionDate, sessionTime, onPay, onNex
         Back
       </button>
 
-      <h2 style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '24px', letterSpacing: '-.02em', color: T.ink, margin: '0 0 24px' }}>
-        Payment details
+      <h2 style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 800, fontSize: '24px', letterSpacing: '-.02em', color: T.ink, margin: '0 0 12px' }}>
+        Confirm your request
       </h2>
+      <p style={{ fontSize: '14px', color: T.ink2, margin: '0 0 24px', lineHeight: 1.5 }}>
+        Your trainer will confirm this session. Payment collection isn&apos;t live yet — you won&apos;t be charged.
+      </p>
 
       <div className="booking-payment-grid">
         {/* Form */}
         <div>
           <TrainerSummary trainer={trainer} />
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
-            <CardInput
-              label="Card number"
-              placeholder="1234 5678 9012 3456"
-              value={cardNum}
-              onChange={(e) => setCardNum(formatCardNum(e.target.value))}
-              maxLength={19}
-            />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <CardInput
-                label="Expiry"
-                placeholder="MM / YY"
-                value={expiry}
-                onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                maxLength={7}
-              />
-              <CardInput
-                label="CVC"
-                placeholder="123"
-                value={cvc}
-                onChange={(e) => setCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                maxLength={4}
-              />
-            </div>
-            <CardInput
-              label="Name on card"
-              placeholder="Jane Smith"
-              value={cardName}
-              onChange={(e) => setCardName(e.target.value)}
-            />
-          </div>
-
-          {showCardError && !payError && (
-            <div style={{
-              background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)',
-              borderRadius: '10px', padding: '12px 16px', marginBottom: '16px',
-              fontSize: '14px', color: '#DC2626', fontWeight: 500,
-            }}>
-              Please fill in your card details to continue.
-            </div>
-          )}
 
           {payError && (
             <div style={{
@@ -510,29 +417,19 @@ function PaymentScreen({ trainer, format, sessionDate, sessionTime, onPay, onNex
             disabled={submitting}
             style={{
               display: 'block', width: '100%', padding: '17px', borderRadius: '12px', minHeight: '44px',
-              background: submitting || !cardValid ? T.surface2 : '#00BCC8',
-              color: submitting || !cardValid ? T.ink3 : '#FFFFFF',
+              background: submitting ? T.surface2 : '#00BCC8',
+              color: submitting ? T.ink3 : '#FFFFFF',
               border: 'none',
               fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '16.5px',
               cursor: submitting ? 'not-allowed' : 'pointer',
               transition: 'filter .15s ease',
               marginBottom: '12px',
             }}
-            onMouseEnter={(e) => { if (!submitting && cardValid) e.currentTarget.style.filter = 'brightness(1.06)' }}
+            onMouseEnter={(e) => { if (!submitting) e.currentTarget.style.filter = 'brightness(1.06)' }}
             onMouseLeave={(e) => { e.currentTarget.style.filter = 'none' }}
           >
-            {submitting ? 'Booking…' : `Pay $${trainer.rate}`}
+            {submitting ? 'Requesting…' : 'Request booking'}
           </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', color: T.ink3, fontSize: '13px' }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            Secured by Stripe
-          </div>
-          <p style={{ textAlign: 'center', fontSize: '12px', color: T.ink3, marginTop: '8px' }}>
-            Demo mode — no real payment processed
-          </p>
         </div>
 
         {/* Order summary */}
@@ -933,7 +830,7 @@ function BookingPageInner() {
                 />
               )}
               {step === 2 && (
-                <PaymentScreen
+                <RequestBookingScreen
                   trainer={trainer}
                   format={format}
                   sessionDate={dateParam}
