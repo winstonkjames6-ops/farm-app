@@ -7,6 +7,7 @@ import { createClient } from '@/utils/supabase/client'
 import { ProfileCard } from '@/components/profile/ProfileCard'
 import type { ContactRow, StatItem } from '@/components/profile/types'
 import { T } from '@/lib/theme'
+import { CURRENT_TERMS_VERSION } from '@/lib/terms'
 
 type Tag = { id: string; name: string }
 
@@ -230,6 +231,7 @@ export default function TrainerSetupPage() {
       avatar_url: avatarPublicUrl,
       referral_source: referralSource,
       terms_accepted_at: new Date().toISOString(),
+      terms_version: CURRENT_TERMS_VERSION,
       notif_session_reminders: notifSessionReminders,
       notif_messages: notifMessages,
       notif_booking_requests: notifBookingRequests,

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
+import { CURRENT_TERMS_VERSION } from '@/lib/terms'
 import { PasswordStrengthMeter, computePasswordStrength } from '@/components/auth/PasswordStrengthMeter'
 
 // Handles both the 18+ self-service flow (full control, no parent-account
@@ -613,7 +614,7 @@ export default function AthleteOnboardingPage() {
       return
     }
 
-    await supabase.from('profiles').update({ terms_accepted_at: new Date().toISOString() }).eq('id', data.user.id)
+    await supabase.from('profiles').update({ terms_accepted_at: new Date().toISOString(), terms_version: CURRENT_TERMS_VERSION }).eq('id', data.user.id)
 
     setSubmitting(false)
     setStep(2)

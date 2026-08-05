@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
+import { CURRENT_TERMS_VERSION } from '@/lib/terms'
 
 // Child accounts created here are left unclaimed (profile_id = null) with a
 // server-generated invite_code the parent relays to the child. The child
@@ -920,6 +921,7 @@ export default function ParentOnboardingPage() {
           notif_messages: notifState.notif_messages,
           notif_promo_updates: notifState.notif_promo_updates,
           terms_accepted_at: now,
+          terms_version: CURRENT_TERMS_VERSION,
         })
         .eq('id', userId)
       if (profileErr) throw new Error(profileErr.message)
@@ -935,6 +937,7 @@ export default function ParentOnboardingPage() {
             dob: child.dob,
             sport: child.sport,
             terms_accepted_at: now,
+            terms_version: CURRENT_TERMS_VERSION,
           })
           .select('id, name')
           .single()
