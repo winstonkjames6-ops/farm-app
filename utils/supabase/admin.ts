@@ -1,5 +1,6 @@
 // WARNING: Never import this file into any client component.
 // The service role key bypasses all RLS — server-only use only.
+import '@/lib/env'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export function createAdminClient() {

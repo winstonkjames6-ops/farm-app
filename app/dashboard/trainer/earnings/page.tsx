@@ -174,7 +174,7 @@ function EarningsView({
         <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
           <SectionLabel>Athlete rate overrides</SectionLabel>
           <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, marginBottom: '16px' }}>
-            Set a custom rate for an athlete you've worked with before — it replaces your standard rate for their future bookings.
+            Set a custom rate for an athlete you&apos;ve worked with before — it replaces your standard rate for their future bookings.
           </div>
           {pastAthletes.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '20px 0', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink3 }}>

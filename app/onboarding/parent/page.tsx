@@ -550,7 +550,7 @@ function LastThingsStep({
           )}
         </span>
         <span style={{ fontSize: '14px', lineHeight: 1.5, color: T.ink, fontWeight: 500 }}>
-          I agree to FARM's Terms of Service and confirm I am the parent or legal guardian of the athletes on this account
+          I agree to FARM&apos;s Terms of Service and confirm I am the parent or legal guardian of the athletes on this account
         </span>
       </button>
 
@@ -667,9 +667,9 @@ function SuccessScreen({ claimed, onDone }: { claimed: ClaimedChild[]; onDone: (
       <div style={{ maxWidth: '520px', margin: '0 auto', padding: '40px 20px 100px' }}>
         <div style={{
           fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '28px', color: T.ink, marginBottom: '4px',
-        }}>You're all set</div>
+        }}>You&apos;re all set</div>
         <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink2, marginBottom: '28px', lineHeight: 1.5 }}>
-          Share each code below with your athlete — they'll enter it when they set up their own FARM account.
+          Share each code below with your athlete — they&apos;ll enter it when they set up their own FARM account.
         </div>
 
         {claimed.map((child) => (

@@ -334,7 +334,7 @@ function ReviewPageInner() {
                   lineHeight: 1.55,
                 }}
               >
-                You've already submitted a review for this session.
+                You&apos;ve already submitted a review for this session.
               </div>
             </div>
             <Link

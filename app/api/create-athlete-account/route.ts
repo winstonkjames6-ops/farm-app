@@ -5,14 +5,41 @@ import { createAdminClient } from '@/utils/supabase/admin'
 const USERNAME_RE = /^[a-z0-9]+$/
 const PIN_RE = /^\d{4,6}$/
 
-export async function POST(request: NextRequest) {
-  console.log('SERVICE_ROLE_KEY present:', !!process.env.SUPABASE_SERVICE_ROLE_KEY, 'length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length ?? 0)
+// Stopgap rate limit against a compromised/spammy parent account, not anonymous abuse
+// (this route already requires an authenticated session). In-memory, so it resets on
+// cold start and doesn't share state across multiple serverless instances — that's an
+// intentional scope decision, not an oversight; a durable store would be needed for that.
+const RATE_LIMIT_MAX = 5
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000
+const creationTimestamps = new Map<string, number[]>()
 
+function isRateLimited(userId: string): boolean {
+  const now = Date.now()
+  const timestamps = (creationTimestamps.get(userId) ?? []).filter(
+    (t) => now - t < RATE_LIMIT_WINDOW_MS,
+  )
+  if (timestamps.length >= RATE_LIMIT_MAX) {
+    creationTimestamps.set(userId, timestamps)
+    return true
+  }
+  timestamps.push(now)
+  creationTimestamps.set(userId, timestamps)
+  return false
+}
+
+export async function POST(request: NextRequest) {
   // Step 1: verify the session belongs to an authenticated parent
   const supabase = await createClient()
   const { data: { user: parentUser } } = await supabase.auth.getUser()
   if (!parentUser) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  if (isRateLimited(parentUser.id)) {
+    return NextResponse.json(
+      { error: 'Too many athlete accounts created recently. Please try again later.' },
+      { status: 429 },
+    )
   }
 
   try {

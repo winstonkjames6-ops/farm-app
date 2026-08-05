@@ -660,7 +660,7 @@ function WeeklyHoursPanel({
           )}
         </div>
         <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12.5px', color: T.ink2, marginBottom: '14px' }}>
-          This is what's bookable on your public page. Edit the days and hours below, then save.
+          This is what&apos;s bookable on your public page. Edit the days and hours below, then save.
         </div>
 
         <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '11px', color: T.ink2, fontWeight: 600, marginBottom: '6px' }}>Days</div>

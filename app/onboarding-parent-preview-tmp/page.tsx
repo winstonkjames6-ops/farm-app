@@ -133,14 +133,14 @@ function ChildCard({ child, onChange, onRemove, canRemove }: { child: ChildDraft
   )
 }
 
-function AthletesStep({ children, onChangeChild, onAddChild, onRemoveChild }: {
-  children: ChildDraft[]; onChangeChild: (localId: string, patch: Partial<ChildDraft>) => void; onAddChild: () => void; onRemoveChild: (localId: string) => void
+function AthletesStep({ kids, onChangeChild, onAddChild, onRemoveChild }: {
+  kids: ChildDraft[]; onChangeChild: (localId: string, patch: Partial<ChildDraft>) => void; onAddChild: () => void; onRemoveChild: (localId: string) => void
 }) {
   return (
     <div>
-      <div style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '16px' }}>Add each athlete you'll be booking sessions for.</div>
-      {children.map((child) => (
-        <ChildCard key={child.localId} child={child} onChange={(patch) => onChangeChild(child.localId, patch)} onRemove={() => onRemoveChild(child.localId)} canRemove={children.length > 1} />
+      <div style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '16px' }}>Add each athlete you&apos;ll be booking sessions for.</div>
+      {kids.map((child) => (
+        <ChildCard key={child.localId} child={child} onChange={(patch) => onChangeChild(child.localId, patch)} onRemove={() => onRemoveChild(child.localId)} canRemove={kids.length > 1} />
       ))}
       <button onClick={onAddChild} style={{
         width: '100%', height: '48px', borderRadius: '10px', border: '1px dashed #E5E7EB',
@@ -160,14 +160,14 @@ function computeAge(dob: string): number | null {
   return age >= 0 ? age : null
 }
 
-function ConsentStep({ children, agreed, setAgreed, error }: { children: ChildDraft[]; agreed: boolean; setAgreed: (v: boolean) => void; error: string | null }) {
+function ConsentStep({ kids, agreed, setAgreed, error }: { kids: ChildDraft[]; agreed: boolean; setAgreed: (v: boolean) => void; error: string | null }) {
   return (
     <div>
       <div style={{ background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '14px', padding: '18px', marginBottom: '20px' }}>
-        {children.map((child, i) => {
+        {kids.map((child, i) => {
           const age = computeAge(child.dob)
           return (
-            <div key={child.localId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < children.length - 1 ? `1px solid ${T.line}` : 'none' }}>
+            <div key={child.localId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < kids.length - 1 ? `1px solid ${T.line}` : 'none' }}>
               <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: T.ink }}>{child.firstName} {child.lastName}</div>
               <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink3 }}>{age != null ? `${age} yrs · ` : ''}{child.sport}</div>
             </div>
@@ -177,7 +177,7 @@ function ConsentStep({ children, agreed, setAgreed, error }: { children: ChildDr
       <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
         <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: T.cyan, flexShrink: 0 }} />
         <span style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", lineHeight: 1.5 }}>
-          I confirm I am the parent or legal guardian of the athlete(s) listed above and I agree to FARM's Terms of Service and Privacy Policy on their behalf.
+          I confirm I am the parent or legal guardian of the athlete(s) listed above and I agree to FARM&apos;s Terms of Service and Privacy Policy on their behalf.
         </span>
       </label>
       {error && <div style={{ fontSize: '13px', color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '16px' }}>{error}</div>}
@@ -196,9 +196,9 @@ function SuccessScreen({ claimed, onDone }: { claimed: ClaimedChild[]; onDone: (
   return (
     <div style={{ background: T.bg, minHeight: '100vh' }}>
       <div style={{ maxWidth: '480px', margin: '0 auto', padding: '40px 20px 100px' }}>
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '26px', color: T.ink, marginBottom: '4px' }}>You're all set</div>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '26px', color: T.ink, marginBottom: '4px' }}>You&apos;re all set</div>
         <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3, marginBottom: '28px' }}>
-          Share each code below with your athlete — they'll enter it when they set up their own FARM account.
+          Share each code below with your athlete — they&apos;ll enter it when they set up their own FARM account.
         </div>
         {claimed.map((child) => (
           <div key={child.id} style={{ background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '14px', padding: '18px', marginBottom: '16px' }}>
@@ -273,12 +273,12 @@ export default function ParentOnboardingPreview() {
       )}
       {step === 1 && (
         <WizardShell step={1} title="Add your athletes" subtitle="Who are you booking sessions for?" onBack={null} onContinue={handleContinue} canContinue={athletesValid} submitting={false} isLastStep={false}>
-          <AthletesStep children={children} onChangeChild={updateChild} onAddChild={addChild} onRemoveChild={removeChild} />
+          <AthletesStep kids={children} onChangeChild={updateChild} onAddChild={addChild} onRemoveChild={removeChild} />
         </WizardShell>
       )}
       {step === 2 && (
         <WizardShell step={2} title="Consent & review" subtitle="One last thing before you're done." onBack={() => setStep(1)} onContinue={handleContinue} canContinue={agreed} submitting={submitting} isLastStep>
-          <ConsentStep children={children} agreed={agreed} setAgreed={setAgreed} error={null} />
+          <ConsentStep kids={children} agreed={agreed} setAgreed={setAgreed} error={null} />
         </WizardShell>
       )}
     </>

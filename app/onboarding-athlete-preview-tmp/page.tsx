@@ -192,7 +192,7 @@ function ConfirmInfoStep({
   return (
     <div>
       <div style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '16px' }}>
-        Your parent entered this when they set up your invite — make sure it's right, and fix anything that isn't.
+        Your parent entered this when they set up your invite — make sure it&apos;s right, and fix anything that isn&apos;t.
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
         <div><FieldLabel>First name</FieldLabel><input style={inputStyle} value={firstName} onChange={(e) => setFirstName(e.target.value)} /></div>
@@ -245,7 +245,7 @@ function LoginStep({
         <FieldLabel>Confirm password</FieldLabel>
         <input style={inputStyle} type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
         {mismatch && (
-          <div style={{ fontSize: '12px', color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '6px' }}>Passwords don't match.</div>
+          <div style={{ fontSize: '12px', color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '6px' }}>Passwords don&apos;t match.</div>
         )}
       </div>
 
@@ -255,7 +255,7 @@ function LoginStep({
           style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: T.cyan, flexShrink: 0 }}
         />
         <span style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", lineHeight: 1.5 }}>
-          I agree to FARM's Terms of Service and Privacy Policy.
+          I agree to FARM&apos;s Terms of Service and Privacy Policy.
         </span>
       </label>
 
@@ -342,10 +342,10 @@ function ConfirmationScreen({ onDone }: { onDone: () => void }) {
           </svg>
         </div>
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '26px', color: T.ink, marginBottom: '8px' }}>
-          You're all set
+          You&apos;re all set
         </div>
         <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3, marginBottom: '28px' }}>
-          Your account is ready. You're in full control of it from here — no parent sign-in needed.
+          Your account is ready. You&apos;re in full control of it from here — no parent sign-in needed.
         </div>
         <button
           onClick={onDone}
