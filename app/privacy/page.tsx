@@ -25,7 +25,7 @@ We may use aggregated, anonymised data to improve our recommendation algorithms,
     title: 'Data Sharing',
     body: `When you book a session, we share limited information with the trainer: your name, your child's first name, the session type and sport, and any notes you include at booking. Trainers do not receive your payment details.
 
-We use Stripe to process payments; your card details are transmitted directly to Stripe and are never stored on FARM's servers. We may share data with service providers (cloud hosting, analytics, email delivery) who process it strictly on our behalf under confidentiality agreements. We may disclose personal data if required by law, court order, or to protect the safety of our users or the public.`,
+Payment processing is not yet live on FARM. Once that feature ships, we will use Stripe to process payments; your card details will be transmitted directly to Stripe and will never be stored on FARM's servers. We may share data with service providers (cloud hosting, analytics, email delivery) who process it strictly on our behalf under confidentiality agreements. We may disclose personal data if required by law, court order, or to protect the safety of our users or the public.`,
   },
   {
     id: 'cookies',

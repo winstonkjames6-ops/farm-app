@@ -695,7 +695,7 @@ function RateSection({
             <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '20px', color: T.ink3 }}>$</span>
             <input type="number" value={hourlyRate} onChange={(e) => onHourlyRateChange(e.target.value)} style={{ width: '160px', border: 'none', borderBottom: '2px solid #E5E7EB', fontSize: '32px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: T.ink, outline: 'none', background: 'transparent', padding: '0 4px' }} />
           </div>
-          <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '6px' }}>You keep 85% — FARM takes 15%</div>
+          <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '6px' }}>Planned split: trainers keep the majority of each session fee (final terms coming soon)</div>
         </div>
       </div>
     </SectionCard>

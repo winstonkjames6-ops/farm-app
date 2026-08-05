@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'FARM | On-Demand Youth Sports Training',
-  description: 'Book curated 1-on-1 trainers in your sport. 85% goes straight to your coach.',
+  description: 'Book curated 1-on-1 trainers in your sport. Trainers keep the majority of every session fee.',
   keywords: 'sports training, youth coaching, soccer, volleyball, tennis, lacrosse',
   openGraph: {
     title: 'FARM | On-Demand Youth Sports Training',

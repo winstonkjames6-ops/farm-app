@@ -23,7 +23,7 @@ You agree not to use FARM to engage in any unlawful activity, misrepresent your 
   {
     id: 'payments',
     title: 'Payments and Refunds',
-    body: `Session fees are charged at the time of booking via Stripe, our payment processor. Trainers set their own hourly rates. FARM retains 15% of each session fee to cover platform operations; trainers receive the remaining 85%.
+    body: `Payment processing is not yet live on FARM. Once payments launch, session fees will be charged at the time of booking via Stripe, our payment processor. Trainers will set their own hourly rates, and FARM's platform fee and the resulting trainer/FARM split will be confirmed and published here before payments go live.
 
 Cancellations made more than 24 hours before a scheduled session are eligible for a full refund to the original payment method within 5–10 business days. Cancellations made within 24 hours of a session are non-refundable, unless the cancellation is initiated by the trainer — in which case a full refund is automatically issued. FARM does not facilitate cash payments or off-platform financial arrangements.`,
   },

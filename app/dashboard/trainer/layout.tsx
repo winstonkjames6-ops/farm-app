@@ -382,7 +382,7 @@ const PAGE_HELP: Record<string, { title: string; body: string }> = {
   },
   '/dashboard/trainer/earnings': {
     title: 'Earnings',
-    body: 'Track your session revenue, pending payouts, and Stripe payment history. You keep 85% of every session rate you set.',
+    body: 'Track your session revenue. Payout tracking and Stripe payment history are coming soon.',
   },
   '/dashboard/trainer/messages': {
     title: 'Messages',

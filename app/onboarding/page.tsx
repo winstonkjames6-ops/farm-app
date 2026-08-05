@@ -25,7 +25,7 @@ const PARENT_SLIDES = [
   {
     icon: 'calendar',
     headline: 'Book in under 2 minutes',
-    body: 'Pick a date, choose in-person or remote, and pay securely through Stripe. Your trainer gets notified instantly.',
+    body: 'Pick a date, choose in-person or remote, and confirm your booking. Secure payment through Stripe is coming soon. Your trainer gets notified instantly.',
     cta: 'Next',
   },
   {
@@ -52,7 +52,7 @@ const TRAINER_SLIDES = [
   {
     icon: 'money',
     headline: 'Get paid every week',
-    body: 'You keep 85% of every session. Stripe deposits hit your bank account weekly, automatically.',
+    body: "Payouts are coming soon — you'll keep the majority of every session once Stripe is connected.",
     cta: 'Set up my schedule →',
   },
 ]

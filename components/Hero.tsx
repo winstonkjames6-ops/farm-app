@@ -28,7 +28,7 @@ export default function Hero() {
             </h1>
 
             <p className="text-xl text-text-secondary mb-8 leading-relaxed">
-              Book curated trainers in your sport. 85% of every session goes straight to your coach.
+              Book curated trainers in your sport. Trainers keep the majority of every session fee.
               No subscriptions. No long-term contracts.
             </p>
 

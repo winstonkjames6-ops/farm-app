@@ -28,7 +28,7 @@ export default function FAQ() {
     },
     {
       q: 'How do trainers get paid?',
-      a: 'Trainers receive 85% of each session price via Stripe. Payouts happen every week.',
+      a: "Payments aren't live yet. Once they launch via Stripe, trainers will keep the majority of every session fee, paid out weekly.",
     },
   ]
 

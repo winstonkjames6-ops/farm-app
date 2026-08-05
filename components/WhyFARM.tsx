@@ -5,8 +5,8 @@ export default function WhyFARM() {
       description: 'Pay only for sessions you book. Cancel anytime.',
     },
     {
-      title: '85% to coaches',
-      description: 'Trainers keep 85% of every session. Better than other platforms.',
+      title: 'Coach-first split',
+      description: 'Trainers will keep the majority of every session fee once payments launch.',
     },
     {
       title: 'Verified coaches',

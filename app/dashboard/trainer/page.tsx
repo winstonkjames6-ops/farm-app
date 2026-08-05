@@ -318,7 +318,7 @@ function EarningsCard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${T.border}`, paddingTop: '14px' }}>
         <div>
           <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, marginBottom: '2px' }}>Pending payout</div>
-          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>Stripe payout Friday</div>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>Payouts coming soon</div>
         </div>
         <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '22px', color: T.ink }}>${pending}</span>
       </div>
