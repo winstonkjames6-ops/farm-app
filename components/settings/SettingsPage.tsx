@@ -496,6 +496,34 @@ function DeleteAccountModal({
     if (!canDelete) return
     setDeleting(true)
     setError(null)
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData?.user) {
+      setError(userError?.message ?? 'Could not verify your account.')
+      setDeleting(false)
+      return
+    }
+    const userId = userData.user.id
+
+    const buckets = ['avatars', 'post-videos', 'post-thumbnails', 'verification-docs']
+    for (const bucket of buckets) {
+      const { data: files, error: listError } = await supabase.storage.from(bucket).list(userId)
+      if (listError) {
+        setError(`Failed to check ${bucket} for cleanup: ${listError.message}`)
+        setDeleting(false)
+        return
+      }
+      if (!files || files.length === 0) continue
+
+      const paths = files.map((file) => `${userId}/${file.name}`)
+      const { error: removeError } = await supabase.storage.from(bucket).remove(paths)
+      if (removeError) {
+        setError(`Failed to delete files from ${bucket}: ${removeError.message}`)
+        setDeleting(false)
+        return
+      }
+    }
+
     const { error } = await supabase.rpc('delete_own_account')
     if (error) {
       setError(error.message)
