@@ -1,6 +1,6 @@
-# FARM Landing Page
+# FARM
 
-On-demand youth sports training marketplace landing page.
+FARM is a marketplace connecting parents/athletes with independent youth sports trainers. This repo is the full Next.js application — marketing site, auth, onboarding, dashboards, and admin tooling — backed by Supabase.
 
 ## Quick Start
 
@@ -9,114 +9,57 @@ On-demand youth sports training marketplace landing page.
 npm install
 ```
 
-### 2. Run locally
+### 2. Configure environment
+
+Create `.env.local` with your Supabase project credentials:
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
+```
+
+### 3. Run locally
 ```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 3. Add hero image (optional)
+> Payment processing (Stripe) is not yet live — see the "Not yet implemented" section below.
 
-Replace the emoji placeholder in `components/Hero.tsx`:
-- Go to Unsplash and search "youth sports training"
-- Download an image
-- Save as `public/hero.jpg`
-- In Hero.tsx, replace the emoji div with:
-```tsx
-<img 
-  src="/hero.jpg" 
-  alt="Coach training youth athlete" 
-  className="w-full h-full object-cover"
-/>
-```
+## What's here
 
-## Project Structure
+- **Marketing site** — the public landing page (`app/page.tsx`, `components/landing/*`), plus static `/terms`, `/privacy`, and `/how-it-works` pages.
+- **Auth** — email/password signup and login (`app/auth`, `app/login`, `app/signup`), password reset flow, and email verification.
+- **Role-based onboarding** — separate guided flows for parents, trainers, and athletes (`app/onboarding/parent`, `app/onboarding/trainer`, `app/onboarding/athlete`, `app/onboarding/setup`). Parents can create child/athlete accounts via invite code (`app/child`) without the athlete needing their own login up front.
+- **Trainer discovery** — a filterable trainer directory (`components/search/TrainerDirectory.tsx`) with sport, specialty, and rate filters, and individual trainer profile pages (`app/trainer/[slug]`).
+- **Booking & scheduling** — session booking (`app/booking`), trainer availability presets, and a shared slot-generation module (`lib/scheduling.ts`) used by both the public booking page and the trainer's own schedule dashboard.
+- **Dashboards** — role-specific dashboards under `app/dashboard`:
+  - `dashboard/trainer` — schedule, earnings, profile, messages
+  - `dashboard/athlete` — sessions, profile, messages
+  - `dashboard/admin` — admin tooling and reports (gated by an `admin_roles` table check)
+- **Discover feed** — a social feed of trainer/session posts (`components/DiscoverFeed.tsx`), with post upload, drafts, and saved posts.
+- **Messaging & notifications** — in-app messaging (`app/messages`) and a notifications dropdown/page.
+- **Reviews** — post-session rating and review flow (`app/review`).
 
-```
-farm-landing-page/
-├── app/
-│   ├── layout.tsx        (Root layout)
-│   ├── page.tsx          (Landing page)
-│   └── globals.css       (Global styles)
-├── components/
-│   ├── Navbar.tsx        (Navigation)
-│   ├── Hero.tsx          (Hero section)
-│   ├── HowItWorks.tsx    (4-step process)
-│   ├── WhyFARM.tsx       (6 benefits)
-│   ├── FAQ.tsx           (Collapsible FAQs)
-│   └── CTA.tsx           (Call-to-action footer)
-├── tailwind.config.ts    (Color palette)
-├── package.json
-└── tsconfig.json
-```
+## Backend
 
-## Colors
+Supabase (Postgres + Auth) is the backend. Schema and RLS policy changes live as SQL migrations in `supabase/migrations/`. Key tables include `profiles`, `athletes`, `trainers`, `bookings`, `reviews`, `trainer_tags`, `posts`, and `admin_roles`.
 
-- **Primary Orange**: `#ff8c42`
-- **Dark Background**: `#1a1a1a`
-- **Secondary Gray**: `#2a2a2a`
+Run migrations against your Supabase project with the Supabase CLI, or apply them via the Supabase dashboard/MCP tooling. There is no local Supabase stack checked into this repo — schema changes should be written as new timestamped migration files, not applied ad hoc.
 
-All configured in `tailwind.config.ts`.
+## Not yet implemented
 
-## Deploy to Vercel
+- **Payments** — Stripe is not integrated. No dependency exists in `package.json` and no payment code runs today; booking/payout copy throughout the app is written in future tense until this ships.
+- Trainer payout scheduling and revenue split terms will be finalized alongside the Stripe integration.
 
-```bash
-# Install Vercel CLI
-npm install -g vercel
+## Tech stack
 
-# Deploy
-vercel
+- Next.js 14 (App Router), React 18, TypeScript (strict mode)
+- Supabase (`@supabase/ssr`, `@supabase/supabase-js`)
+- Tailwind CSS + inline styles (mixed, depending on the component's age)
+- Framer Motion / GSAP for animation
+- lucide-react for icons
 
-# Set custom domain
-# → Vercel dashboard → Settings → Domains
-# → Add farm.coach
-```
+## QA scripts
 
-## Key Components
-
-### Hero
-- Headline + subheadline
-- Two CTAs (parent / trainer signup)
-- Background gradient overlay
-- Social proof placeholders
-
-### How It Works
-- 4-step grid (browse, pick time, pay, rate)
-- Interactive hover effects
-- Emoji icons
-
-### Why FARM
-- 6 key benefits with expand animation
-- 3-column responsive grid
-
-### FAQ
-- 6 collapsible accordion items
-- Click to expand/collapse
-- Email fallback
-
-### CTA
-- Final signup CTAs
-- Footer with links
-- Divider separator
-
-## Styling
-
-All components use:
-- Tailwind CSS utilities
-- Custom CSS variables (colors)
-- Responsive design (mobile-first)
-- Dark theme with orange accent
-
-## Next Steps
-
-Once deployed:
-1. Door-knock Week 1 with farm.coach link
-2. Post in Facebook groups
-3. Share with coaches at Week 1–3
-4. Track signup conversion rate
-5. Build signup forms (Week 3)
-
----
-
-Built for FARM validation phase (8 weeks).
+Ad hoc QA/screenshot scripts used during manual testing live in `/qa`, out of the way of the app source.

@@ -7,6 +7,25 @@ import { Star, Volleyball } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type Trainer = {
+  id: string
+  name: string
+  sport: string
+  specialty: string
+  location: string
+  rate: number
+  bio: string | null
+  isCertified: boolean
+  hasActivePreset: boolean
+  avatarUrl: string | null
+  initials: string
+  avgRating: number | null
+  reviewCount: number
+  tags: string[]
+}
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 export const SPORTS = ['Soccer', 'Basketball', 'Tennis', 'Volleyball', 'Lacrosse', 'Baseball']
@@ -25,7 +44,7 @@ const SORT_OPTIONS = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function getInitials(name) {
+function getInitials(name: string): string {
   const words = (name || '').trim().split(/\s+/).filter(Boolean)
   if (words.length === 0) return '?'
   if (words.length === 1) return words[0][0].toUpperCase()
@@ -39,7 +58,7 @@ const hanken = "'Hanken Grotesk', sans-serif"
 
 const ARROW = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='rgba(0,0,0,0.40)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`
 
-const selectStyle = {
+const selectStyle: React.CSSProperties = {
   width: '100%', padding: '9px 32px 9px 12px',
   border: '1px solid rgba(0,0,0,0.08)', background: '#FFFFFF',
   fontFamily: hanken, fontSize: '13.5px', color: '#1A1A1A',
@@ -48,18 +67,18 @@ const selectStyle = {
   colorScheme: 'light',
 }
 
-const labelStyle = {
+const labelStyle: React.CSSProperties = {
   display: 'block', fontFamily: barlow, fontWeight: 800,
   fontSize: '11.5px', letterSpacing: '.16em', textTransform: 'uppercase',
   color: '#6B6B6B', marginBottom: '8px',
 }
 
-const divider = { height: '1px', background: 'rgba(0,0,0,0.08)' }
+const divider: React.CSSProperties = { height: '1px', background: 'rgba(0,0,0,0.08)' }
 
 // ── Sport icons ───────────────────────────────────────────────────────────────
 
-function SportIcon({ sport, size = 12, color = 'currentColor' }) {
-  const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
+function SportIcon({ sport, size = 12, color = 'currentColor' }: { sport: string; size?: number; color?: string }) {
+  const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (sport) {
     case 'Soccer':
       return (
@@ -106,7 +125,7 @@ function SportIcon({ sport, size = 12, color = 'currentColor' }) {
 
 // ── TrainerCard ───────────────────────────────────────────────────────────────
 
-function TrainerCard({ trainer, index }) {
+function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 28 }}
@@ -174,18 +193,18 @@ function TrainerCard({ trainer, index }) {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.40)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
                 </svg>
-                <span style={{ fontFamily: hanken, fontSize: '13px', color: '#9A9A9A' }}>{trainer.location}</span>
+                <span style={{ fontFamily: hanken, fontSize: '13px', color: T.ink3 }}>{trainer.location}</span>
               </div>
             </div>
 
             <div style={{ flexShrink: 0, textAlign: 'right' }}>
               <div style={{ fontFamily: barlow, fontWeight: 800, fontSize: '22px', color: '#00BCC8' }}>${trainer.rate}</div>
-              <div style={{ fontFamily: hanken, fontSize: '12px', color: '#9A9A9A' }}>/hr</div>
+              <div style={{ fontFamily: hanken, fontSize: '12px', color: T.ink3 }}>/hr</div>
               {trainer.reviewCount > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px', marginTop: '4px' }}>
                   <Star size={11} fill="#F59E0B" color="#F59E0B" />
-                  <span style={{ fontFamily: hanken, fontSize: '12px', fontWeight: 600, color: '#1A1A1A' }}>{trainer.avgRating.toFixed(1)}</span>
-                  <span style={{ fontFamily: hanken, fontSize: '11px', color: '#9A9A9A' }}>({trainer.reviewCount})</span>
+                  <span style={{ fontFamily: hanken, fontSize: '12px', fontWeight: 600, color: '#1A1A1A' }}>{trainer.avgRating?.toFixed(1)}</span>
+                  <span style={{ fontFamily: hanken, fontSize: '11px', color: T.ink3 }}>({trainer.reviewCount})</span>
                 </div>
               )}
             </div>
@@ -220,7 +239,7 @@ function TrainerCard({ trainer, index }) {
             ) : (
               <span style={{
                 fontFamily: hanken, fontSize: '12px', fontWeight: 600, padding: '4px 10px',
-                border: '1px solid rgba(0,0,0,0.10)', color: '#9A9A9A',
+                border: '1px solid rgba(0,0,0,0.10)', color: T.ink3,
               }}>Availability not set</span>
             )}
           </div>
@@ -228,7 +247,7 @@ function TrainerCard({ trainer, index }) {
           {/* Bio */}
           {trainer.bio && (
             <p style={{
-              fontFamily: hanken, fontSize: '13px', color: '#9A9A9A',
+              fontFamily: hanken, fontSize: '13px', color: T.ink3,
               margin: 0, lineHeight: 1.45,
               paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.08)',
             }}>
@@ -258,11 +277,11 @@ function TrainerCard({ trainer, index }) {
 // ── TrainerDirectory ──────────────────────────────────────────────────────────
 
 export default function TrainerDirectory() {
-  const [trainers, setTrainers] = useState([])
+  const [trainers, setTrainers] = useState<Trainer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedSports, setSelectedSports] = useState([])
-  const [selectedTags, setSelectedTags] = useState([])
+  const [selectedSports, setSelectedSports] = useState<string[]>([])
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [maxRateIdx, setMaxRateIdx] = useState(0)
   const [sort, setSort] = useState('price_asc')
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
@@ -277,20 +296,21 @@ export default function TrainerDirectory() {
       supabase.from('trainer_tags').select('trainer_id, tags(name)'),
     ]).then(([{ data }, { data: reviewData }, { data: tagData }]) => {
       if (data) {
-        const ratingsByTrainer = {}
+        const rows = data as any[]
+        const ratingsByTrainer: Record<string, { sum: number; count: number }> = {}
         for (const r of reviewData ?? []) {
           const bucket = ratingsByTrainer[r.trainer_id] ?? (ratingsByTrainer[r.trainer_id] = { sum: 0, count: 0 })
           bucket.sum += r.rating
           bucket.count += 1
         }
 
-        const tagsByTrainer = {}
-        for (const t of tagData ?? []) {
+        const tagsByTrainer: Record<string, string[]> = {}
+        for (const t of (tagData ?? []) as any[]) {
           const bucket = tagsByTrainer[t.trainer_id] ?? (tagsByTrainer[t.trainer_id] = [])
           if (t.tags?.name) bucket.push(t.tags.name)
         }
 
-        setTrainers(data.map((row) => {
+        setTrainers(rows.map((row): Trainer => {
           const ratings = ratingsByTrainer[row.id]
           return {
             id: row.profile_id,
@@ -314,11 +334,11 @@ export default function TrainerDirectory() {
     })
   }, [])
 
-  const toggleSport = (s) => {
+  const toggleSport = (s: string) => {
     setSelectedSports((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s])
   }
 
-  const toggleTag = (tag) => {
+  const toggleTag = (tag: string) => {
     setSelectedTags((prev) => prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag])
   }
 
@@ -461,7 +481,7 @@ export default function TrainerDirectory() {
         }}>
           Find a trainer
         </h1>
-        <p style={{ fontFamily: hanken, fontSize: '15px', color: '#9A9A9A', margin: '0 0 20px' }}>
+        <p style={{ fontFamily: hanken, fontSize: '15px', color: T.ink3, margin: '0 0 20px' }}>
           {distinctLocationCount > 0
             ? `${distinctLocationCount} location${distinctLocationCount === 1 ? '' : 's'} · All sports`
             : 'Trainers near you'}
