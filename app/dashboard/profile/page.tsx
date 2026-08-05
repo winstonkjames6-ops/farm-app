@@ -1460,6 +1460,7 @@ function NotificationsSection() {
 // ── Section: Danger Zone ───────────────────────────────────────────────────────
 
 function DangerZoneSection({ onLogOut }: { onLogOut: () => void }) {
+  const router = useRouter()
   return (
     <SectionCard dangerBorder>
       <CardLabel danger>Danger Zone</CardLabel>
@@ -1506,14 +1507,17 @@ function DangerZoneSection({ onLogOut }: { onLogOut: () => void }) {
               fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px',
             }}>Permanently delete your account and all data</div>
           </div>
-          <button style={{
-            padding: '8px 16px',
-            border: '1px solid rgba(239,68,68,0.4)',
-            color: T.danger, background: 'transparent',
-            borderRadius: '8px', fontSize: '14px',
-            fontFamily: "'Hanken Grotesk', sans-serif",
-            cursor: 'pointer', minHeight: '44px', flexShrink: 0,
-          }}>Request deletion</button>
+          <button
+            onClick={() => router.push('/dashboard/settings')}
+            style={{
+              padding: '8px 16px',
+              border: '1px solid rgba(239,68,68,0.4)',
+              color: T.danger, background: 'transparent',
+              borderRadius: '8px', fontSize: '14px',
+              fontFamily: "'Hanken Grotesk', sans-serif",
+              cursor: 'pointer', minHeight: '44px', flexShrink: 0,
+            }}
+          >Request deletion</button>
         </div>
       </div>
     </SectionCard>

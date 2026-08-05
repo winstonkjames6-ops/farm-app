@@ -1050,9 +1050,12 @@ function DangerZoneSection({ paused, setPaused }: { paused: boolean; setPaused: 
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '16px 0' }}>
           <div style={{ fontSize: '14px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>Delete account</div>
-          <button style={{ padding: '8px 16px', border: '1px solid #EF4444', color: '#EF4444', background: 'transparent', borderRadius: '8px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px' }}>
+          <Link
+            href="/dashboard/trainer/settings"
+            style={{ padding: '8px 16px', border: '1px solid #EF4444', color: '#EF4444', background: 'transparent', borderRadius: '8px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px', display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
+          >
             Request deletion
-          </button>
+          </Link>
         </div>
       </div>
     </SectionCard>
