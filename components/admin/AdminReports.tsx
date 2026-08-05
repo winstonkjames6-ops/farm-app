@@ -7,11 +7,10 @@ import { T } from '@/lib/theme'
 const barlow = "'Barlow Condensed', sans-serif"
 const hanken = "'Hanken Grotesk', sans-serif"
 
-// TEMPORARY GATE — NOT A REAL PERMISSIONS SYSTEM.
-// There is no admin role in this app yet. Access here is limited to a single
-// hardcoded profile id (in addition to requiring role = 'trainer') as a stand-in
-// until proper role-based admin access control exists.
-const ADMIN_ALLOWLIST = ['d2930a19-3e35-475f-99b8-32950f4a209c']
+// Superseded by the admin_roles table check in app/dashboard/admin/reports/page.tsx
+// (the Server Component that renders this). Left unused rather than deleted —
+// remove once the new check has been confirmed working.
+// const ADMIN_ALLOWLIST = ['d2930a19-3e35-475f-99b8-32950f4a209c']
 
 type Report = {
   id: string
@@ -36,8 +35,6 @@ type CommentReport = {
 }
 
 export default function AdminReports() {
-  const [checking, setChecking] = useState(true)
-  const [authorized, setAuthorized] = useState(false)
   const [loading, setLoading] = useState(true)
   const [reports, setReports] = useState<Report[]>([])
   const [commentReports, setCommentReports] = useState<CommentReport[]>([])
@@ -46,28 +43,6 @@ export default function AdminReports() {
     const supabase = createClient()
 
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        setChecking(false)
-        setLoading(false)
-        return
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      const isAllowed = profile?.role === 'trainer' && ADMIN_ALLOWLIST.includes(user.id)
-      setAuthorized(isAllowed)
-      setChecking(false)
-
-      if (!isAllowed) {
-        setLoading(false)
-        return
-      }
-
       const { data, error } = await supabase
         .from('post_reports')
         .select(`
@@ -149,16 +124,6 @@ export default function AdminReports() {
       return
     }
     setCommentReports((prev) => prev.filter((r) => r.id !== reportId))
-  }
-
-  if (checking) return null
-
-  if (!authorized) {
-    return (
-      <div style={{ minHeight: '100vh', background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3 }}>Not authorized.</p>
-      </div>
-    )
   }
 
   return (
