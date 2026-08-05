@@ -172,7 +172,7 @@ export default function TrainerSetupPage() {
     setAvatarUploading(true)
     setError(null)
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-    const filename = `${userId}-${Date.now()}.${ext}`
+    const filename = `${userId}/${Date.now()}.${ext}`
     const { error: uploadError } = await supabase.storage
       .from('avatars').upload(filename, file, { upsert: true, contentType: file.type })
     if (uploadError) {
