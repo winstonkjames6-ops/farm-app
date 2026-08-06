@@ -50,7 +50,33 @@ export async function POST(request: NextRequest) {
       position, goals, sessionFormat, username, pin,
     } = body
 
-    // Step 3: validate username and pin
+    // Step 3: validate dob — server-side minimum age floor (13), UTC-based to
+    // mirror compute_athlete_is_minor's `dob > (current_date - interval 'N years')`
+    // comparison. This route is the only account-creation path with no equivalent
+    // server-side check; app/signup/page.tsx's under-13 gate is client-side only.
+    if (typeof dob !== 'string' || dob.trim() === '') {
+      return NextResponse.json(
+        { error: 'Date of birth is required.' },
+        { status: 400 },
+      )
+    }
+    const birthDate = new Date(dob)
+    if (Number.isNaN(birthDate.getTime())) {
+      return NextResponse.json(
+        { error: 'Date of birth is not a valid date.' },
+        { status: 400 },
+      )
+    }
+    const now = new Date()
+    const thirteenYearsAgoUTC = new Date(Date.UTC(now.getUTCFullYear() - 13, now.getUTCMonth(), now.getUTCDate()))
+    if (birthDate.getTime() > thirteenYearsAgoUTC.getTime()) {
+      return NextResponse.json(
+        { error: 'FARM requires athletes to be at least 13 years old.' },
+        { status: 400 },
+      )
+    }
+
+    // Step 4: validate username and pin
     const cleanUsername = (username ?? '').trim().toLowerCase()
     if (!cleanUsername || !USERNAME_RE.test(cleanUsername)) {
       return NextResponse.json(
@@ -67,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     const admin = createAdminClient()
 
-    // Step 4: check username uniqueness
+    // Step 5: check username uniqueness
     const { data: existingProfile } = await admin
       .from('profiles')
       .select('id')
@@ -78,10 +104,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'That username is taken.' }, { status: 400 })
     }
 
-    // Step 5: build synthetic email
+    // Step 6: build synthetic email
     const syntheticEmail = `${cleanUsername}@athlete.farmapp.internal`
 
-    // Step 6: create auth user
+    // Step 7: create auth user
     const { data: authData, error: authError } = await admin.auth.admin.createUser({
       email: syntheticEmail,
       password: String(pin),
@@ -95,7 +121,7 @@ export async function POST(request: NextRequest) {
     }
     const newUserId = authData.user.id
 
-    // Step 7: insert into profiles
+    // Step 8: insert into profiles
     const { error: profileError } = await admin.from('profiles').insert({
       id: newUserId,
       role: 'athlete',
@@ -107,7 +133,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: profileError.message }, { status: 400 })
     }
 
-    // Step 8: insert into athletes
+    // Step 9: insert into athletes
     const { error: athleteError } = await admin.from('athletes').insert({
       parent_id: parentUser.id,
       profile_id: newUserId,
