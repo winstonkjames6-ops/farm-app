@@ -176,7 +176,8 @@ export default function TrainerSetupPage() {
     const { error: uploadError } = await supabase.storage
       .from('avatars').upload(filename, file, { upsert: true, contentType: file.type })
     if (uploadError) {
-      setError('Could not upload that photo.')
+      console.error('Avatar upload failed:', uploadError)
+      setError(`Could not upload that photo: ${uploadError.message}`)
       setAvatarUploading(false)
       return
     }
@@ -194,7 +195,8 @@ export default function TrainerSetupPage() {
     const { error: uploadError } = await supabase.storage
       .from('verification-docs').upload(path, file, { upsert: false, contentType: file.type })
     if (uploadError) {
-      setError('Could not upload that document.')
+      console.error('Document upload failed:', uploadError)
+      setError(`Could not upload that document: ${uploadError.message}`)
       setDocUploading(false)
       return
     }
