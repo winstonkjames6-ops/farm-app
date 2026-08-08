@@ -23,6 +23,8 @@ import {
   Star,
   Music,
   PlayCircle,
+  FileText,
+  Upload,
 } from 'lucide-react'
 import { T } from '@/lib/theme'
 import { AvatarCropModal } from '@/components/profile/AvatarCropModal'
@@ -119,6 +121,20 @@ const TRAVEL_OPTIONS = ['No travel', 'Up to 5 miles', 'Up to 10 miles', 'Up to 2
 
 const AVATAR_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024 // matches the avatars bucket's own file_size_limit
+
+const VERIFICATION_DOC_ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
+
+// verification-docs paths are `${userId}/${epochMs}-${originalFilename}` (see
+// uploadVerificationDoc) — parsed back out here to show filename/upload date
+// without a dedicated timestamp column on trainers.
+function parseVerificationDocPath(path: string): { filename: string; uploadedAt: Date } | null {
+  const basename = path.split('/').pop() ?? ''
+  const dashIndex = basename.indexOf('-')
+  if (dashIndex === -1) return null
+  const ts = Number(basename.slice(0, dashIndex))
+  if (!Number.isFinite(ts)) return null
+  return { filename: basename.slice(dashIndex + 1), uploadedAt: new Date(ts) }
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -708,10 +724,14 @@ function CredentialsSection({
   certificationStatus,
   certificationNotes,
   onRequestVerification,
+  idVerificationUrl,
+  onUploadVerificationDoc,
 }: {
   certificationStatus?: 'none' | 'pending' | 'approved' | 'rejected'
   certificationNotes?: string
   onRequestVerification?: (notes: string) => Promise<void>
+  idVerificationUrl?: string | null
+  onUploadVerificationDoc?: (file: File) => Promise<void>
 }) {
   const [certs, setCerts] = useState<Certification[]>(INITIAL_CERTS)
   const [affs, setAffs] = useState<Affiliation[]>(INITIAL_AFFS)
@@ -723,6 +743,12 @@ function CredentialsSection({
   const [notesDraft, setNotesDraft] = useState(certificationNotes ?? '')
   const [verificationSaveStatus, setVerificationSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [verificationSaveError, setVerificationSaveError] = useState('')
+
+  const [docUploading, setDocUploading] = useState(false)
+  const [docUploadError, setDocUploadError] = useState('')
+  const [replacingDoc, setReplacingDoc] = useState(false)
+  const docInputRef = useRef<HTMLInputElement>(null)
+  const parsedDoc = idVerificationUrl ? parseVerificationDocPath(idVerificationUrl) : null
 
   useEffect(() => {
     setNotesDraft(certificationNotes ?? '')
@@ -739,6 +765,27 @@ function CredentialsSection({
       setVerificationSaveError(e instanceof Error ? e.message : 'Request failed')
       setVerificationSaveStatus('error')
     }
+  }
+
+  async function handleDocFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !onUploadVerificationDoc) return
+
+    setDocUploadError('')
+    if (!VERIFICATION_DOC_ALLOWED_TYPES.includes(file.type)) {
+      setDocUploadError('Please upload a PDF, JPEG, or PNG file.')
+      return
+    }
+
+    setDocUploading(true)
+    try {
+      await onUploadVerificationDoc(file)
+      setReplacingDoc(false)
+    } catch (e) {
+      setDocUploadError(e instanceof Error ? e.message : 'Upload failed')
+    }
+    setDocUploading(false)
   }
 
   const inlineInput: React.CSSProperties = {
@@ -836,6 +883,68 @@ function CredentialsSection({
       {certificationStatus !== 'approved' && (
         <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #E5E7EB' }}>
           <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Verification</div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <FieldLabel>ID or certification document</FieldLabel>
+            {parsedDoc && !replacingDoc ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', border: '1px solid #E5E7EB', borderRadius: '8px' }}>
+                <FileText size={18} color={T.cyan} style={{ flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {parsedDoc.filename}
+                  </div>
+                  <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                    Uploaded {parsedDoc.uploadedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setReplacingDoc(true)}
+                  style={{ background: 'transparent', border: '1px solid #E5E7EB', borderRadius: '6px', padding: '6px 12px', fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', flexShrink: 0 }}
+                >
+                  Replace
+                </button>
+              </div>
+            ) : (
+              <>
+                <input
+                  ref={docInputRef} type="file" accept="application/pdf,image/jpeg,image/png"
+                  onChange={handleDocFileChange} style={{ display: 'none' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => docInputRef.current?.click()}
+                  disabled={docUploading}
+                  style={{ width: '100%', height: '44px', borderRadius: '8px', border: '1px dashed #E5E7EB', background: 'transparent', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', cursor: docUploading ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: docUploading ? 0.6 : 1 }}
+                >
+                  {docUploading ? (
+                    <>
+                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }} style={{ display: 'flex' }}>
+                        <Loader2 size={16} />
+                      </motion.div>
+                      Uploading…
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={16} /> {parsedDoc ? 'Upload a new document' : 'Upload PDF, JPEG, or PNG'}
+                    </>
+                  )}
+                </button>
+                {parsedDoc && replacingDoc && !docUploading && (
+                  <button
+                    type="button"
+                    onClick={() => { setReplacingDoc(false); setDocUploadError('') }}
+                    style={{ background: 'transparent', border: 'none', color: T.ink3, fontSize: '12px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', marginTop: '6px', padding: 0 }}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </>
+            )}
+            {docUploadError && (
+              <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{docUploadError}</div>
+            )}
+          </div>
 
           {certificationStatus === 'pending' && (
             <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>
@@ -1103,6 +1212,7 @@ export default function TrainerProfilePage() {
   const [isCertified, setIsCertified] = useState(false)
   const [certificationStatus, setCertificationStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('none')
   const [certificationNotes, setCertificationNotes] = useState('')
+  const [idVerificationUrl, setIdVerificationUrl] = useState<string | null>(null)
   const [credentials, setCredentials] = useState('')
   const [activePresetId, setActivePresetId] = useState<string | null>(null)
   const [themePreference, setThemePreference] = useState<ThemeSetting>('light')
@@ -1129,7 +1239,7 @@ export default function TrainerProfilePage() {
       setUserId(user.id)
       const [profileRes, trainerRes] = await Promise.all([
         supabase.from('profiles').select('name, avatar_url, banner_image_url, phone, verified, theme_preference, background_mode').eq('id', user.id).single(),
-        supabase.from('trainers').select('id, specialty, bio, rate, location, is_certified, certification_status, certification_notes, credentials, active_preset_id').eq('profile_id', user.id).single(),
+        supabase.from('trainers').select('id, specialty, bio, rate, location, is_certified, certification_status, certification_notes, id_verification_url, credentials, active_preset_id').eq('profile_id', user.id).single(),
       ])
       const loadedName = profileRes.data?.name ?? ''
       const loadedPhone = profileRes.data?.phone ?? ''
@@ -1152,6 +1262,7 @@ export default function TrainerProfilePage() {
       setIsCertified((trainerRes.data as any)?.is_certified ?? false)
       setCertificationStatus(((trainerRes.data as any)?.certification_status as typeof certificationStatus) ?? 'none')
       setCertificationNotes((trainerRes.data as any)?.certification_notes ?? '')
+      setIdVerificationUrl((trainerRes.data as any)?.id_verification_url ?? null)
       setCredentials((trainerRes.data as any)?.credentials ?? '')
       setActivePresetId((trainerRes.data as any)?.active_preset_id ?? null)
 
@@ -1263,6 +1374,29 @@ export default function TrainerProfilePage() {
     if (error) throw new Error(error.message)
     setCertificationStatus('pending')
     setCertificationNotes(notes)
+  }
+
+  async function uploadVerificationDoc(file: File) {
+    if (!userId) throw new Error('Not authenticated')
+    const supabase = createClient()
+    const path = `${userId}/${Date.now()}-${file.name.replace(/\s+/g, '-')}`
+
+    const { error: uploadErr } = await supabase.storage
+      .from('verification-docs')
+      .upload(path, file, { contentType: file.type })
+    if (uploadErr) throw new Error(uploadErr.message)
+
+    // Uploading resubmits for review from 'none' or 'rejected'; an already-
+    // 'approved' trainer isn't silently downgraded back to 'pending'.
+    const nextStatus = certificationStatus === 'approved' ? certificationStatus : 'pending'
+    const { error: updateErr } = await supabase
+      .from('trainers')
+      .update({ id_verification_url: path, certification_status: nextStatus })
+      .eq('profile_id', userId)
+    if (updateErr) throw new Error(updateErr.message)
+
+    setIdVerificationUrl(path)
+    setCertificationStatus(nextStatus)
   }
 
   async function handleSaveAppearance(updates: { theme_preference?: ThemeSetting; background_mode?: BackgroundMode }) {
@@ -1399,6 +1533,8 @@ export default function TrainerProfilePage() {
               certificationStatus={certificationStatus}
               certificationNotes={certificationNotes}
               onRequestVerification={requestVerification}
+              idVerificationUrl={idVerificationUrl}
+              onUploadVerificationDoc={uploadVerificationDoc}
             />
             <ReviewsSection />
             <SessionSetupSection />
