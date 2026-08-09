@@ -913,7 +913,7 @@ function CredentialsSection({
 
       <div>
         <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '4px' }}>Affiliations</div>
-        <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '12px' }}>Teams, clubs, or schools you've coached for, past or present.</div>
+        <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '12px' }}>Teams, clubs, or schools you&apos;ve coached for, past or present.</div>
         {affs.map((aff, i) => (
           <div key={aff.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: (i < affs.length - 1 || addingAff) ? '1px solid #E5E7EB' : 'none' }}>
             <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
