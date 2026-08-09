@@ -874,7 +874,8 @@ function CredentialsSection({
       <CardLabel>Credentials</CardLabel>
 
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Certifications</div>
+        <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '4px' }}>Certifications</div>
+        <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '12px' }}>Formal coaching licenses or certifications — include the issuing organization and year.</div>
         {certs.map((cert, i) => (
           <div key={cert.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: (i < certs.length - 1 || addingCert) ? '1px solid #E5E7EB' : 'none' }}>
             <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
@@ -911,7 +912,8 @@ function CredentialsSection({
       </div>
 
       <div>
-        <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Affiliations</div>
+        <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '4px' }}>Affiliations</div>
+        <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '12px' }}>Teams, clubs, or schools you've coached for, past or present.</div>
         {affs.map((aff, i) => (
           <div key={aff.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: (i < affs.length - 1 || addingAff) ? '1px solid #E5E7EB' : 'none' }}>
             <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
@@ -948,7 +950,8 @@ function CredentialsSection({
       </div>
 
       <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #E5E7EB' }}>
-        <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Verification</div>
+        <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '4px' }}>Verification</div>
+        <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '12px' }}>Upload a government ID or your certification document. An admin reviews this before your profile shows as verified.</div>
 
         {certificationStatus === 'approved' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '8px' }}>
