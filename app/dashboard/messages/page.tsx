@@ -31,6 +31,19 @@ type ConversationThread = {
   lastSentAt: string
 }
 
+type MinorTrainerThread = {
+  trainerId: string
+  trainerName: string
+  lastBody: string
+  lastSentAt: string
+}
+
+type MinorAthleteGroup = {
+  athleteId: string
+  athleteName: string
+  threads: MinorTrainerThread[]
+}
+
 function relativeTime(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
   if (diff < 60) return 'just now'
@@ -94,6 +107,7 @@ function MessagesPageInner() {
   const [ready, setReady] = useState(false)
   const [threads, setThreads] = useState<ConversationThread[]>([])
   const [inboxLoading, setInboxLoading] = useState(false)
+  const [minorAthleteGroups, setMinorAthleteGroups] = useState<MinorAthleteGroup[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -210,6 +224,76 @@ function MessagesPageInner() {
     loadInbox()
   }, [withId])
 
+  // Read-only oversight: minor athletes' trainer conversations. Separate
+  // effect/state from the parent's own inbox above — RLS ("parents can view
+  // their minor athletes' trainer messages") already restricts this to
+  // exactly athlete<->trainer rows for the parent's own minor athletes, so no
+  // extra client-side filtering is needed beyond grouping for display.
+  useEffect(() => {
+    if (withId) return
+    const supabase = createClient()
+    async function loadMinorAthleteThreads() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: minors } = await supabase
+        .from('athletes')
+        .select('id, name, profile_id')
+        .eq('parent_id', user.id)
+        .eq('is_minor', true)
+        .not('profile_id', 'is', null)
+
+      const athleteList = (minors ?? []) as { id: string; name: string; profile_id: string }[]
+      if (athleteList.length === 0) { setMinorAthleteGroups([]); return }
+
+      const orClause = athleteList.map((a) => `sender_id.eq.${a.profile_id},recipient_id.eq.${a.profile_id}`).join(',')
+      const { data: minorMsgs } = await supabase
+        .from('messages')
+        .select('id, sender_id, recipient_id, body, sent_at')
+        .or(orClause)
+        .order('sent_at', { ascending: false })
+
+      if (!minorMsgs || minorMsgs.length === 0) { setMinorAthleteGroups([]); return }
+
+      const athleteByProfileId = new Map(athleteList.map((a) => [a.profile_id, a]))
+
+      // One entry per (athlete, trainer) pair, keeping only the most recent
+      // message per pair (results are already newest-first).
+      const pairs = new Map<string, { athleteProfileId: string; trainerId: string; lastBody: string; lastSentAt: string }>()
+      for (const msg of minorMsgs) {
+        const athleteProfileId = athleteByProfileId.has(msg.sender_id) ? msg.sender_id : msg.recipient_id
+        const trainerId = athleteProfileId === msg.sender_id ? msg.recipient_id : msg.sender_id
+        const key = `${athleteProfileId}:${trainerId}`
+        if (!pairs.has(key)) {
+          pairs.set(key, { athleteProfileId, trainerId, lastBody: msg.body, lastSentAt: msg.sent_at })
+        }
+      }
+
+      const trainerIds = Array.from(new Set(Array.from(pairs.values()).map((p) => p.trainerId)))
+      const { data: trainerProfiles } = await supabase.from('profiles').select('id, name').in('id', trainerIds)
+      const trainerNameMap = new Map<string, string>()
+      if (trainerProfiles) trainerProfiles.forEach((p: { id: string; name: string }) => trainerNameMap.set(p.id, p.name))
+
+      const groups = new Map<string, MinorAthleteGroup>()
+      for (const pair of pairs.values()) {
+        const athlete = athleteByProfileId.get(pair.athleteProfileId)
+        if (!athlete) continue
+        if (!groups.has(athlete.id)) {
+          groups.set(athlete.id, { athleteId: athlete.id, athleteName: athlete.name, threads: [] })
+        }
+        groups.get(athlete.id)!.threads.push({
+          trainerId: pair.trainerId,
+          trainerName: trainerNameMap.get(pair.trainerId) ?? 'Unknown',
+          lastBody: pair.lastBody,
+          lastSentAt: pair.lastSentAt,
+        })
+      }
+
+      setMinorAthleteGroups(Array.from(groups.values()))
+    }
+    loadMinorAthleteThreads()
+  }, [withId])
+
   async function sendMessage() {
     if (!inputVal.trim() || !withId || !currentUserId) return
     setSendError('')
@@ -268,6 +352,47 @@ function MessagesPageInner() {
               })
             )}
           </div>
+
+          {minorAthleteGroups.length > 0 && (
+            <div style={{ marginTop: 32 }}>
+              <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 18, color: T.ink, marginBottom: 4 }}>
+                Your Athletes&apos; Trainer Messages
+              </div>
+              <div style={{ fontSize: 13, color: T.ink3, marginBottom: 16 }}>
+                Read-only oversight — you&apos;re viewing your minor athlete&apos;s conversations, not replying as them.
+              </div>
+              {minorAthleteGroups.map((group) => (
+                <div key={group.athleteId} style={{ marginBottom: 20 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: T.ink3, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    {group.athleteName}
+                  </div>
+                  <div style={{ ...cardStyle }}>
+                    {group.threads.map((thread, i) => {
+                      const initials = thread.trainerName.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase()
+                      return (
+                        <div
+                          key={thread.trainerId}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px',
+                            borderBottom: i < group.threads.length - 1 ? `1px solid ${T.line}` : 'none',
+                          }}
+                        >
+                          <Avatar initials={initials || '?'} size={42} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink }}>
+                              {group.athleteName}&apos;s messages with {thread.trainerName}
+                            </div>
+                            <div style={{ fontSize: 13, color: T.ink3, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{thread.lastBody}</div>
+                          </div>
+                          <div style={{ fontSize: 11, color: T.ink3, flexShrink: 0 }}>{relativeTime(thread.lastSentAt)}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </motion.div>
     )
