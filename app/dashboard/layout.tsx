@@ -544,6 +544,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (pathname.startsWith('/dashboard/athlete')) {
     return <>{children}</>
   }
+  // Admin routes have their own dedicated shell (app/dashboard/admin/layout.tsx)
+  if (pathname.startsWith('/dashboard/admin')) {
+    return <>{children}</>
+  }
 
   return <ParentDashboardLayout>{children}</ParentDashboardLayout>
 }
