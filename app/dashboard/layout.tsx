@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, MessageSquare, Compass, Bookmark } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageSquare, Compass, Bookmark, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { TourProvider, useTour } from './tour-context'
 import TourOverlay from './tour-overlay'
 import { createClient } from '@/utils/supabase/client'
+import { useIsAdmin } from '@/lib/useIsAdmin'
 import NotificationsDropdown from '@/components/NotificationsDropdown'
 
 import { T } from '@/lib/theme'
@@ -447,7 +448,7 @@ function Sidebar({
 
 // ── Desktop header ─────────────────────────────────────────────────────────────
 
-function DesktopHeader({ sidebarOpen }: { sidebarOpen: boolean }) {
+function DesktopHeader({ sidebarOpen, isAdmin }: { sidebarOpen: boolean; isAdmin: boolean }) {
   return (
     <motion.header
       animate={{ left: sidebarOpen ? 240 : 72, width: `calc(100% - ${sidebarOpen ? 240 : 72}px)` }}
@@ -462,7 +463,24 @@ function DesktopHeader({ sidebarOpen }: { sidebarOpen: boolean }) {
           Dashboard
         </span>
       </div>
-      <NotificationsDropdown />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {isAdmin && (
+          <Link
+            href="/dashboard/admin/certifications"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '4px 10px', borderRadius: '999px',
+              border: '1px solid rgba(124,58,237,0.3)', background: 'rgba(124,58,237,0.08)',
+              color: '#7C3AED', textDecoration: 'none',
+              fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 600,
+            }}
+          >
+            <ShieldCheck size={13} />
+            Admin
+          </Link>
+        )}
+        <NotificationsDropdown />
+      </div>
     </motion.header>
   )
 }
@@ -569,6 +587,7 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
   const sidebarWidth = isMobile ? 0 : sidebarOpen ? 240 : 72
+  const isAdmin = useIsAdmin()
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -657,7 +676,7 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
               nextSessionText={nextSessionText}
               nextSessionTrainer={nextSessionTrainer}
             />
-            <DesktopHeader sidebarOpen={sidebarOpen} />
+            <DesktopHeader sidebarOpen={sidebarOpen} isAdmin={isAdmin} />
           </>
         )}
         <main
