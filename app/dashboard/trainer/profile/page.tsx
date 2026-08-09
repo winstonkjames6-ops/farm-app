@@ -880,10 +880,18 @@ function CredentialsSection({
         )}
       </div>
 
-      {certificationStatus !== 'approved' && (
-        <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #E5E7EB' }}>
-          <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Verification</div>
+      <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #E5E7EB' }}>
+        <div style={{ fontSize: '13px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, marginBottom: '12px' }}>Verification</div>
 
+        {certificationStatus === 'approved' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '8px' }}>
+            <CheckCircle size={18} color="#10B981" style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>Verification approved</span>
+          </div>
+        )}
+
+        {certificationStatus !== 'approved' && (
+        <>
           <div style={{ marginBottom: '16px' }}>
             <FieldLabel>ID or certification document</FieldLabel>
             {parsedDoc && !replacingDoc ? (
@@ -977,8 +985,9 @@ function CredentialsSection({
               {verificationSaveStatus === 'error' && <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{verificationSaveError}</div>}
             </>
           )}
-        </div>
-      )}
+        </>
+        )}
+      </div>
 
     </SectionCard>
   )
