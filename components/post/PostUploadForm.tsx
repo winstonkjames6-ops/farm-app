@@ -8,6 +8,17 @@ import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 import { SPORTS } from '@/components/search/TrainerDirectory'
 
+// First-pass, case-insensitive substring blocklist. Blocks uploads with flagged content.
+const BLOCKED_WORDS = [
+  'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'dick', 'piss',
+  'nigger', 'nigga', 'faggot', 'fag', 'retard', 'whore', 'slut',
+]
+
+function containsBlockedWord(text: string): boolean {
+  const lower = text.toLowerCase()
+  return BLOCKED_WORDS.some((word) => lower.includes(word))
+}
+
 type Role = 'trainer' | 'athlete'
 
 type BookingOption = {
@@ -270,6 +281,16 @@ export function PostUploadForm({ role }: { role: Role }) {
     if (!videoFile) {
       setStatus('error')
       setErrorMessage('Please choose a video to upload.')
+      return
+    }
+    if (caption.trim() && containsBlockedWord(caption)) {
+      setStatus('error')
+      setErrorMessage('Caption contains blocked content. Please remove or edit.')
+      return
+    }
+    if (sport && containsBlockedWord(sport)) {
+      setStatus('error')
+      setErrorMessage('Sport selection contains blocked content. Please choose a different sport.')
       return
     }
 
