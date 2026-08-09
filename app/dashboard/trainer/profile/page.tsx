@@ -890,10 +890,8 @@ function CredentialsSection({
           </div>
         )}
 
-        {certificationStatus !== 'approved' && (
-        <>
-          <div style={{ marginBottom: '16px' }}>
-            <FieldLabel>ID or certification document</FieldLabel>
+        <div style={{ marginBottom: '16px' }}>
+          <FieldLabel>ID or certification document</FieldLabel>
             {parsedDoc && !replacingDoc ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', border: '1px solid #E5E7EB', borderRadius: '8px' }}>
                 <FileText size={18} color={T.cyan} style={{ flexShrink: 0 }} />
@@ -949,11 +947,13 @@ function CredentialsSection({
                 )}
               </>
             )}
-            {docUploadError && (
-              <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{docUploadError}</div>
-            )}
-          </div>
+          {docUploadError && (
+            <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{docUploadError}</div>
+          )}
+        </div>
 
+        {certificationStatus !== 'approved' && (
+        <>
           {certificationStatus === 'pending' && (
             <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>
               Verification request submitted — under review
@@ -1395,17 +1395,17 @@ export default function TrainerProfilePage() {
       .upload(path, file, { contentType: file.type })
     if (uploadErr) throw new Error(uploadErr.message)
 
-    // Uploading resubmits for review from 'none' or 'rejected'; an already-
-    // 'approved' trainer isn't silently downgraded back to 'pending'.
-    const nextStatus = certificationStatus === 'approved' ? certificationStatus : 'pending'
+    // Any successful doc upload — including "Replace" clicked from the
+    // approved state — is an explicit resubmission, so it always goes back
+    // to 'pending' for re-review.
     const { error: updateErr } = await supabase
       .from('trainers')
-      .update({ id_verification_url: path, certification_status: nextStatus })
+      .update({ id_verification_url: path, certification_status: 'pending' })
       .eq('profile_id', userId)
     if (updateErr) throw new Error(updateErr.message)
 
     setIdVerificationUrl(path)
-    setCertificationStatus(nextStatus)
+    setCertificationStatus('pending')
   }
 
   async function handleSaveAppearance(updates: { theme_preference?: ThemeSetting; background_mode?: BackgroundMode }) {
