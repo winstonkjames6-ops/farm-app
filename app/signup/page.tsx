@@ -15,6 +15,34 @@ const T = {
   error: '#EF4444',
 }
 
+// Supabase Auth's own validation errors (already-registered email, weak
+// password, invalid email, etc.) are already user-facing — pass those through
+// unchanged. But if handle_new_user() throws (e.g. the athlete age-floor
+// checks), that Postgres exception can surface through error.message instead
+// of a clean Auth error. Map the known cases to friendly text and fall back
+// to a generic message for anything else that looks like a raw DB error.
+function friendlySignupError(message: string): string {
+  const lower = message.toLowerCase()
+
+  if (lower.includes('at least 13 years old')) {
+    return 'You must be at least 13 to create an athlete account.'
+  }
+  if (lower.includes('date of birth is required')) {
+    return 'Date of birth is required to create an athlete account.'
+  }
+
+  const looksLikeDbError =
+    lower.includes('constraint') ||
+    lower.includes('duplicate key') ||
+    lower.includes('database error')
+
+  if (looksLikeDbError) {
+    return 'Something went wrong creating your account. Please try again.'
+  }
+
+  return message
+}
+
 const inputBase: React.CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
@@ -155,7 +183,7 @@ export default function SignupPage() {
         data: { role: 'athlete', dob }
       }
     })
-    if (error) { setAuthError(error.message); setStep('account'); return }
+    if (error) { setAuthError(friendlySignupError(error.message)); setStep('account'); return }
     setStep('check-email')
   }
 
@@ -170,7 +198,7 @@ export default function SignupPage() {
       }
     })
     if (error) {
-      setAuthError(error.message)
+      setAuthError(friendlySignupError(error.message))
       setStep('account')
       return
     }
@@ -188,7 +216,7 @@ export default function SignupPage() {
       }
     })
     if (error) {
-      setAuthError(error.message)
+      setAuthError(friendlySignupError(error.message))
       setStep('account')
       return
     }
