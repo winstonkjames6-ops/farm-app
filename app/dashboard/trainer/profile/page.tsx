@@ -57,18 +57,8 @@ const IconYoutube = () => (
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
-type Certification = { id: number; name: string; org: string; year: string }
-type Affiliation = { id: number; name: string; role: string; years: string }
-
-const INITIAL_CERTS: Certification[] = [
-  { id: 1, name: 'UEFA B License', org: 'UEFA', year: '2019' },
-  { id: 2, name: 'Youth Soccer Coach', org: 'US Soccer Federation', year: '2021' },
-]
-
-const INITIAL_AFFS: Affiliation[] = [
-  { id: 1, name: 'Green Valley FC', role: 'Head Coach', years: '2018–present' },
-  { id: 2, name: 'Riverside Academy', role: 'Skills Trainer', years: '2020–2022' },
-]
+type Certification = { id: string; name: string; org: string | null; year: string | null }
+type Affiliation = { id: string; name: string; role: string | null; years: string | null }
 
 const MOCK_REVIEWS = [
   {
@@ -721,24 +711,53 @@ function RateSection({
 // ── Section: Credentials ───────────────────────────────────────────────────────
 
 function CredentialsSection({
+  trainerId,
   certificationStatus,
   certificationNotes,
   onRequestVerification,
   idVerificationUrl,
   onUploadVerificationDoc,
 }: {
+  trainerId?: string | null
   certificationStatus?: 'none' | 'pending' | 'approved' | 'rejected'
   certificationNotes?: string
   onRequestVerification?: (notes: string) => Promise<void>
   idVerificationUrl?: string | null
   onUploadVerificationDoc?: (file: File) => Promise<void>
 }) {
-  const [certs, setCerts] = useState<Certification[]>(INITIAL_CERTS)
-  const [affs, setAffs] = useState<Affiliation[]>(INITIAL_AFFS)
+  const [certs, setCerts] = useState<Certification[]>([])
+  const [affs, setAffs] = useState<Affiliation[]>([])
+  const [certsError, setCertsError] = useState('')
+  const [affsError, setAffsError] = useState('')
+  const [savingCert, setSavingCert] = useState(false)
+  const [savingAff, setSavingAff] = useState(false)
   const [addingCert, setAddingCert] = useState(false)
   const [newCert, setNewCert] = useState({ name: '', org: '', year: '' })
   const [addingAff, setAddingAff] = useState(false)
   const [newAff, setNewAff] = useState({ name: '', role: '', years: '' })
+
+  useEffect(() => {
+    if (!trainerId) return
+    const supabase = createClient()
+    supabase
+      .from('trainer_certifications')
+      .select('id, name, org, year')
+      .eq('trainer_id', trainerId)
+      .order('created_at', { ascending: true })
+      .then(({ data, error }) => {
+        if (error) { setCertsError(error.message); return }
+        setCerts((data ?? []) as Certification[])
+      })
+    supabase
+      .from('trainer_affiliations')
+      .select('id, name, role, years')
+      .eq('trainer_id', trainerId)
+      .order('created_at', { ascending: true })
+      .then(({ data, error }) => {
+        if (error) { setAffsError(error.message); return }
+        setAffs((data ?? []) as Affiliation[])
+      })
+  }, [trainerId])
 
   const [notesDraft, setNotesDraft] = useState(certificationNotes ?? '')
   const [verificationSaveStatus, setVerificationSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -794,18 +813,60 @@ function CredentialsSection({
     outline: 'none', color: T.ink, background: '#FFFFFF', minWidth: '80px',
   }
 
-  function confirmCert() {
-    if (!newCert.name) return
-    setCerts((prev) => [...prev, { id: Date.now(), ...newCert }])
+  async function confirmCert() {
+    if (!newCert.name || !trainerId) return
+    setSavingCert(true)
+    setCertsError('')
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('trainer_certifications')
+      .insert({ trainer_id: trainerId, name: newCert.name, org: newCert.org || null, year: newCert.year || null })
+      .select('id, name, org, year')
+      .single()
+    setSavingCert(false)
+    if (error || !data) {
+      setCertsError(error?.message ?? 'Could not save certification.')
+      return
+    }
+    setCerts((prev) => [...prev, data as Certification])
     setNewCert({ name: '', org: '', year: '' })
     setAddingCert(false)
   }
 
-  function confirmAff() {
-    if (!newAff.name) return
-    setAffs((prev) => [...prev, { id: Date.now(), ...newAff }])
+  async function deleteCert(id: string) {
+    setCertsError('')
+    const supabase = createClient()
+    const { error } = await supabase.from('trainer_certifications').delete().eq('id', id)
+    if (error) { setCertsError(error.message); return }
+    setCerts((prev) => prev.filter((c) => c.id !== id))
+  }
+
+  async function confirmAff() {
+    if (!newAff.name || !trainerId) return
+    setSavingAff(true)
+    setAffsError('')
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('trainer_affiliations')
+      .insert({ trainer_id: trainerId, name: newAff.name, role: newAff.role || null, years: newAff.years || null })
+      .select('id, name, role, years')
+      .single()
+    setSavingAff(false)
+    if (error || !data) {
+      setAffsError(error?.message ?? 'Could not save affiliation.')
+      return
+    }
+    setAffs((prev) => [...prev, data as Affiliation])
     setNewAff({ name: '', role: '', years: '' })
     setAddingAff(false)
+  }
+
+  async function deleteAff(id: string) {
+    setAffsError('')
+    const supabase = createClient()
+    const { error } = await supabase.from('trainer_affiliations').delete().eq('id', id)
+    if (error) { setAffsError(error.message); return }
+    setAffs((prev) => prev.filter((a) => a.id !== id))
   }
 
   return (
@@ -819,22 +880,25 @@ function CredentialsSection({
             <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>{cert.name}</div>
-              <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{cert.org} · {cert.year}</div>
+              <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{[cert.org, cert.year].filter(Boolean).join(' · ')}</div>
             </div>
-            <button onClick={() => setCerts((prev) => prev.filter((c) => c.id !== cert.id))} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '44px', minHeight: '44px' }}>
+            <button onClick={() => deleteCert(cert.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '44px', minHeight: '44px' }}>
               <Trash2 size={16} />
             </button>
           </div>
         ))}
+        {certsError && (
+          <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px' }}>{certsError}</div>
+        )}
         {addingCert && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 0', flexWrap: 'wrap' }}>
             <input value={newCert.name} onChange={(e) => setNewCert((p) => ({ ...p, name: e.target.value }))} placeholder="Certification name" style={{ ...inlineInput, minWidth: '140px' }} />
             <input value={newCert.org} onChange={(e) => setNewCert((p) => ({ ...p, org: e.target.value }))} placeholder="Issuing org" style={inlineInput} />
             <input value={newCert.year} onChange={(e) => setNewCert((p) => ({ ...p, year: e.target.value }))} placeholder="Year" style={{ ...inlineInput, flex: '0 0 80px' }} />
-            <button onClick={confirmCert} style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#10B981', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <button onClick={confirmCert} disabled={savingCert} style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#10B981', border: 'none', cursor: savingCert ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: savingCert ? 0.6 : 1 }}>
               <Check size={16} color="#FFFFFF" />
             </button>
-            <button onClick={() => setAddingCert(false)} style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'transparent', border: '1px solid #E5E7EB', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <button onClick={() => setAddingCert(false)} disabled={savingCert} style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'transparent', border: '1px solid #E5E7EB', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <XIcon size={16} color={T.ink3} />
             </button>
           </div>
@@ -853,22 +917,25 @@ function CredentialsSection({
             <Award size={18} color={T.cyan} style={{ flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: '14px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500 }}>{aff.name}</div>
-              <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{aff.role} · {aff.years}</div>
+              <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif" }}>{[aff.role, aff.years].filter(Boolean).join(' · ')}</div>
             </div>
-            <button onClick={() => setAffs((prev) => prev.filter((a) => a.id !== aff.id))} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '44px', minHeight: '44px' }}>
+            <button onClick={() => deleteAff(aff.id)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.ink3, display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '44px', minHeight: '44px' }}>
               <Trash2 size={16} />
             </button>
           </div>
         ))}
+        {affsError && (
+          <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px' }}>{affsError}</div>
+        )}
         {addingAff && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 0', flexWrap: 'wrap' }}>
             <input value={newAff.name} onChange={(e) => setNewAff((p) => ({ ...p, name: e.target.value }))} placeholder="School or club name" style={{ ...inlineInput, minWidth: '140px' }} />
             <input value={newAff.role} onChange={(e) => setNewAff((p) => ({ ...p, role: e.target.value }))} placeholder="Role" style={inlineInput} />
             <input value={newAff.years} onChange={(e) => setNewAff((p) => ({ ...p, years: e.target.value }))} placeholder="Years active" style={{ ...inlineInput, flex: '0 0 110px' }} />
-            <button onClick={confirmAff} style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#10B981', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <button onClick={confirmAff} disabled={savingAff} style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#10B981', border: 'none', cursor: savingAff ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: savingAff ? 0.6 : 1 }}>
               <Check size={16} color="#FFFFFF" />
             </button>
-            <button onClick={() => setAddingAff(false)} style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'transparent', border: '1px solid #E5E7EB', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <button onClick={() => setAddingAff(false)} disabled={savingAff} style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'transparent', border: '1px solid #E5E7EB', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <XIcon size={16} color={T.ink3} />
             </button>
           </div>
@@ -1209,6 +1276,7 @@ export default function TrainerProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
 
   const [userId, setUserId] = useState<string | null>(null)
+  const [trainerId, setTrainerId] = useState<string | null>(null)
   const [initName, setInitName] = useState('')
   const [initBio, setInitBio] = useState('')
   const [initLocation, setInitLocation] = useState('')
@@ -1283,6 +1351,7 @@ export default function TrainerProfilePage() {
       setDataLoaded(true)
 
       const trainerRowId = trainerRes.data?.id
+      setTrainerId(trainerRowId ?? null)
       if (trainerRowId) {
         const { data: bookingData } = await supabase
           .from('bookings')
@@ -1539,6 +1608,7 @@ export default function TrainerProfilePage() {
               onHourlyRateChange={setDraftRate}
             />
             <CredentialsSection
+              trainerId={trainerId}
               certificationStatus={certificationStatus}
               certificationNotes={certificationNotes}
               onRequestVerification={requestVerification}

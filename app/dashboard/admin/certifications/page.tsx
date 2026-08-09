@@ -27,10 +27,10 @@ export default async function Page() {
     .select(`
       id,
       bio,
-      credentials,
       years_experience,
       id_verification_url,
-      profile:profiles!profile_id(name, email)
+      profile:profiles!profile_id(name, email),
+      trainer_certifications(id, name, org, year)
     `)
     .eq('certification_status', 'pending')
     .order('id', { ascending: true })
@@ -53,7 +53,7 @@ export default async function Page() {
         name: row.profile?.name ?? 'Unknown',
         email: row.profile?.email ?? '',
         bio: row.bio ?? null,
-        credentials: row.credentials ?? null,
+        certifications: row.trainer_certifications ?? [],
         yearsExperience: row.years_experience ?? null,
         docUrl,
       }

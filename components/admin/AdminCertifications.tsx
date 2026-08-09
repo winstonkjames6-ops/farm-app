@@ -8,12 +8,19 @@ import { T } from '@/lib/theme'
 const barlow = "'Barlow Condensed', sans-serif"
 const hanken = "'Hanken Grotesk', sans-serif"
 
+type TrainerCertification = {
+  id: string
+  name: string
+  org: string | null
+  year: string | null
+}
+
 type Trainer = {
   id: string
   name: string
   email: string
   bio: string | null
-  credentials: string | null
+  certifications: TrainerCertification[]
   yearsExperience: number | null
   docUrl: string | null
 }
@@ -91,7 +98,18 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px', fontSize: '13px', color: T.ink2, lineHeight: 1.5 }}>
                   <span><strong style={{ color: T.ink }}>Years of experience:</strong> {t.yearsExperience ?? 'Not provided'}</span>
-                  <span><strong style={{ color: T.ink }}>Credentials:</strong> {t.credentials || 'Not provided'}</span>
+                  {t.certifications.length === 0 ? (
+                    <span><strong style={{ color: T.ink }}>Certifications:</strong> Not provided</span>
+                  ) : (
+                    <div>
+                      <strong style={{ color: T.ink }}>Certifications:</strong>
+                      <ul style={{ margin: '4px 0 0', paddingLeft: '18px' }}>
+                        {t.certifications.map((c) => (
+                          <li key={c.id}>{[c.name, c.org, c.year].filter(Boolean).join(' · ')}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   {t.bio && <span><strong style={{ color: T.ink }}>Bio:</strong> {t.bio}</span>}
                 </div>
 
