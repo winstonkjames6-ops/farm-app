@@ -216,7 +216,7 @@ function MessagesViewInner() {
       >
         <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '28px', color: T.ink }}>Messages</div>
-          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', overflow: 'hidden' }}>
+          <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: '16px', overflow: 'hidden' }}>
             {inboxLoading ? (
               <div style={{ padding: '32px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px' }}>Loading…</div>
             ) : threads.length === 0 ? (
@@ -259,7 +259,7 @@ function MessagesViewInner() {
       transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
     >
       <div style={{ padding: '32px' }}>
-        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden', height: 'calc(100vh - 160px)' }}>
+        <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden', height: 'calc(100vh - 160px)' }}>
           <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
             <button
               onClick={() => router.push('/dashboard/trainer/messages')}
@@ -305,7 +305,7 @@ function MessagesViewInner() {
                     <div style={{
                       padding: '12px 16px',
                       borderRadius: isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                      background: isMine ? T.cyan : T.card,
+                      background: isMine ? T.cyan : T.cardBg,
                       border: isMine ? 'none' : `1px solid ${T.border}`,
                       color: isMine ? '#FFFFFF' : T.ink,
                       fontFamily: "'Hanken Grotesk', sans-serif",
@@ -336,7 +336,7 @@ function MessagesViewInner() {
             <div ref={bottomRef} />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '16px 24px', borderTop: `1px solid ${T.border}`, background: T.card, flexShrink: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '16px 24px', borderTop: `1px solid ${T.border}`, background: T.cardBg, flexShrink: 0 }}>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <input
                 type="text"

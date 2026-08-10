@@ -77,7 +77,7 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
         </div>
 
         {trainers.length === 0 ? (
-          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: T.radius.lg, textAlign: 'center', padding: '80px 24px' }}>
+          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: T.radius.lg, textAlign: 'center', padding: '80px 24px' }}>
             <p style={{ fontFamily: hanken, fontSize: T.fontSize.md, color: T.ink3, margin: 0 }}>No pending certification requests</p>
           </div>
         ) : (
@@ -86,7 +86,7 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
               <div
                 key={t.id}
                 style={{
-                  background: T.card, border: `1px solid ${T.line}`, borderRadius: T.radius.lg, padding: '20px',
+                  background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: T.radius.lg, padding: '20px',
                 }}
               >
                 <p style={{ fontFamily: hanken, fontSize: T.fontSize.sm, color: T.ink, margin: '0 0 4px', fontWeight: 700 }}>

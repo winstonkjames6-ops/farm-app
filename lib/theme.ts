@@ -7,7 +7,7 @@ export const T = {
   glass: 'rgba(0,0,0,0.04)',
   border: 'rgba(0,0,0,0.08)',
   line: 'rgba(0,0,0,0.08)',
-  card: '#FFFFFF',
+  cardBg: '#FFFFFF',
   surface2: '#F0EFEB',
   ink: '#111827',
   ink2: '#6B7280',
@@ -37,5 +37,19 @@ export const T = {
     md: '12px',   // cards, modals, standard UI
     lg: '16px',   // large modals, hero sections
     full: '999px', // pills, badges, avatars only
+  },
+
+  // Card/surface styles
+  card: {
+    background: '#FFFFFF',
+    border: '1px solid rgba(0,0,0,0.08)',
+    borderRadius: '12px',
+    padding: '24px',
+  },
+  cardCompact: {
+    background: '#FFFFFF',
+    border: '1px solid rgba(0,0,0,0.08)',
+    borderRadius: '12px',
+    padding: '16px',
   },
 }

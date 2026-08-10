@@ -643,7 +643,7 @@ function WeeklyHoursPanel({
 
       {/* Your live schedule — the primary, always-visible card. Whatever's shown
           here (via quickDays/quickStart/quickEnd) is what's bookable right now. */}
-      <div style={{ background: T.card, border: `1.5px solid ${T.cyanBorder}`, borderRadius: '14px', padding: '20px' }}>
+      <div style={{ background: T.cardBg, border: `1.5px solid ${T.cyanBorder}`, borderRadius: '14px', padding: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
           <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink }}>
             Your live schedule
@@ -691,7 +691,7 @@ function WeeklyHoursPanel({
               type="time"
               value={quickStart}
               onChange={(e) => { setQuickStart(e.target.value); setActivePreset(null) }}
-              style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+              style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -700,7 +700,7 @@ function WeeklyHoursPanel({
               type="time"
               value={quickEnd}
               onChange={(e) => { setQuickEnd(e.target.value); setActivePreset(null) }}
-              style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+              style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -711,7 +711,7 @@ function WeeklyHoursPanel({
               step={5}
               value={quickSessionLength}
               onChange={(e) => setQuickSessionLength(e.target.value)}
-              style={{ width: '90px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+              style={{ width: '90px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -722,7 +722,7 @@ function WeeklyHoursPanel({
               step={5}
               value={quickBreak}
               onChange={(e) => setQuickBreak(e.target.value)}
-              style={{ width: '90px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+              style={{ width: '90px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
             />
           </div>
         </div>
@@ -769,7 +769,7 @@ function WeeklyHoursPanel({
                 value={presetLabelInput}
                 onChange={(e) => setPresetLabelInput(e.target.value)}
                 placeholder="e.g. Summer camp hours"
-                style={{ flex: 1, minWidth: '160px', height: '40px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '0 12px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+                style={{ flex: 1, minWidth: '160px', height: '40px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '0 12px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
               />
               <button
                 onClick={confirmSavePreset}
@@ -793,7 +793,7 @@ function WeeklyHoursPanel({
                 type="date"
                 value={presetStartsOnInput}
                 onChange={(e) => setPresetStartsOnInput(e.target.value)}
-                style={{ width: '160px', height: '36px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '0 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+                style={{ width: '160px', height: '36px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '0 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
               />
             </div>
             {presetError && (
@@ -805,7 +805,7 @@ function WeeklyHoursPanel({
 
       {/* Booking rules — optional guardrails enforced on the public booking page
           (see app/trainer/[slug]/page.jsx). Blank inputs mean "no limit". */}
-      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
+      <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink, marginBottom: '4px' }}>
           Booking rules
         </div>
@@ -822,7 +822,7 @@ function WeeklyHoursPanel({
               placeholder="No limit"
               value={maxSessionsPerDay}
               onChange={(e) => { setMaxSessionsPerDay(e.target.value); setBookingRulesSaved(false) }}
-              style={{ width: '110px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+              style={{ width: '110px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -833,7 +833,7 @@ function WeeklyHoursPanel({
               placeholder="No limit"
               value={minNoticeHours}
               onChange={(e) => { setMinNoticeHours(e.target.value); setBookingRulesSaved(false) }}
-              style={{ width: '110px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+              style={{ width: '110px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -844,7 +844,7 @@ function WeeklyHoursPanel({
               placeholder="No limit"
               value={maxAdvanceDays}
               onChange={(e) => { setMaxAdvanceDays(e.target.value); setBookingRulesSaved(false) }}
-              style={{ width: '110px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+              style={{ width: '110px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
             />
           </div>
         </div>
@@ -871,7 +871,7 @@ function WeeklyHoursPanel({
 
       {/* Days you never work — independent of the active schedule's own day
           selection; blocks that weekday everywhere regardless of any preset. */}
-      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
+      <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px' }}>
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink, marginBottom: '4px' }}>
           Days you never work
         </div>
@@ -910,7 +910,7 @@ function WeeklyHoursPanel({
 
       {/* Everything else — built-in presets + other saved schedules — collapsed by
           default so the live schedule above stays the primary, uncluttered focus. */}
-      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '4px 20px' }}>
+      <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: '14px', padding: '4px 20px' }}>
         <button
           onClick={() => setShowOtherSchedules((v) => !v)}
           style={{
@@ -1857,7 +1857,7 @@ export default function TrainerSchedulePage() {
                           type="date"
                           value={vacationStart}
                           onChange={(e) => { setVacationStart(e.target.value); setVacationSaved(false) }}
-                          style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+                          style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
                         />
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -1866,7 +1866,7 @@ export default function TrainerSchedulePage() {
                           type="date"
                           value={vacationEnd}
                           onChange={(e) => { setVacationEnd(e.target.value); setVacationSaved(false) }}
-                          style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+                          style={{ border: `1px solid ${T.border}`, borderRadius: '8px', padding: '8px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
                         />
                       </div>
                     </div>

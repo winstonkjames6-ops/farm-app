@@ -6,20 +6,12 @@ import { createPortal } from 'react-dom'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
+import { Card } from '@/components/shared/Card'
 
 type Role = 'parent' | 'trainer' | 'athlete'
 type SupabaseClient = ReturnType<typeof createClient>
 
 // ── Shared styles ──────────────────────────────────────────────────────────────
-
-const cardStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.90)',
-  backdropFilter: 'blur(8px)',
-  WebkitBackdropFilter: 'blur(8px)',
-  borderRadius: T.radius.md,
-  border: '1px solid rgba(0,0,0,0.08)',
-  padding: '20px',
-}
 
 const inputStyle: React.CSSProperties = {
   width: '100%', height: '40px', borderRadius: T.radius.md, border: '1px solid #E5E7EB',
@@ -196,7 +188,7 @@ export default function SettingsPage() {
           {/* Notifications — all roles */}
           <div id="tour-settings-overview">
             <SectionLabel>Notifications</SectionLabel>
-            <div style={cardStyle}>
+            <Card>
               <ToggleRow
                 label="Session reminders"
                 hint="Get notified 1 hour before sessions"
@@ -232,14 +224,14 @@ export default function SettingsPage() {
                 onToggle={() => toggleField('notif_promo_updates', promoUpdates, setPromoUpdates)}
                 isLast
               />
-            </div>
+            </Card>
           </div>
 
           {/* Privacy — parent only */}
           {role === 'parent' && (
             <div>
               <SectionLabel>Privacy</SectionLabel>
-              <div style={cardStyle}>
+              <Card>
                 <ToggleRow
                   label="Share athlete progress"
                   hint="Allow trainers to share session clips with other parents"
@@ -253,14 +245,14 @@ export default function SettingsPage() {
                   onToggle={() => toggleField('public_profile', publicProfile, setPublicProfile)}
                   isLast
                 />
-              </div>
+              </Card>
             </div>
           )}
 
           {/* App */}
           <div>
             <SectionLabel>App</SectionLabel>
-            <div style={cardStyle}>
+            <Card>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
                 <div>
                   <div style={{ fontSize: T.fontSize.md, fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
@@ -272,7 +264,7 @@ export default function SettingsPage() {
                 </div>
                 <span style={{ fontSize: T.fontSize.sm, color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>English</span>
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* Account */}
@@ -350,7 +342,7 @@ function AccountSection({
   return (
     <div>
       <SectionLabel>Account</SectionLabel>
-      <div style={cardStyle}>
+      <Card>
 
         {/* Email */}
         <div style={{ padding: '14px 0', borderBottom: `1px solid ${T.line}` }}>
@@ -461,7 +453,7 @@ function AccountSection({
           </div>
           <button onClick={() => setShowDeleteModal(true)} style={dangerBtnStyle}>Delete</button>
         </div>
-      </div>
+      </Card>
 
       {showDeleteModal && (
         <DeleteAccountModal

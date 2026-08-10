@@ -157,11 +157,11 @@ export default function AdminReports() {
         </h2>
 
         {loading ? (
-          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Loading reports&hellip;</p>
           </div>
         ) : reports.length === 0 ? (
-          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No reports</p>
           </div>
         ) : (
@@ -171,7 +171,7 @@ export default function AdminReports() {
                 key={report.id}
                 style={{
                   display: 'flex', gap: '16px',
-                  background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', padding: '16px',
+                  background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', padding: '16px',
                 }}
               >
                 {report.postVideoUrl ? (
@@ -237,11 +237,11 @@ export default function AdminReports() {
         </h2>
 
         {loading ? (
-          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Loading reports&hellip;</p>
           </div>
         ) : commentReports.length === 0 ? (
-          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No reports</p>
           </div>
         ) : (
@@ -251,7 +251,7 @@ export default function AdminReports() {
                 key={report.id}
                 style={{
                   display: 'flex', gap: '16px',
-                  background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', padding: '16px',
+                  background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', padding: '16px',
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>

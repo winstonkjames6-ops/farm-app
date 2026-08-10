@@ -208,11 +208,11 @@ export default function DraftPosts() {
         </h1>
 
         {loading ? (
-          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Loading drafts&hellip;</p>
           </div>
         ) : posts.length === 0 ? (
-          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No drafts yet</p>
           </div>
         ) : (

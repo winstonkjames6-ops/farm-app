@@ -6,11 +6,10 @@ import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 
 import { T } from '@/lib/theme'
+import { Card } from '@/components/shared/Card'
 
 const cardStyle: React.CSSProperties = {
-  background: T.card,
-  borderRadius: T.radius.lg,
-  border: '1px solid rgba(0,0,0,0.08)',
+  padding: 0,
   overflow: 'hidden',
   display: 'flex',
   flexDirection: 'column',
@@ -323,7 +322,7 @@ function MessagesPageInner() {
       >
         <div style={{ padding: '32px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
           <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: T.fontSize.xl, color: T.ink, marginBottom: 20 }}>Messages</div>
-          <div style={{ ...cardStyle }}>
+          <Card style={cardStyle}>
             {inboxLoading ? (
               <div style={{ padding: '32px', color: T.ink3, fontSize: T.fontSize.md }}>Loading…</div>
             ) : threads.length === 0 ? (
@@ -351,7 +350,7 @@ function MessagesPageInner() {
                 )
               })
             )}
-          </div>
+          </Card>
 
           {minorAthleteGroups.length > 0 && (
             <div style={{ marginTop: 32 }}>
@@ -366,7 +365,7 @@ function MessagesPageInner() {
                   <div style={{ fontSize: T.fontSize.xs, fontWeight: 700, color: T.ink3, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     {group.athleteName}
                   </div>
-                  <div style={{ ...cardStyle }}>
+                  <Card style={cardStyle}>
                     {group.threads.map((thread, i) => {
                       const initials = thread.trainerName.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase()
                       return (
@@ -388,7 +387,7 @@ function MessagesPageInner() {
                         </div>
                       )
                     })}
-                  </div>
+                  </Card>
                 </div>
               ))}
             </div>
@@ -405,7 +404,7 @@ function MessagesPageInner() {
       transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
     >
       <div style={{ padding: '32px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
-        <div style={{ ...cardStyle, height: 'calc(100vh - 120px)' }}>
+        <Card style={{ ...cardStyle, height: 'calc(100vh - 120px)' }}>
           <div style={{ padding: '16px 20px', borderBottom: `1px solid ${T.line}`, display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
             <button
               onClick={() => router.push('/dashboard/messages')}
@@ -512,7 +511,7 @@ function MessagesPageInner() {
             </div>
             {sendError && <div style={{ color: '#EF4444', fontSize: T.fontSize.xs, fontFamily: "'Hanken Grotesk', sans-serif" }}>{sendError}</div>}
           </div>
-        </div>
+        </Card>
       </div>
     </motion.div>
   )

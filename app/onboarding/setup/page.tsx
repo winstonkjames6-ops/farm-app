@@ -298,7 +298,7 @@ export default function TrainerSetupPage() {
       </div>
 
       <div style={{
-        width: '100%', maxWidth: '520px', background: T.card,
+        width: '100%', maxWidth: '520px', background: T.cardBg,
         border: `1px solid ${T.border}`, borderRadius: '20px',
         padding: '32px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       }}>

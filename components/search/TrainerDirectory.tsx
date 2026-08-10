@@ -560,7 +560,7 @@ export default function TrainerDirectory() {
 
         {/* Right column */}
         <div>
-          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', overflow: 'hidden' }}>
+          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', overflow: 'hidden' }}>
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               gap: '16px', flexWrap: 'wrap',

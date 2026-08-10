@@ -93,7 +93,7 @@ function EarningsView({
     >
       <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {/* Summary card */}
-        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
+        <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '4px' }}>
             <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>Total earned</span>
             <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '36px', color: T.ink, lineHeight: 1 }}>
@@ -119,7 +119,7 @@ function EarningsView({
         </div>
 
         {/* Weekly progress */}
-        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
+        <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
           <SectionLabel>Weekly goal</SectionLabel>
           <div style={{ marginBottom: '10px' }}>
             <div style={{ height: '6px', borderRadius: '999px', background: '#E5E7EB', overflow: 'hidden' }}>
@@ -137,7 +137,7 @@ function EarningsView({
         </div>
 
         {/* Session history */}
-        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
+        <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
           <SectionLabel>Session history</SectionLabel>
           {data.history.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3 }}>
@@ -171,7 +171,7 @@ function EarningsView({
         </div>
 
         {/* Athlete rate overrides */}
-        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
+        <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '24px' }}>
           <SectionLabel>Athlete rate overrides</SectionLabel>
           <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, marginBottom: '16px' }}>
             Set a custom rate for an athlete you&apos;ve worked with before — it replaces your standard rate for their future bookings.
@@ -191,7 +191,7 @@ function EarningsView({
                     placeholder="Standard rate"
                     value={athleteRateInputs[athlete.id] ?? ''}
                     onChange={(e) => onAthleteRateInputChange(athlete.id, e.target.value)}
-                    style={{ width: '120px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '7px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.card, outline: 'none' }}
+                    style={{ width: '120px', border: `1px solid ${T.border}`, borderRadius: '8px', padding: '7px 10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink, background: T.cardBg, outline: 'none' }}
                   />
                   <button
                     onClick={() => onSaveAthleteRate(athlete.id)}
@@ -323,7 +323,7 @@ export default function TrainerEarningsPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '32px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3, background: T.card, borderRadius: '14px', border: `1px solid ${T.border}` }}>
+      <div style={{ padding: '32px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3, background: T.cardBg, borderRadius: '14px', border: `1px solid ${T.border}` }}>
         Loading earnings...
       </div>
     )

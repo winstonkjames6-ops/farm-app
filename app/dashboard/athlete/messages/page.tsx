@@ -7,7 +7,7 @@ import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 
 const cardStyle: React.CSSProperties = {
-  background: T.card,
+  background: T.cardBg,
   borderRadius: '16px',
   border: '1px solid rgba(0,0,0,0.08)',
   overflow: 'hidden',

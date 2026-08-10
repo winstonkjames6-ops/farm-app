@@ -129,7 +129,7 @@ function NextSessionCard({ session }: { session: Session | null }) {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}
+        style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}
       >
         <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '18px', color: T.ink2 }}>
           No sessions today
