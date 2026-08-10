@@ -15,7 +15,7 @@ export function MetricCard({ label, value, icon: Icon, opacity }: MetricCardProp
         background: `rgba(0, 188, 200, ${opacity})`,
         borderRadius: T.radius.md,
         padding: '24px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
