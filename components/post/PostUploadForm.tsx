@@ -14,9 +14,33 @@ const BLOCKED_WORDS = [
   'nigger', 'nigga', 'faggot', 'fag', 'retard', 'whore', 'slut',
 ]
 
+const VOWELS = new Set(['a', 'e', 'i', 'o', 'u'])
+
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[\s_]+/g, '') // Remove all spaces and underscores
+    // Only unambiguous consonant substitutions are folded here — vowel digits
+    // (0/1/3/4/!/|/@) are left as-is and matched per-word below, since folding
+    // them to a fixed letter can't also let them stand in for a leftover digit.
+    .replace(/[5]/g, 's')
+    .replace(/[7]/g, 't')
+    .replace(/[8]/g, 'b')
+    .replace(/[9]/g, 'g')
+}
+
 function containsBlockedWord(text: string): boolean {
-  const lower = text.toLowerCase()
-  return BLOCKED_WORDS.some((word) => lower.includes(word))
+  const normalized = normalizeText(text)
+  // Create a flexible pattern allowing 0+ repeated characters between letters,
+  // and letting digits/symbols stand in for vowels (e.g. "f1ck" -> "fick" -> "fuck").
+  return BLOCKED_WORDS.some((word) => {
+    const pattern = word
+      .split('')
+      .map((ch) => (VOWELS.has(ch) ? `[${ch}0-9!|@]+` : `${ch}+`))
+      .join('')
+    const regex = new RegExp(pattern)
+    return regex.test(normalized)
+  })
 }
 
 type Role = 'trainer' | 'athlete'
