@@ -9,7 +9,7 @@ import { T } from '@/lib/theme'
 
 const cardStyle: React.CSSProperties = {
   background: T.card,
-  borderRadius: '16px',
+  borderRadius: T.radius.lg,
   border: '1px solid rgba(0,0,0,0.08)',
   overflow: 'hidden',
   display: 'flex',
@@ -82,7 +82,7 @@ function onlineStatus(lastActive: string | null): string {
 function Avatar({ initials, size }: { initials: string; size: number }) {
   return (
     <div style={{
-      width: size, height: size, borderRadius: '999px', flexShrink: 0,
+      width: size, height: size, borderRadius: T.radius.full, flexShrink: 0,
       background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
@@ -322,12 +322,12 @@ function MessagesPageInner() {
         transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
       >
         <div style={{ padding: '32px', color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
-          <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 22, color: T.ink, marginBottom: 20 }}>Messages</div>
+          <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: T.fontSize.xl, color: T.ink, marginBottom: 20 }}>Messages</div>
           <div style={{ ...cardStyle }}>
             {inboxLoading ? (
-              <div style={{ padding: '32px', color: T.ink3, fontSize: 14 }}>Loading…</div>
+              <div style={{ padding: '32px', color: T.ink3, fontSize: T.fontSize.md }}>Loading…</div>
             ) : threads.length === 0 ? (
-              <div style={{ padding: '32px', color: T.ink3, fontSize: 14 }}>No messages yet.</div>
+              <div style={{ padding: '32px', color: T.ink3, fontSize: T.fontSize.md }}>No messages yet.</div>
             ) : (
               threads.map((thread, i) => {
                 const initials = thread.otherName.split(' ').map((w: string) => w[0] ?? '').join('').slice(0, 2).toUpperCase()
@@ -343,10 +343,10 @@ function MessagesPageInner() {
                   >
                     <Avatar initials={initials || '?'} size={42} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink }}>{thread.otherName}</div>
-                      <div style={{ fontSize: 13, color: T.ink3, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{thread.lastBody}</div>
+                      <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: T.fontSize.md, color: T.ink }}>{thread.otherName}</div>
+                      <div style={{ fontSize: T.fontSize.sm, color: T.ink3, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{thread.lastBody}</div>
                     </div>
-                    <div style={{ fontSize: 11, color: T.ink3, flexShrink: 0 }}>{relativeTime(thread.lastSentAt)}</div>
+                    <div style={{ fontSize: T.fontSize.xs, color: T.ink3, flexShrink: 0 }}>{relativeTime(thread.lastSentAt)}</div>
                   </a>
                 )
               })
@@ -355,15 +355,15 @@ function MessagesPageInner() {
 
           {minorAthleteGroups.length > 0 && (
             <div style={{ marginTop: 32 }}>
-              <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 18, color: T.ink, marginBottom: 4 }}>
+              <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: T.fontSize.lg, color: T.ink, marginBottom: 4 }}>
                 Your Athletes&apos; Trainer Messages
               </div>
-              <div style={{ fontSize: 13, color: T.ink3, marginBottom: 16 }}>
+              <div style={{ fontSize: T.fontSize.sm, color: T.ink3, marginBottom: 16 }}>
                 Read-only oversight — you&apos;re viewing your minor athlete&apos;s conversations, not replying as them.
               </div>
               {minorAthleteGroups.map((group) => (
                 <div key={group.athleteId} style={{ marginBottom: 20 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: T.ink3, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <div style={{ fontSize: T.fontSize.xs, fontWeight: 700, color: T.ink3, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     {group.athleteName}
                   </div>
                   <div style={{ ...cardStyle }}>
@@ -379,12 +379,12 @@ function MessagesPageInner() {
                         >
                           <Avatar initials={initials || '?'} size={42} />
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 14, color: T.ink }}>
+                            <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: T.fontSize.md, color: T.ink }}>
                               {group.athleteName}&apos;s messages with {thread.trainerName}
                             </div>
-                            <div style={{ fontSize: 13, color: T.ink3, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{thread.lastBody}</div>
+                            <div style={{ fontSize: T.fontSize.sm, color: T.ink3, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{thread.lastBody}</div>
                           </div>
-                          <div style={{ fontSize: 11, color: T.ink3, flexShrink: 0 }}>{relativeTime(thread.lastSentAt)}</div>
+                          <div style={{ fontSize: T.fontSize.xs, color: T.ink3, flexShrink: 0 }}>{relativeTime(thread.lastSentAt)}</div>
                         </div>
                       )
                     })}
@@ -418,9 +418,9 @@ function MessagesPageInner() {
             </button>
             <Avatar initials={otherInitials || '?'} size={38} />
             <div>
-              <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: 15, color: T.ink }}>{otherName || '…'}</div>
+              <div style={{ fontFamily: "'Archivo', sans-serif", fontWeight: 700, fontSize: T.fontSize.sm, color: T.ink }}>{otherName || '…'}</div>
               {statusText && (
-                <div style={{ fontSize: 11, color: statusText === 'Online' ? T.cyan : T.ink3, marginTop: 1 }}>
+                <div style={{ fontSize: T.fontSize.xs, color: statusText === 'Online' ? T.cyan : T.ink3, marginTop: 1 }}>
                   {statusText}
                 </div>
               )}
@@ -442,7 +442,7 @@ function MessagesPageInner() {
                   lastKey = key
                   items.push(
                     <div key={`sep-${key}`} style={{ textAlign: 'center', margin: '2px 0' }}>
-                      <span style={{ fontSize: 11, color: T.ink3, background: 'rgba(0,0,0,0.05)', borderRadius: '99px', padding: '3px 10px' }}>
+                      <span style={{ fontSize: T.fontSize.xs, color: T.ink3, background: 'rgba(0,0,0,0.05)', borderRadius: T.radius.full, padding: '3px 10px' }}>
                         {dateSeparatorLabel(msg.sent_at)}
                       </span>
                     </div>
@@ -463,11 +463,11 @@ function MessagesPageInner() {
                       background: isMine ? T.cyan : T.surface2,
                       color: isMine ? '#FFFFFF' : T.ink,
                       borderRadius: isMine ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                      fontSize: 14, lineHeight: 1.55,
+                      fontSize: T.fontSize.md, lineHeight: 1.55,
                       fontWeight: isMine ? 500 : 400,
                     }}>
                       <div style={{ minHeight: '1em' }}>{msg.body}</div>
-                      <div style={{ fontSize: 11, marginTop: 4, color: isMine ? 'rgba(255,255,255,0.65)' : T.ink3, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 3 }}>
+                      <div style={{ fontSize: T.fontSize.xs, marginTop: 4, color: isMine ? 'rgba(255,255,255,0.65)' : T.ink3, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 3 }}>
                         <span>{time}</span>
                         {isMine && (
                           msg.read_at ? (
@@ -500,17 +500,17 @@ function MessagesPageInner() {
                 onKeyDown={(e) => { if (e.key === 'Enter') sendMessage() }}
                 placeholder="Type a message..."
                 disabled={!ready}
-                style={{ flex: 1, background: T.surface2, border: '1px solid rgba(0,0,0,0.10)', borderRadius: '10px', color: T.ink, padding: '11px 16px', fontSize: 14, outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif", opacity: ready ? 1 : 0.45, cursor: ready ? 'text' : 'not-allowed' }}
+                style={{ flex: 1, background: T.surface2, border: '1px solid rgba(0,0,0,0.10)', borderRadius: T.radius.md, color: T.ink, padding: '11px 16px', fontSize: T.fontSize.md, outline: 'none', fontFamily: "'Hanken Grotesk', sans-serif", opacity: ready ? 1 : 0.45, cursor: ready ? 'text' : 'not-allowed' }}
               />
               <button
                 onClick={sendMessage}
                 disabled={!ready}
-                style={{ background: T.cyan, color: '#FFFFFF', border: 'none', cursor: ready ? 'pointer' : 'not-allowed', borderRadius: '10px', padding: '11px 22px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: '.08em', flexShrink: 0, opacity: ready ? 1 : 0.45 }}
+                style={{ background: T.cyan, color: '#FFFFFF', border: 'none', cursor: ready ? 'pointer' : 'not-allowed', borderRadius: T.radius.md, padding: '11px 22px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: T.fontSize.md, letterSpacing: '.08em', flexShrink: 0, opacity: ready ? 1 : 0.45 }}
               >
                 SEND
               </button>
             </div>
-            {sendError && <div style={{ color: '#EF4444', fontSize: 12, fontFamily: "'Hanken Grotesk', sans-serif" }}>{sendError}</div>}
+            {sendError && <div style={{ color: '#EF4444', fontSize: T.fontSize.xs, fontFamily: "'Hanken Grotesk', sans-serif" }}>{sendError}</div>}
           </div>
         </div>
       </div>

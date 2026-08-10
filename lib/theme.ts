@@ -16,4 +16,26 @@ export const T = {
   // tertiary color that still passes. Use font-size / weight for hierarchy instead.
   ink3: '#6B7280',
   danger: '#EF4444',
+
+  // Typography scale — 6 sizes, 2 weights
+  fontSize: {
+    xs: '11px',   // captions, labels
+    sm: '13px',   // body, support text
+    md: '16px',   // standard body, form fields
+    lg: '18px',   // section headers (500 weight)
+    xl: '22px',   // page headers (500 weight)
+    '2xl': '28px', // hero text (500 weight)
+  },
+  fontWeight: {
+    regular: 400,
+    bold: 500,
+  },
+
+  // Border radius scale — 4 sizes
+  radius: {
+    sm: '6px',    // form inputs, small components
+    md: '12px',   // cards, modals, standard UI
+    lg: '16px',   // large modals, hero sections
+    full: '999px', // pills, badges, avatars only
+  },
 }

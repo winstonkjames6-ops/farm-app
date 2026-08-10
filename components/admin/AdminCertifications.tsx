@@ -68,8 +68,8 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
             href="/dashboard/admin/reports"
             style={{
               flexShrink: 0,
-              fontFamily: hanken, fontWeight: 600, fontSize: '13px', color: T.ink2, textDecoration: 'none',
-              border: `1px solid ${T.line}`, borderRadius: '999px', padding: '8px 16px',
+              fontFamily: hanken, fontWeight: 600, fontSize: T.fontSize.sm, color: T.ink2, textDecoration: 'none',
+              border: `1px solid ${T.line}`, borderRadius: T.radius.full, padding: '8px 16px',
             }}
           >
             ← Reports
@@ -77,8 +77,8 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
         </div>
 
         {trainers.length === 0 ? (
-          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
-            <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No pending certification requests</p>
+          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: T.radius.lg, textAlign: 'center', padding: '80px 24px' }}>
+            <p style={{ fontFamily: hanken, fontSize: T.fontSize.md, color: T.ink3, margin: 0 }}>No pending certification requests</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -86,17 +86,17 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
               <div
                 key={t.id}
                 style={{
-                  background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px', padding: '20px',
+                  background: T.card, border: `1px solid ${T.line}`, borderRadius: T.radius.lg, padding: '20px',
                 }}
               >
-                <p style={{ fontFamily: hanken, fontSize: '15px', color: T.ink, margin: '0 0 4px', fontWeight: 700 }}>
+                <p style={{ fontFamily: hanken, fontSize: T.fontSize.sm, color: T.ink, margin: '0 0 4px', fontWeight: 700 }}>
                   {t.name}
                 </p>
-                <p style={{ fontFamily: hanken, fontSize: '13px', color: T.ink2, margin: '0 0 12px' }}>
+                <p style={{ fontFamily: hanken, fontSize: T.fontSize.sm, color: T.ink2, margin: '0 0 12px' }}>
                   {t.email}
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px', fontSize: '13px', color: T.ink2, lineHeight: 1.5 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px', fontSize: T.fontSize.sm, color: T.ink2, lineHeight: 1.5 }}>
                   <span><strong style={{ color: T.ink }}>Years of experience:</strong> {t.yearsExperience ?? 'Not provided'}</span>
                   {t.certifications.length === 0 ? (
                     <span><strong style={{ color: T.ink }}>Certifications:</strong> Not provided</span>
@@ -120,13 +120,13 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
                     rel="noreferrer"
                     style={{
                       display: 'inline-block', marginBottom: '16px',
-                      fontFamily: hanken, fontWeight: 600, fontSize: '13px', color: T.cyan, textDecoration: 'none',
+                      fontFamily: hanken, fontWeight: 600, fontSize: T.fontSize.sm, color: T.cyan, textDecoration: 'none',
                     }}
                   >
                     View verification document →
                   </a>
                 ) : (
-                  <p style={{ fontFamily: hanken, fontSize: '13px', color: T.ink3, margin: '0 0 16px', fontStyle: 'italic' }}>
+                  <p style={{ fontFamily: hanken, fontSize: T.fontSize.sm, color: T.ink3, margin: '0 0 16px', fontStyle: 'italic' }}>
                     No document uploaded
                   </p>
                 )}
@@ -137,14 +137,14 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
                   value={notes[t.id] ?? ''}
                   onChange={(e) => setNotes((prev) => ({ ...prev, [t.id]: e.target.value }))}
                   style={{
-                    width: '100%', height: '38px', borderRadius: '8px', border: `1px solid ${T.line}`,
-                    padding: '0 12px', fontSize: '13px', fontFamily: hanken, outline: 'none',
+                    width: '100%', height: '38px', borderRadius: T.radius.md, border: `1px solid ${T.line}`,
+                    padding: '0 12px', fontSize: T.fontSize.sm, fontFamily: hanken, outline: 'none',
                     boxSizing: 'border-box', color: T.ink, background: T.bg, marginBottom: '10px',
                   }}
                 />
 
                 {errors[t.id] && (
-                  <p style={{ fontFamily: hanken, fontSize: '12px', color: T.danger, margin: '0 0 10px' }}>
+                  <p style={{ fontFamily: hanken, fontSize: T.fontSize.xs, color: T.danger, margin: '0 0 10px' }}>
                     {errors[t.id]}
                   </p>
                 )}
@@ -155,9 +155,9 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
                     disabled={pendingId === t.id}
                     onClick={() => decide(t.id, 'approved')}
                     style={{
-                      height: '36px', padding: '0 18px', borderRadius: '999px', border: 'none',
+                      height: '36px', padding: '0 18px', borderRadius: T.radius.full, border: 'none',
                       background: T.cyan, color: '#FFFFFF',
-                      fontFamily: hanken, fontWeight: 700, fontSize: '13px',
+                      fontFamily: hanken, fontWeight: 700, fontSize: T.fontSize.sm,
                       cursor: pendingId === t.id ? 'not-allowed' : 'pointer',
                       opacity: pendingId === t.id ? 0.6 : 1,
                     }}
@@ -169,9 +169,9 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
                     disabled={pendingId === t.id}
                     onClick={() => decide(t.id, 'rejected')}
                     style={{
-                      height: '36px', padding: '0 18px', borderRadius: '999px', border: `1px solid ${T.danger}`,
+                      height: '36px', padding: '0 18px', borderRadius: T.radius.full, border: `1px solid ${T.danger}`,
                       background: 'transparent', color: T.danger,
-                      fontFamily: hanken, fontWeight: 700, fontSize: '13px',
+                      fontFamily: hanken, fontWeight: 700, fontSize: T.fontSize.sm,
                       cursor: pendingId === t.id ? 'not-allowed' : 'pointer',
                       opacity: pendingId === t.id ? 0.6 : 1,
                     }}

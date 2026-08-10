@@ -16,46 +16,46 @@ const cardStyle: React.CSSProperties = {
   background: 'rgba(255,255,255,0.90)',
   backdropFilter: 'blur(8px)',
   WebkitBackdropFilter: 'blur(8px)',
-  borderRadius: '14px',
+  borderRadius: T.radius.md,
   border: '1px solid rgba(0,0,0,0.08)',
   padding: '20px',
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', height: '40px', borderRadius: '8px', border: '1px solid #E5E7EB',
-  padding: '0 12px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif",
+  width: '100%', height: '40px', borderRadius: T.radius.md, border: '1px solid #E5E7EB',
+  padding: '0 12px', fontSize: T.fontSize.md, fontFamily: "'Hanken Grotesk', sans-serif",
   outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF',
 }
 
 const linkButtonStyle: React.CSSProperties = {
   background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-  color: T.cyan, fontSize: '13px', fontWeight: 600, fontFamily: "'Hanken Grotesk', sans-serif",
+  color: T.cyan, fontSize: T.fontSize.sm, fontWeight: 600, fontFamily: "'Hanken Grotesk', sans-serif",
 }
 
 const secondaryBtnStyle: React.CSSProperties = {
-  height: '36px', padding: '0 16px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.12)',
-  background: 'transparent', color: T.ink2, fontSize: '13px', fontWeight: 600,
+  height: '36px', padding: '0 16px', borderRadius: T.radius.md, border: '1px solid rgba(0,0,0,0.12)',
+  background: 'transparent', color: T.ink2, fontSize: T.fontSize.sm, fontWeight: 600,
   fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer',
 }
 
 const dangerBtnStyle: React.CSSProperties = {
-  height: '36px', padding: '0 16px', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.4)',
-  background: 'transparent', color: T.danger, fontSize: '13px', fontWeight: 700,
+  height: '36px', padding: '0 16px', borderRadius: T.radius.md, border: '1px solid rgba(239,68,68,0.4)',
+  background: 'transparent', color: T.danger, fontSize: T.fontSize.sm, fontWeight: 700,
   fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer',
 }
 
 const errorTextStyle: React.CSSProperties = {
-  fontSize: '12px', color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px',
+  fontSize: T.fontSize.xs, color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px',
 }
 
 const pendingTextStyle: React.CSSProperties = {
-  fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px',
+  fontSize: T.fontSize.xs, color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px',
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '11px',
+      fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: T.fontSize.xs,
       letterSpacing: '.12em', textTransform: 'uppercase' as const, color: T.ink3,
       marginBottom: '10px',
     }}>{children}</div>
@@ -69,7 +69,7 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
     <div
       onClick={onToggle}
       style={{
-        width: '44px', height: '26px', borderRadius: '999px',
+        width: '44px', height: '26px', borderRadius: T.radius.full,
         background: on ? T.cyan : '#E5E7EB',
         position: 'relative', cursor: 'pointer', flexShrink: 0,
         transition: 'background 0.15s',
@@ -99,11 +99,11 @@ function ToggleRow({
       padding: '14px 0', borderBottom: isLast ? 'none' : `1px solid ${T.line}`,
     }}>
       <div>
-        <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+        <div style={{ fontSize: T.fontSize.md, fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
           {label}
         </div>
         {hint && (
-          <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
+          <div style={{ fontSize: T.fontSize.xs, color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
             {hint}
           </div>
         )}
@@ -178,7 +178,7 @@ export default function SettingsPage() {
             onClick={() => router.back()}
             aria-label="Back"
             style={{
-              width: '40px', height: '40px', borderRadius: '10px',
+              width: '40px', height: '40px', borderRadius: T.radius.md,
               border: '1.5px solid rgba(0,0,0,0.12)', background: '#FFFFFF',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', flexShrink: 0, padding: 0,
@@ -187,7 +187,7 @@ export default function SettingsPage() {
             <ArrowLeft size={18} color={T.ink} />
           </button>
           <span style={{
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: '26px', color: T.ink,
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: T.fontSize['2xl'], color: T.ink,
           }}>Settings</span>
         </div>
 
@@ -263,14 +263,14 @@ export default function SettingsPage() {
             <div style={cardStyle}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
                 <div>
-                  <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                  <div style={{ fontSize: T.fontSize.md, fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
                     Language
                   </div>
-                  <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
+                  <div style={{ fontSize: T.fontSize.xs, color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
                     More languages coming soon
                   </div>
                 </div>
-                <span style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>English</span>
+                <span style={{ fontSize: T.fontSize.sm, color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>English</span>
               </div>
             </div>
           </div>
@@ -355,7 +355,7 @@ function AccountSection({
         {/* Email */}
         <div style={{ padding: '14px 0', borderBottom: `1px solid ${T.line}` }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-            <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+            <div style={{ fontSize: T.fontSize.md, fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
               Email
             </div>
             {!editingEmail && (
@@ -379,7 +379,7 @@ function AccountSection({
               </div>
             </form>
           ) : (
-            <div style={{ fontSize: '13px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
+            <div style={{ fontSize: T.fontSize.sm, color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
               {email}
             </div>
           )}
@@ -391,11 +391,11 @@ function AccountSection({
         <div style={{ padding: '14px 0', borderBottom: `1px solid ${T.line}` }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+              <div style={{ fontSize: T.fontSize.md, fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
                 Password
               </div>
               {!editingPassword && (
-                <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
+                <div style={{ fontSize: T.fontSize.xs, color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
                   ••••••••
                 </div>
               )}
@@ -443,7 +443,7 @@ function AccountSection({
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px',
           padding: '14px 0', borderBottom: `1px solid ${T.line}`,
         }}>
-          <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+          <div style={{ fontSize: T.fontSize.md, fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
             Log out
           </div>
           <button onClick={onLogOut} style={secondaryBtnStyle}>Log out</button>
@@ -452,10 +452,10 @@ function AccountSection({
         {/* Delete account */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: '14px 0' }}>
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 500, color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+            <div style={{ fontSize: T.fontSize.md, fontWeight: 500, color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif" }}>
               Delete account
             </div>
-            <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
+            <div style={{ fontSize: T.fontSize.xs, color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '2px' }}>
               Permanently delete your account and all data
             </div>
           </div>
@@ -541,20 +541,20 @@ function DeleteAccountModal({
       padding: '24px', overflowY: 'auto',
     }}>
       <div style={{
-        background: '#FFFFFF', borderRadius: '16px', padding: '24px',
+        background: '#FFFFFF', borderRadius: T.radius.lg, padding: '24px',
         width: '420px', maxWidth: '100%', maxHeight: '92vh', overflowY: 'auto',
       }}>
         <div style={{
-          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '18px',
+          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: T.fontSize.lg,
           color: T.danger, marginBottom: '4px',
         }}>Delete your account?</div>
         <div style={{
-          fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif",
+          fontSize: T.fontSize.sm, color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif",
           lineHeight: 1.5, marginBottom: '16px',
         }}>
           This permanently deletes your profile, bookings, messages, and reviews. This cannot be undone.
         </div>
-        <div style={{ fontSize: '13px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '8px' }}>
+        <div style={{ fontSize: T.fontSize.sm, color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '8px' }}>
           Type <strong>DELETE</strong> to confirm
         </div>
         <input
