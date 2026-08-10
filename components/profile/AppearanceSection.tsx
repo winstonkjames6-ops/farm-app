@@ -17,12 +17,12 @@ function Toggle({ on, onChange }: { on: boolean; onChange: () => void }) {
       onClick={onChange}
       style={{
         width: '44px', height: '24px', borderRadius: '999px',
-        background: on ? T.cyan : '#E5E7EB', position: 'relative', cursor: 'pointer',
+        background: on ? T.cyan : T.border, position: 'relative', cursor: 'pointer',
         flexShrink: 0, transition: 'background 0.2s ease',
       }}
     >
       <div style={{
-        width: '20px', height: '20px', borderRadius: '50%', background: '#FFFFFF',
+        width: '20px', height: '20px', borderRadius: '50%', background: T.cardBg,
         position: 'absolute', top: '2px', left: on ? '22px' : '2px',
         transition: 'left 0.2s ease', boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
       }} />
@@ -40,7 +40,7 @@ function ThemeSegmented({
   return (
     <div style={{
       display: 'flex', gap: '4px', flexShrink: 0,
-      background: '#F3F4F6', border: '1px solid rgba(0,0,0,0.08)',
+      background: T.surface2, border: '1px solid rgba(0,0,0,0.08)',
       borderRadius: '10px', padding: '3px',
     }}>
       {THEME_OPTIONS.map(({ value: v, label }) => {
@@ -52,7 +52,7 @@ function ThemeSegmented({
             style={{
               minHeight: '32px', padding: '0 12px', borderRadius: '8px',
               border: active ? '1px solid rgba(0,0,0,0.08)' : '1px solid transparent',
-              background: active ? '#FFFFFF' : 'transparent',
+              background: active ? T.cardBg : 'transparent',
               color: active ? T.ink : T.ink2,
               fontFamily: "'Hanken Grotesk', sans-serif",
               fontSize: '13px', fontWeight: active ? 700 : 500,
@@ -183,7 +183,7 @@ export function AppearanceSection({
         <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '10px' }}>Saving…</div>
       )}
       {saved && !saving && !error && (
-        <div style={{ fontSize: '12px', color: '#059669', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '10px' }}>Saved</div>
+        <div style={{ fontSize: '12px', color: T.success, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '10px' }}>Saved</div>
       )}
     </div>
   )

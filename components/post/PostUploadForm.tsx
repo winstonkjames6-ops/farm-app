@@ -91,22 +91,22 @@ function CardLabel({ children }: { children: React.ReactNode }) {
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: '13px', color: '#374151', fontFamily: hanken, fontWeight: 500, marginBottom: '6px' }}>
+    <div style={{ fontSize: '13px', color: T.ink2, fontFamily: hanken, fontWeight: 500, marginBottom: '6px' }}>
       {children}
     </div>
   )
 }
 
 const inputBase: React.CSSProperties = {
-  width: '100%', height: '44px', borderRadius: '8px', border: '1px solid #E5E7EB',
+  width: '100%', height: '44px', borderRadius: '8px', border: `1px solid ${T.border}`,
   padding: '0 14px', fontSize: '16px', fontFamily: hanken,
-  outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF',
+  outline: 'none', boxSizing: 'border-box', color: T.ink, background: T.cardBg,
 }
 
 const selectBase: React.CSSProperties = {
-  width: '100%', height: '44px', borderRadius: '8px', border: '1px solid #E5E7EB',
+  width: '100%', height: '44px', borderRadius: '8px', border: `1px solid ${T.border}`,
   fontSize: '16px', fontFamily: hanken, padding: '0 14px', outline: 'none',
-  color: T.ink, background: '#FFFFFF', cursor: 'pointer', boxSizing: 'border-box',
+  color: T.ink, background: T.cardBg, cursor: 'pointer', boxSizing: 'border-box',
 }
 
 function formatBookingDate(sessionTime: string): string {
@@ -397,7 +397,7 @@ export function PostUploadForm({ role }: { role: Role }) {
       </div>
 
       {loadError && (
-        <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: hanken }}>{loadError}</div>
+        <div style={{ fontSize: '13px', color: T.danger, fontFamily: hanken }}>{loadError}</div>
       )}
 
       <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -420,7 +420,7 @@ export function PostUploadForm({ role }: { role: Role }) {
                   style={{ width: '100%', maxHeight: '320px', borderRadius: '8px', background: '#000000', display: 'block' }}
                 />
               )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', border: `1px solid ${T.border}`, borderRadius: '8px' }}>
                 <Film size={18} color={T.cyan} style={{ flexShrink: 0 }} />
                 <span style={{ flex: 1, fontFamily: hanken, fontSize: '14px', color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {videoFile.name}
@@ -435,8 +435,8 @@ export function PostUploadForm({ role }: { role: Role }) {
               </div>
               {videoSizeError && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', padding: '10px 12px' }}>
-                  <AlertCircle size={16} color="#EF4444" style={{ flexShrink: 0 }} />
-                  <span style={{ fontSize: '13px', color: '#DC2626', fontFamily: hanken }}>{videoSizeError}</span>
+                  <AlertCircle size={16} color={T.danger} style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: '13px', color: T.dangerDark, fontFamily: hanken }}>{videoSizeError}</span>
                 </div>
               )}
             </div>
@@ -446,7 +446,7 @@ export function PostUploadForm({ role }: { role: Role }) {
               onClick={() => fileInputRef.current?.click()}
               style={{
                 width: '100%', height: '96px', borderRadius: '8px', border: '1px dashed #D1D5DB',
-                background: '#FAFAFA', display: 'flex', flexDirection: 'column', alignItems: 'center',
+                background: T.surface2, display: 'flex', flexDirection: 'column', alignItems: 'center',
                 justifyContent: 'center', gap: '6px', cursor: 'pointer', color: T.ink2,
               }}
             >
@@ -465,7 +465,7 @@ export function PostUploadForm({ role }: { role: Role }) {
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 placeholder="Say something about this clip... (optional)"
-                style={{ width: '100%', minHeight: '100px', borderRadius: '8px', border: '1px solid #E5E7EB', padding: '14px', fontSize: '16px', fontFamily: hanken, resize: 'vertical', outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF' }}
+                style={{ width: '100%', minHeight: '100px', borderRadius: '8px', border: `1px solid ${T.border}`, padding: '14px', fontSize: '16px', fontFamily: hanken, resize: 'vertical', outline: 'none', boxSizing: 'border-box', color: T.ink, background: T.cardBg }}
               />
             </div>
             <div>
@@ -507,15 +507,15 @@ export function PostUploadForm({ role }: { role: Role }) {
 
         {status === 'error' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', padding: '12px 14px' }}>
-            <AlertCircle size={16} color="#EF4444" style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: '13px', color: '#DC2626', fontFamily: hanken }}>{errorMessage || 'Something went wrong.'}</span>
+            <AlertCircle size={16} color={T.danger} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: '13px', color: T.dangerDark, fontFamily: hanken }}>{errorMessage || 'Something went wrong.'}</span>
           </div>
         )}
 
         {status === 'success' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '8px', padding: '12px 14px' }}>
-            <CheckCircle2 size={16} color="#10B981" style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: '13px', color: '#047857', fontFamily: hanken }}>
+            <CheckCircle2 size={16} color={T.successLight} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: '13px', color: T.success, fontFamily: hanken }}>
               {submitAction === 'draft' ? 'Saved as draft.' : 'Post uploaded successfully.'}
             </span>
           </div>

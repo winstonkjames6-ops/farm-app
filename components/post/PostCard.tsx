@@ -150,7 +150,7 @@ export function PostCardBody({
                 onClick={(e) => e.stopPropagation()}
                 style={{
                   position: 'absolute', top: '100%', right: 0, marginTop: '6px', zIndex: 5,
-                  minWidth: '120px', background: '#FFFFFF', border: `1px solid ${T.line}`,
+                  minWidth: '120px', background: T.cardBg, border: `1px solid ${T.line}`,
                   borderRadius: '10px', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', overflow: 'hidden',
                 }}
               >
@@ -172,7 +172,7 @@ export function PostCardBody({
       </div>
 
       {post.caption && (
-        <p style={{ fontFamily: hanken, fontSize: '14px', color: '#374151', margin: '0 0 12px', lineHeight: 1.5 }}>
+        <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink2, margin: '0 0 12px', lineHeight: 1.5 }}>
           {post.caption}
         </p>
       )}
@@ -203,10 +203,10 @@ export function PostCardBody({
             display: 'flex', alignItems: 'center', gap: '6px',
             background: 'none', border: 'none', padding: 0,
             cursor: currentUserId ? 'pointer' : 'default',
-            color: liked ? '#EF4444' : T.ink3,
+            color: liked ? T.danger : T.ink3,
           }}
         >
-          <Heart size={18} fill={liked ? '#EF4444' : 'none'} />
+          <Heart size={18} fill={liked ? T.danger : 'none'} />
           <span style={{ fontFamily: hanken, fontSize: '13px', fontWeight: 600 }}>{likeCount}</span>
         </button>
 
@@ -278,13 +278,13 @@ export function PostCardBody({
                 placeholder="Why are you reporting this post?"
                 required
                 style={{
-                  width: '100%', minHeight: '72px', borderRadius: '8px', border: '1px solid #E5E7EB',
+                  width: '100%', minHeight: '72px', borderRadius: '8px', border: `1px solid ${T.border}`,
                   padding: '10px 12px', fontSize: '13px', fontFamily: hanken, resize: 'vertical',
-                  outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF',
+                  outline: 'none', boxSizing: 'border-box', color: T.ink, background: T.cardBg,
                 }}
               />
               {reportStatus === 'error' && (
-                <p style={{ fontFamily: hanken, fontSize: '12px', color: '#EF4444', margin: '6px 0 0' }}>
+                <p style={{ fontFamily: hanken, fontSize: '12px', color: T.danger, margin: '6px 0 0' }}>
                   Something went wrong. Try again.
                 </p>
               )}
@@ -369,14 +369,14 @@ export function PostCard({
       transition={{ duration: 0.32, ease: [0.2, 0.7, 0.2, 1], delay: index * 0.05 }}
       onClick={() => onPlay()}
       style={{
-        background: '#FFFFFF',
-        border: post.feedbackRequested ? `1.5px dashed ${T.cyanBorder}` : '1px solid rgba(0,0,0,0.08)',
+        background: T.cardBg,
+        border: post.feedbackRequested ? `1.5px dashed ${T.cyanBorder}` : `1px solid ${T.border}`,
         borderRadius: '16px',
         overflow: 'hidden', cursor: 'pointer',
       }}
     >
       {/* Thumbnail / player */}
-      <div style={{ position: 'relative', width: '100%', height: '220px', background: '#111827' }}>
+      <div style={{ position: 'relative', width: '100%', height: '220px', background: T.ink }}>
         {isPlaying ? (
           <>
             <video

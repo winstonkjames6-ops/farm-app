@@ -179,7 +179,7 @@ export default function AdminReports() {
                     href={report.postVideoUrl}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ flexShrink: 0, width: '96px', height: '96px', borderRadius: '10px', overflow: 'hidden', background: '#111827', display: 'block' }}
+                    style={{ flexShrink: 0, width: '96px', height: '96px', borderRadius: '10px', overflow: 'hidden', background: T.ink, display: 'block' }}
                   >
                     {report.postThumbnailUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element

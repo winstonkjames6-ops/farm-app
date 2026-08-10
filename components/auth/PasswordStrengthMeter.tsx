@@ -2,6 +2,8 @@
 // (athlete 18+ wizard, and the minor wizard when it's built) — one scoring
 // heuristic and one visual, not reimplemented per flow.
 
+import { T } from '@/lib/theme'
+
 export interface PasswordStrength {
   score: number // 0-4
   label: string
@@ -9,11 +11,11 @@ export interface PasswordStrength {
 }
 
 const BANDS: Array<{ label: string; color: string }> = [
-  { label: 'Too weak', color: '#EF4444' },
-  { label: 'Weak', color: '#EF4444' },
-  { label: 'Fair', color: '#F59E0B' },
-  { label: 'Good', color: '#00BCC8' },
-  { label: 'Strong', color: '#10B981' },
+  { label: 'Too weak', color: T.danger },
+  { label: 'Weak', color: T.danger },
+  { label: 'Fair', color: T.warning },
+  { label: 'Good', color: T.cyan },
+  { label: 'Strong', color: T.successLight },
 ]
 
 export function computePasswordStrength(password: string): PasswordStrength {
@@ -40,7 +42,7 @@ export function PasswordStrengthMeter({ password }: { password: string }) {
         {BANDS.map((_, i) => (
           <div key={i} style={{
             flex: 1, height: '4px', borderRadius: '999px',
-            background: i <= score ? color : '#E5E7EB',
+            background: i <= score ? color : T.border,
             transition: 'background 0.15s',
           }} />
         ))}

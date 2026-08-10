@@ -16,6 +16,10 @@ export const T = {
   // tertiary color that still passes. Use font-size / weight for hierarchy instead.
   ink3: '#6B7280',
   danger: '#EF4444',
+  dangerDark: '#DC2626',
+  success: '#047857',
+  successLight: '#10B981',
+  warning: '#F59E0B',
 
   // Typography scale — 6 sizes, 2 weights
   fontSize: {

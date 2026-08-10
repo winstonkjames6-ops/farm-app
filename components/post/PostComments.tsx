@@ -175,13 +175,13 @@ export function PostComments({ postId, currentUserId }: { postId: string; curren
                         placeholder="Why are you reporting this comment?"
                         required
                         style={{
-                          width: '100%', minHeight: '56px', borderRadius: '8px', border: '1px solid #E5E7EB',
+                          width: '100%', minHeight: '56px', borderRadius: '8px', border: `1px solid ${T.border}`,
                           padding: '8px 10px', fontSize: '12px', fontFamily: hanken, resize: 'vertical',
-                          outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF',
+                          outline: 'none', boxSizing: 'border-box', color: T.ink, background: T.cardBg,
                         }}
                       />
                       {reportStatus === 'error' && (
-                        <p style={{ fontFamily: hanken, fontSize: '11px', color: '#EF4444', margin: '4px 0 0' }}>
+                        <p style={{ fontFamily: hanken, fontSize: '11px', color: T.danger, margin: '4px 0 0' }}>
                           Something went wrong. Try again.
                         </p>
                       )}
@@ -230,9 +230,9 @@ export function PostComments({ postId, currentUserId }: { postId: string; curren
               onKeyDown={(e) => { if (e.key === 'Enter') submitComment() }}
               placeholder="Add a comment…"
               style={{
-                flex: 1, height: '34px', borderRadius: '999px', border: '1px solid #E5E7EB',
+                flex: 1, height: '34px', borderRadius: '999px', border: `1px solid ${T.border}`,
                 padding: '0 14px', fontSize: '13px', fontFamily: hanken,
-                outline: 'none', boxSizing: 'border-box', color: T.ink, background: '#FFFFFF',
+                outline: 'none', boxSizing: 'border-box', color: T.ink, background: T.cardBg,
               }}
             />
             <button
@@ -250,7 +250,7 @@ export function PostComments({ postId, currentUserId }: { postId: string; curren
             </button>
           </div>
           {submitStatus === 'error' && (
-            <p style={{ fontFamily: hanken, fontSize: '12px', color: '#EF4444', margin: '6px 0 0' }}>{submitError}</p>
+            <p style={{ fontFamily: hanken, fontSize: '12px', color: T.danger, margin: '6px 0 0' }}>{submitError}</p>
           )}
         </>
       ) : (
