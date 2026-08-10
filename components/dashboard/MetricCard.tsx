@@ -47,9 +47,9 @@ export function MetricCard({ label, value, icon, opacity }: MetricCardProps) {
         src={`/icons/metric-${icon}.png`}
         alt=""
         style={{
-          width: '64px',
-          height: '64px',
-          opacity: 0.6,
+          width: '96px',
+          height: '96px',
+          opacity: 0.9,
           flexShrink: 0,
         }}
         aria-hidden="true"
