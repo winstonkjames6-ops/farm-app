@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { Calendar, TrendingUp, Clock, Star } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
+import { MetricCard } from '@/components/dashboard/MetricCard'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -38,12 +40,6 @@ function getGreeting() {
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
-const IconStar = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-  </svg>
-)
-
 const IconMapPin = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -70,55 +66,6 @@ const IconCheckCircle = () => (
     <polyline points="22 4 12 14.01 9 11.01" />
   </svg>
 )
-
-// ── Stat tile ──────────────────────────────────────────────────────────────────
-
-function StatTile({
-  value,
-  label,
-  isEarnings,
-  suffix,
-  index,
-  accentColor,
-}: {
-  value: string
-  label: string
-  isEarnings?: boolean
-  suffix?: React.ReactNode
-  index: number
-  accentColor: string
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.1 + index * 0.08 }}
-      style={{
-        background: 'rgba(255,255,255,0.90)',
-        backdropFilter: 'blur(8px)',
-        border: `1px solid ${T.border}`,
-        borderLeft: `4px solid ${accentColor}`,
-        borderRadius: '12px',
-        padding: '20px 24px',
-        minWidth: '140px',
-        flexShrink: 0,
-      }}
-    >
-      {isEarnings ? (
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1px' }}>
-          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '22px', color: T.ink3, paddingTop: '7px', lineHeight: 1 }}>$</span>
-          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '48px', color: T.ink, lineHeight: 1 }}>{value}</span>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '48px', color: T.ink, lineHeight: 1 }}>{value}</span>
-          {suffix && <span style={{ color: T.cyan, display: 'flex', alignItems: 'center' }}>{suffix}</span>}
-        </div>
-      )}
-      <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, marginTop: '6px' }}>{label}</div>
-    </motion.div>
-  )
-}
 
 // ── Next session hero card ─────────────────────────────────────────────────────
 
@@ -371,11 +318,11 @@ function HomeView({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', scrollbarWidth: 'none' as const }}>
-          <StatTile value="7" label="Sessions this week" index={0} accentColor="#6366F1" />
-          <StatTile value="485" label="Earnings this week" isEarnings index={1} accentColor="#00BCC8" />
-          <StatTile value="2" label="Upcoming today" index={2} accentColor="#F59E0B" />
-          <StatTile value="4.9" label="Avg rating" index={3} suffix={<IconStar />} accentColor="#10B981" />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <MetricCard label="Sessions this week" value="7" icon={Calendar} opacity={1} />
+          <MetricCard label="Earnings this week" value="$485" icon={TrendingUp} opacity={0.9} />
+          <MetricCard label="Upcoming today" value="2" icon={Clock} opacity={0.8} />
+          <MetricCard label="Avg rating" value="4.9 ★" icon={Star} opacity={0.7} />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
