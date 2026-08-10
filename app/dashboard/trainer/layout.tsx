@@ -530,7 +530,7 @@ export default function TrainerDashboardLayout({ children }: { children: React.R
 const KNOWN_SPORTS = new Set(['soccer', 'basketball', 'tennis', 'volleyball', 'lacrosse', 'baseball', 'swimming', 'track'])
 
 function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
-  const { primarySport, setPrimarySport } = useTrainerSport()
+  const { setPrimarySport } = useTrainerSport()
   const [isMobile, setIsMobile] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [trainerName, setTrainerName] = useState('')
@@ -594,18 +594,10 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div style={{ minHeight: '100vh', position: 'relative' }}>
-      {/* Background image — reacts to trainer's primary sport */}
+      {/* Background */}
       <div style={{
         position: 'fixed', inset: 0, zIndex: 0,
-        backgroundImage: `url('/backgrounds/${primarySport}.jpg')`,
-        backgroundSize: 'cover', backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-      }} />
-
-      {/* Overlay */}
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 1,
-        background: 'rgba(248,248,246,0.60)', pointerEvents: 'none',
+        background: T.cardBg,
       }} />
 
       {/* Nav */}

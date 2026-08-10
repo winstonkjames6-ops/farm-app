@@ -434,13 +434,7 @@ export default function AthleteLayout({ children }: { children: React.ReactNode 
     <div style={{ minHeight: '100vh', position: 'relative' }}>
       <div style={{
         position: 'fixed', inset: 0, zIndex: 0,
-        backgroundImage: `url('/backgrounds/parent.jpg')`,
-        backgroundSize: 'cover', backgroundPosition: 'center',
-        backgroundAttachment: 'fixed',
-      }} />
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 1,
-        background: 'rgba(248,248,246,0.60)', pointerEvents: 'none',
+        background: T.cardBg,
       }} />
       {isMobile ? (
         <MobileHeader activeNav={activeNav} initials={identity.initials} />
