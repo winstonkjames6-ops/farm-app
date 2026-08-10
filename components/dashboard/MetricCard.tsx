@@ -1,14 +1,13 @@
-import type { LucideIcon } from 'lucide-react'
 import { T } from '@/lib/theme'
 
 type MetricCardProps = {
   label: string
   value: string | number
-  icon: LucideIcon
+  icon: 'calendar' | 'trending-up' | 'clock' | 'star'
   opacity: number
 }
 
-export function MetricCard({ label, value, icon: Icon, opacity }: MetricCardProps) {
+export function MetricCard({ label, value, icon, opacity }: MetricCardProps) {
   return (
     <div
       style={{
@@ -44,7 +43,17 @@ export function MetricCard({ label, value, icon: Icon, opacity }: MetricCardProp
           {value}
         </div>
       </div>
-      <Icon size={48} color="rgba(255, 255, 255, 0.3)" strokeWidth={1.5} aria-hidden="true" />
+      <img
+        src={`/icons/metric-${icon}.png`}
+        alt=""
+        style={{
+          width: '48px',
+          height: '48px',
+          opacity: 0.3,
+          flexShrink: 0,
+        }}
+        aria-hidden="true"
+      />
     </div>
   )
 }

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Calendar, TrendingUp, Clock, Star } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 import { MetricCard } from '@/components/dashboard/MetricCard'
@@ -319,10 +318,10 @@ function HomeView({
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <MetricCard label="Sessions this week" value="7" icon={Calendar} opacity={1} />
-          <MetricCard label="Earnings this week" value="$485" icon={TrendingUp} opacity={0.9} />
-          <MetricCard label="Upcoming today" value="2" icon={Clock} opacity={0.8} />
-          <MetricCard label="Avg rating" value="4.9 ★" icon={Star} opacity={0.7} />
+          <MetricCard label="Sessions this week" value="7" icon="calendar" opacity={1} />
+          <MetricCard label="Earnings this week" value="$485" icon="trending-up" opacity={0.9} />
+          <MetricCard label="Upcoming today" value="2" icon="clock" opacity={0.8} />
+          <MetricCard label="Avg rating" value="4.9 ★" icon="star" opacity={0.7} />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
