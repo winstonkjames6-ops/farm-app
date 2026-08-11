@@ -56,11 +56,11 @@ export function MetricCard({
         aria-hidden="true"
         style={{
           position: 'absolute',
-          width: '130px',
-          height: '130px',
-          top: '50%',
+          width: '160px',
+          height: '160px',
+          top: '64.5%',
           transform: 'translateY(-50%)',
-          right: '-12px',
+          right: '1px',
           opacity: 1,
           pointerEvents: 'none',
           userSelect: 'none',
