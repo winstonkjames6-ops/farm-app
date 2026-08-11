@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
@@ -301,6 +302,7 @@ function HomeView({
   onMarkComplete: (id: string) => Promise<void>
   trainerFirstName: string
 }) {
+  const router = useRouter()
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -318,10 +320,44 @@ function HomeView({
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <MetricCard label="Sessions this week" value="7" icon="calendar" opacity={1} />
-          <MetricCard label="Earnings this week" value="$485" icon="trending-up" opacity={0.9} />
-          <MetricCard label="Upcoming today" value="2" icon="clock" opacity={0.8} />
-          <MetricCard label="Avg rating" value="4.9 ★" icon="star" opacity={0.7} />
+          <MetricCard
+            value="7"
+            labelPrimary="Sessions"
+            labelSecondary="This Week"
+            icon="calendar"
+            actionLabel="View Schedule"
+            background={T.metricTeal[1]}
+            onActionClick={() => router.push('/dashboard/trainer/schedule')}
+          />
+          <MetricCard
+            value="$485"
+            valueColor={T.money}
+            labelPrimary="Earnings"
+            labelSecondary="This Week"
+            icon="trending-up"
+            actionLabel="View Earnings"
+            background={T.metricTeal[2]}
+            onActionClick={() => router.push('/dashboard/trainer/earnings')}
+          />
+          <MetricCard
+            value="2"
+            labelPrimary="Sessions"
+            labelSecondary="Today"
+            icon="clock"
+            actionLabel="View Sessions"
+            background={T.metricTeal[3]}
+            onActionClick={() => router.push('/dashboard/trainer/schedule')}
+          />
+          <MetricCard
+            value="4.9"
+            valueSuffix="★"
+            labelPrimary="Average"
+            labelSecondary="Rating"
+            icon="star"
+            actionLabel="View Reviews"
+            background={T.metricTeal[4]}
+            onActionClick={() => router.push('/dashboard/trainer/profile')}
+          />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

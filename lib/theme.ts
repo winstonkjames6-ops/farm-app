@@ -21,6 +21,16 @@ export const T = {
   successLight: '#10B981',
   warning: '#F59E0B',
 
+  // Metric card palette — descending teal opacity ladder, same hue
+  metricTeal: {
+    1: 'rgba(15, 163, 173, 1)',
+    2: 'rgba(15, 163, 173, 0.8)',
+    3: 'rgba(15, 163, 173, 0.6)',
+    4: 'rgba(15, 163, 173, 0.4)',
+  },
+  // Money value color
+  money: '#8FE04A',
+
   // Typography scale — 6 sizes, 2 weights
   fontSize: {
     xs: '11px',   // captions, labels
