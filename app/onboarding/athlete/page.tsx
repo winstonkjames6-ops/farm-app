@@ -33,6 +33,22 @@ const SPORTS = [
   'Swimming', 'Golf', 'Gymnastics', 'Martial Arts', 'Hockey', 'Wrestling', 'Other',
 ]
 
+// Supabase errors (PostgrestError/AuthError) carry a `.message` string; a Zod
+// validation result carries an `.issues` array instead — neither should ever
+// be handed straight to JSX, which is what produced the literal "{}".
+function describeError(err: unknown, fallback: string): string {
+  if (err == null) return fallback
+  console.error('[athlete onboarding] error:', err)
+  if (typeof err === 'string') return err || fallback
+  const anyErr = err as { issues?: Array<{ message?: string }>; message?: string }
+  if (Array.isArray(anyErr.issues)) {
+    const messages = anyErr.issues.map((issue) => issue?.message).filter((m): m is string => Boolean(m))
+    return messages.length > 0 ? messages.map((m) => `• ${m}`).join('\n') : fallback
+  }
+  if (typeof anyErr.message === 'string' && anyErr.message.length > 0) return anyErr.message
+  return fallback
+}
+
 const inputStyle: React.CSSProperties = {
   width: '100%', height: '48px', borderRadius: '10px', border: '1px solid #E5E7EB',
   padding: '0 14px', fontSize: '15px', fontFamily: "'Hanken Grotesk', sans-serif",
@@ -272,7 +288,7 @@ function LoginStep({
       </label>
 
       {error && (
-        <div style={{ fontSize: '13px', color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '16px' }}>{error}</div>
+        <div style={{ fontSize: '13px', color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '16px', whiteSpace: 'pre-line' }}>{error}</div>
       )}
       {strength.score === 0 && password.length > 0 && (
         <div style={{ fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px' }}>
@@ -392,7 +408,7 @@ function MinorWelcomeStep({
       </div>
 
       {error && (
-        <div style={{ fontSize: '13px', color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '16px' }}>{error}</div>
+        <div style={{ fontSize: '13px', color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '16px', whiteSpace: 'pre-line' }}>{error}</div>
       )}
     </div>
   )
@@ -560,7 +576,7 @@ export default function AthleteOnboardingPage() {
     const { data, error } = await supabase.rpc('lookup_invite_code', { p_code: enteredCode })
     setSubmitting(false)
     if (error || !data || data.length === 0) {
-      setGateError(error?.message ?? 'Invalid or expired invite code.')
+      setGateError(describeError(error, 'Invalid or expired invite code.'))
       return
     }
     const row = data[0]
@@ -601,7 +617,7 @@ export default function AthleteOnboardingPage() {
     })
     if (error || !data.user) {
       setSubmitting(false)
-      setLoginError(error?.message ?? 'Something went wrong. Please try again.')
+      setLoginError(describeError(error, 'Something went wrong. Please try again.'))
       return
     }
 
@@ -610,7 +626,7 @@ export default function AthleteOnboardingPage() {
     })
     if (claimErr) {
       setSubmitting(false)
-      setLoginError(claimErr.message)
+      setLoginError(describeError(claimErr, 'Something went wrong. Please try again.'))
       return
     }
 
@@ -656,7 +672,7 @@ export default function AthleteOnboardingPage() {
     })
     if (error || !data.user) {
       setSubmitting(false)
-      setMinorLoginError(error?.message ?? 'Something went wrong. Please try again.')
+      setMinorLoginError(describeError(error, 'Something went wrong. Please try again.'))
       return
     }
 
@@ -665,7 +681,7 @@ export default function AthleteOnboardingPage() {
     })
     if (claimErr) {
       setSubmitting(false)
-      setMinorLoginError(claimErr.message)
+      setMinorLoginError(describeError(claimErr, 'Something went wrong. Please try again.'))
       return
     }
 
