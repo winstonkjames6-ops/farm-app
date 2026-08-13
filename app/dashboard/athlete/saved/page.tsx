@@ -1,7 +1,5 @@
-'use client'
-
-import SavedPosts from '@/components/SavedPosts'
+import { redirect } from 'next/navigation'
 
 export default function Page() {
-  return <SavedPosts />
+  redirect('/dashboard/athlete/discover?tab=saved')
 }

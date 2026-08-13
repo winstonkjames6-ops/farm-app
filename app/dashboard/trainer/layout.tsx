@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, MessageSquare, Compass, Bookmark, FileText, ShieldCheck } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MessageSquare, Compass, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { TrainerSportProvider, useTrainerSport } from './sport-context'
@@ -100,8 +100,6 @@ const IconX = () => (
 const NAV_ITEMS = [
   { key: 'home',     label: 'Home',     Icon: IconHome,       badge: false },
   { key: 'discover', label: 'Discover', Icon: Compass,        badge: false },
-  { key: 'saved',    label: 'Saved',    Icon: Bookmark,       badge: false },
-  { key: 'drafts',   label: 'Drafts',   Icon: FileText,       badge: false },
   { key: 'schedule', label: 'Schedule', Icon: IconCalendar,   badge: false },
   { key: 'earnings', label: 'Earnings', Icon: IconDollarSign, badge: false },
   { key: 'messages', label: 'Messages', Icon: MessageSquare,  badge: true  },
@@ -112,8 +110,6 @@ const NAV_ITEMS = [
 const NAV_HREFS: Record<string, string> = {
   home:     '/dashboard/trainer',
   discover: '/dashboard/trainer/discover',
-  saved:    '/dashboard/trainer/saved',
-  drafts:   '/dashboard/trainer/drafts',
   schedule: '/dashboard/trainer/schedule',
   earnings: '/dashboard/trainer/earnings',
   messages: '/dashboard/trainer/messages',
@@ -581,8 +577,6 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
   const getActiveNav = () => {
     if (pathname === '/dashboard/trainer') return 'home'
     if (pathname.includes('/discover')) return 'discover'
-    if (pathname.includes('/saved')) return 'saved'
-    if (pathname.includes('/drafts')) return 'drafts'
     if (pathname.includes('/schedule')) return 'schedule'
     if (pathname.includes('/earnings')) return 'earnings'
     if (pathname.includes('/messages')) return 'messages'

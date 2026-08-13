@@ -1,7 +1,5 @@
-'use client'
-
-import DraftPosts from '@/components/DraftPosts'
+import { redirect } from 'next/navigation'
 
 export default function Page() {
-  return <DraftPosts />
+  redirect('/dashboard/trainer/discover?tab=drafts')
 }
