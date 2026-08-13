@@ -7,16 +7,34 @@ import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 import { notifyWaitlistOfOpening } from '@/lib/waitlist'
 
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+type Booking = {
+  id: string
+  trainerId: string | null
+  sessionTime: string
+  trainerName: string
+  trainerInitials: string
+  trainerProfileId: string | null
+  sport: string
+  date: string
+  time: string
+  format: string
+  status: string
+  totalPaid: number | null
+  rating: number | null
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function computeInitials(name) {
+function computeInitials(name: string): string {
   if (!name) return ''
   const words = name.trim().split(/\s+/)
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
   return (words[0][0] + words[words.length - 1][0]).toUpperCase()
 }
 
-const FORMAT_MAP = {
+const FORMAT_MAP: Record<string, string> = {
   in_person: 'In-Person',
   'in-person': 'In-Person',
   online: 'Remote Video',
@@ -25,14 +43,14 @@ const FORMAT_MAP = {
   video: 'Remote Video',
 }
 
-function formatBookingDate(sessionTime) {
+function formatBookingDate(sessionTime: string): string {
   const dt = new Date(sessionTime)
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   return `${dayNames[dt.getDay()]}, ${monthNames[dt.getMonth()]} ${dt.getDate()}`
 }
 
-function formatBookingTime(sessionTime) {
+function formatBookingTime(sessionTime: string): string {
   const dt = new Date(sessionTime)
   let hours = dt.getHours()
   const minutes = dt.getMinutes()
@@ -44,7 +62,7 @@ function formatBookingTime(sessionTime) {
 
 // ── Stars ────────────────────────────────────────────────────────────────────
 
-function Stars({ rating, size = 14 }) {
+function Stars({ rating, size = 14 }: { rating: number; size?: number }) {
   return (
     <span className="inline-flex gap-[3px] align-middle">
       {[1, 2, 3, 4, 5].map((i) => (
@@ -61,7 +79,7 @@ function Stars({ rating, size = 14 }) {
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
 
-function Avatar({ initials }) {
+function Avatar({ initials }: { initials: string }) {
   return (
     <div
       className="flex-none flex items-center justify-center rounded-xl text-white font-black text-lg"
@@ -78,7 +96,7 @@ function Avatar({ initials }) {
 
 // ── Sport badge ───────────────────────────────────────────────────────────────
 
-function SportBadge({ sport }) {
+function SportBadge({ sport }: { sport: string }) {
   return (
     <span
       className="text-[11px] font-bold tracking-wide uppercase px-2 py-[3px] rounded-full"
@@ -93,16 +111,42 @@ function SportBadge({ sport }) {
   )
 }
 
+// ── Section label ─────────────────────────────────────────────────────────────
+
+function SectionLabel({ children, seeAllHref }: { children: React.ReactNode; seeAllHref?: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '12px' }}>
+      <span
+        style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontWeight: 700,
+          fontSize: '11px',
+          letterSpacing: '.1em',
+          textTransform: 'uppercase',
+          color: T.ink,
+        }}
+      >
+        {children}
+      </span>
+      {seeAllHref && (
+        <Link href={seeAllHref} style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 600, color: T.cyan, textDecoration: 'none' }}>
+          See all &gt;
+        </Link>
+      )}
+    </div>
+  )
+}
+
 // ── Upcoming session card ─────────────────────────────────────────────────────
 
-function UpcomingCard({ booking, index, onCancel }) {
+function UpcomingCard({ booking, index, onCancel }: { booking: Booking; index: number; onCancel: (id: string) => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.38, ease: [0.2, 0.7, 0.2, 1], delay: 0.15 + index * 0.08 }}
-      className="rounded-2xl p-6"
-      style={{ background: T.card, border: `1px solid ${T.line}` }}
+      transition={{ duration: 0.38, ease: [0.2, 0.7, 0.2, 1], delay: 0.1 + index * 0.06 }}
+      className="p-5"
+      style={{ background: T.card.background, border: T.card.border, borderRadius: T.radius.md }}
     >
       <div className="dash-card-row flex items-start gap-4">
         <Avatar initials={booking.trainerInitials} />
@@ -110,7 +154,7 @@ function UpcomingCard({ booking, index, onCancel }) {
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <span
-              className="font-bold text-[17px] leading-tight"
+              className="font-bold text-[16px] leading-tight"
               style={{ fontFamily: "'Archivo', sans-serif", color: T.ink }}
             >
               {booking.trainerName}
@@ -118,7 +162,7 @@ function UpcomingCard({ booking, index, onCancel }) {
             <SportBadge sport={booking.sport} />
           </div>
 
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[13.5px]" style={{ color: T.ink3 }}>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[13px]" style={{ color: T.ink3 }}>
             <span className="flex items-center gap-1">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
@@ -134,7 +178,7 @@ function UpcomingCard({ booking, index, onCancel }) {
           </div>
 
           <span
-            className="inline-block mt-3 text-[12.5px] font-semibold px-3 py-1 rounded-full"
+            className="inline-block mt-3 text-[12px] font-semibold px-3 py-1 rounded-full"
             style={{ border: `1.5px solid ${T.line}`, color: T.ink2 }}
           >
             {booking.format}
@@ -166,81 +210,36 @@ function UpcomingCard({ booking, index, onCancel }) {
   )
 }
 
-// ── Past session card ─────────────────────────────────────────────────────────
+// ── Payment history row ───────────────────────────────────────────────────────
 
-function PastCard({ booking, index }) {
+function PaymentRow({ booking }: { booking: Booking }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.38, ease: [0.2, 0.7, 0.2, 1], delay: 0.25 + index * 0.08 }}
-      className="rounded-2xl p-6"
-      style={{ background: T.card, border: `1px solid ${T.line}` }}
-    >
-      <div className="flex items-start gap-4">
-        <Avatar initials={booking.trainerInitials} />
-
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-1">
-            <span
-              className="font-bold text-[17px] leading-tight"
-              style={{ fontFamily: "'Archivo', sans-serif", color: T.ink }}
-            >
-              {booking.trainerName}
-            </span>
-            <SportBadge sport={booking.sport} />
-          </div>
-
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[13.5px]" style={{ color: T.ink3 }}>
-            <span className="flex items-center gap-1">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-              {booking.date}
-            </span>
-            <span>{booking.format}</span>
-          </div>
-
-          <div className="flex items-center gap-3 mt-3">
-            {booking.rating !== null && <Stars rating={booking.rating} />}
-            <span className="text-[13px] font-semibold" style={{ color: T.ink }}>
-              ${booking.totalPaid}.00 paid
-            </span>
-          </div>
+    <div className="flex items-center justify-between gap-3 py-3" style={{ borderBottom: `1px solid ${T.border}` }}>
+      <div className="min-w-0">
+        <div className="text-[14px] font-semibold truncate" style={{ color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+          {booking.trainerName}
         </div>
-
-        <div className="flex-none pt-1 flex flex-col items-end gap-2">
-          <Link
-            href={booking.trainerProfileId ? `/trainer/${booking.trainerProfileId}` : '/dashboard/search'}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-[border-color] duration-150"
-            style={{
-              border: `1.5px solid ${T.line}`,
-              color: T.ink2,
-              textDecoration: 'none',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.26)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
-          >
-            Book again
-          </Link>
-          {booking.rating === null && (
-            <Link
-              href={`/review?bookingId=${booking.id}`}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-[border-color] duration-150"
-              style={{
-                border: `1.5px solid ${T.line}`,
-                color: T.ink2,
-                textDecoration: 'none',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.26)' }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
-            >
-              Leave a review
-            </Link>
-          )}
+        <div className="text-[12.5px]" style={{ color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+          {booking.date} &middot; {booking.format}
         </div>
       </div>
-    </motion.div>
+      <div className="flex-shrink-0 flex flex-col items-end gap-1">
+        <span className="text-[14px] font-semibold" style={{ color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+          {booking.totalPaid != null ? `$${booking.totalPaid}` : '—'}
+        </span>
+        {booking.rating != null ? (
+          <Stars rating={booking.rating} size={11} />
+        ) : (
+          <Link
+            href={`/review?bookingId=${booking.id}`}
+            className="text-[11.5px] font-semibold"
+            style={{ color: T.cyan, textDecoration: 'none' }}
+          >
+            Leave a review
+          </Link>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -277,35 +276,11 @@ function EmptyState() {
   )
 }
 
-// ── Section heading ───────────────────────────────────────────────────────────
-
-function SectionHeading({ children }) {
-  return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', marginBottom: '12px' }}>
-      <span style={{
-        fontFamily: "'Barlow Condensed', sans-serif",
-        fontWeight: 700,
-        fontSize: '11px',
-        letterSpacing: '.12em',
-        textTransform: 'uppercase',
-        color: '#FFFFFF',
-        background: 'rgba(0,0,0,0.38)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        padding: '3px 10px',
-        borderRadius: '999px',
-      }}>
-        {children}
-      </span>
-    </div>
-  )
-}
-
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const [parentName, setParentName] = useState('')
-  const [bookings, setBookings] = useState([])
+  const [bookings, setBookings] = useState<Booking[]>([])
 
   useEffect(() => {
     const supabase = createClient()
@@ -331,7 +306,7 @@ export default function DashboardPage() {
             return
           }
           if (!data) return
-          const mapped = data.map((b) => {
+          const mapped: Booking[] = (data as any[]).map((b) => {
             const trainerName = b.trainers?.profiles?.name ?? ''
             return {
               id: b.id,
@@ -354,11 +329,15 @@ export default function DashboardPage() {
     })
   }, [])
 
-  const upcoming = bookings.filter((b) => b.status !== 'completed' && b.status !== 'cancelled')
-  const past = bookings.filter((b) => b.status === 'completed')
+  const upcoming = bookings
+    .filter((b) => b.status !== 'completed' && b.status !== 'cancelled')
+    .sort((a, b) => a.sessionTime.localeCompare(b.sessionTime))
+  const past = bookings
+    .filter((b) => b.status === 'completed')
+    .sort((a, b) => b.sessionTime.localeCompare(a.sessionTime))
   const isEmpty = bookings.length === 0
 
-  async function cancelBooking(id) {
+  async function cancelBooking(id: string) {
     const supabase = createClient()
     const cancelled = bookings.find((b) => b.id === id)
     const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', id)
@@ -370,15 +349,18 @@ export default function DashboardPage() {
     }
   }
 
-  const sportsSet = new Set(bookings.map((b) => b.sport))
+  const subtitle = upcoming.length > 0
+    ? `Next session ${upcoming[0].date} with ${upcoming[0].trainerName}`
+    : past.length > 0
+      ? 'No upcoming sessions scheduled'
+      : 'Book your first session to get started'
 
   return (
     <div
       className="min-h-screen antialiased"
       style={{ color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}
     >
-      {/* Main */}
-      <div className="max-w-2xl mx-auto px-6 py-10 pb-24">
+      <div className="max-w-4xl mx-auto px-6 py-10 pb-24">
 
         {/* Header */}
         <motion.div
@@ -388,116 +370,84 @@ export default function DashboardPage() {
           transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1] }}
           className="mb-8"
         >
-          <div className="flex flex-wrap items-center gap-3 mb-1">
-            <h1
-              className="font-black text-[30px] leading-tight tracking-tight"
-              style={{ fontFamily: "'Archivo', sans-serif", color: T.ink, letterSpacing: '-.025em', margin: 0 }}
-            >
-              Welcome back{parentName ? `, ${parentName.split(' ')[0]}` : ''}
-            </h1>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: '5px',
-              padding: '3px 10px 3px 8px',
-              border: '1.5px solid #00BCC8',
-              borderRadius: '999px',
-              background: 'rgba(0,188,200,0.07)',
-            }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#00BCC8" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              <span style={{
-                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                fontSize: '10.5px', letterSpacing: '.1em', textTransform: 'uppercase',
-                color: '#00838C',
-              }}>Verified Parent</span>
-            </div>
-          </div>
-          <p className="text-[15px] mb-5" style={{ color: T.ink2 }}>
-            Manage your sessions and track your athlete&apos;s progress
+          <h1
+            className="font-black text-[28px] leading-tight tracking-tight"
+            style={{ fontFamily: "'Archivo', sans-serif", color: T.ink, letterSpacing: '-.025em', margin: 0 }}
+          >
+            Hello{parentName ? `, ${parentName.split(' ')[0]}` : ''}
+          </h1>
+          <p className="text-[14px] mt-1" style={{ color: T.ink2 }}>
+            {subtitle}
           </p>
-
-          {/* Stat pills */}
-          <div className="flex flex-wrap gap-3">
-            {[
-              { label: `${bookings.length} sessions booked` },
-              { label: `${sportsSet.size} sport${sportsSet.size !== 1 ? 's' : ''}` },
-            ].map(({ label }) => (
-              <span
-                key={label}
-                className="text-[13.5px] font-semibold px-4 py-2 rounded-full"
-                style={{ background: T.card, border: `1px solid ${T.line}`, color: T.ink2 }}
-              >
-                {label}
-              </span>
-            ))}
-          </div>
         </motion.div>
 
         {isEmpty ? (
-          <div style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: '16px' }}>
+          <div style={{ background: T.card.background, border: T.card.border, borderRadius: T.radius.md }}>
             <EmptyState />
           </div>
         ) : (
-          <div className="flex flex-col gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+
+            {/* Payment history */}
+            <section>
+              <SectionLabel seeAllHref="/dashboard/calendar">Payment History</SectionLabel>
+              <div style={{ background: T.card.background, border: T.card.border, borderRadius: T.radius.md, padding: '4px 20px' }}>
+                {past.length === 0 ? (
+                  <div className="py-8 text-center text-[13px]" style={{ color: T.ink3 }}>No past sessions</div>
+                ) : (
+                  past.slice(0, 6).map((b) => <PaymentRow key={b.id} booking={b} />)
+                )}
+              </div>
+            </section>
 
             {/* Upcoming */}
-            {upcoming.length > 0 && (
-              <section>
-                <SectionHeading>Upcoming</SectionHeading>
+            <section id="tour-home-upcoming">
+              <SectionLabel>Upcoming</SectionLabel>
+              {upcoming.length === 0 ? (
+                <div style={{ background: T.card.background, border: T.card.border, borderRadius: T.radius.md }} className="py-8 text-center text-[13px]" >
+                  <span style={{ color: T.ink3 }}>No upcoming sessions</span>
+                </div>
+              ) : (
                 <div className="flex flex-col gap-4">
                   {upcoming.map((b, i) => (
-                    <div key={b.id} id={i === 0 ? 'tour-home-upcoming' : undefined}>
-                      <UpcomingCard booking={b} index={i} onCancel={cancelBooking} />
-                    </div>
+                    <UpcomingCard key={b.id} booking={b} index={i} onCancel={cancelBooking} />
                   ))}
                 </div>
-              </section>
-            )}
-
-            {/* Past sessions */}
-            {past.length > 0 && (
-              <section>
-                <SectionHeading>Past sessions</SectionHeading>
-                <div className="flex flex-col gap-4">
-                  {past.map((b, i) => (
-                    <PastCard key={b.id} booking={b} index={i} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Athletes */}
-            <motion.section
-              id="tour-home-athletes"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.38, ease: [0.2, 0.7, 0.2, 1], delay: 0.35 }}
-            >
-              <SectionHeading>Athletes</SectionHeading>
-              <Link
-                href="/child/create"
-                className="flex items-center gap-4 rounded-2xl p-5 no-underline transition-[border-color] duration-150"
-                style={{ background: T.card, border: `1.5px dashed ${T.line}`, color: T.ink2 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.26)' }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
-              >
-                <div
-                  className="flex-none flex items-center justify-center rounded-xl"
-                  style={{ width: 44, height: 44, background: T.surface2 }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={T.ink3} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-semibold text-[15px] mb-0.5" style={{ color: T.ink }}>Add an athlete</p>
-                  <p className="text-[13px]" style={{ color: T.ink3 }}>Create a profile for your child to find the right coach</p>
-                </div>
-              </Link>
-            </motion.section>
+              )}
+            </section>
 
           </div>
         )}
+
+        {/* Athletes */}
+        <motion.section
+          id="tour-home-athletes"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.38, ease: [0.2, 0.7, 0.2, 1], delay: 0.35 }}
+        >
+          <SectionLabel>Athletes</SectionLabel>
+          <Link
+            href="/child/create"
+            className="flex items-center gap-4 p-5 no-underline transition-[border-color] duration-150"
+            style={{ background: T.card.background, border: `1.5px dashed ${T.line}`, borderRadius: T.radius.md, color: T.ink2 }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.26)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = T.line }}
+          >
+            <div
+              className="flex-none flex items-center justify-center rounded-xl"
+              style={{ width: 44, height: 44, background: T.surface2 }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={T.ink3} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-[15px] mb-0.5" style={{ color: T.ink }}>Add an athlete</p>
+              <p className="text-[13px]" style={{ color: T.ink3 }}>Create a profile for your child to find the right coach</p>
+            </div>
+          </Link>
+        </motion.section>
       </div>
 
       <style>{`

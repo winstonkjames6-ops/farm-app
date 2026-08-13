@@ -20,22 +20,33 @@ type Session = {
   parentProfileId: string
   sport: string
   type: SessionType
-  day: string
+  sessionTime: string
   time: string
   location: string
-  isToday: boolean
   status: string
 }
 
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function getGreeting() {
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
+function isSameMonth(iso: string, ref: Date) {
+  const d = new Date(iso)
+  return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth()
+}
+
+function formatDayLabel(iso: string): string {
+  const d = new Date(iso)
+  const today = new Date()
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+  const diffDays = Math.round((startOfDay(d) - startOfDay(today)) / 86400000)
+  if (diffDays === 0) return 'Today'
+  if (diffDays === 1) return 'Tomorrow'
+  if (diffDays < 0) return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString('en-US', { weekday: 'short' })
+}
+
+function formatFullDate(iso: string): string {
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -67,80 +78,37 @@ const IconCheckCircle = () => (
   </svg>
 )
 
-// ── Next session hero card ─────────────────────────────────────────────────────
+// ── Section label ──────────────────────────────────────────────────────────────
 
-function NextSessionCard({ session }: { session: Session | null }) {
-  if (!session) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: '16px', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}
-      >
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '18px', color: T.ink2 }}>
-          No sessions today
-        </div>
-        <button style={{ padding: '0 24px', height: '44px', background: T.cyan, color: '#FFFFFF', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', letterSpacing: '0.06em', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-          SET AVAILABILITY
-        </button>
-      </motion.div>
-    )
-  }
-
+function SectionLabel({ children, seeAllHref }: { children: React.ReactNode; seeAllHref?: string }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)', border: `1px solid rgba(0,188,200,0.25)`, borderLeft: `4px solid ${T.cyan}`, borderRadius: '16px', padding: '24px' }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-            <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '22px', color: T.ink, letterSpacing: '0.02em' }}>{session.childName}</span>
-            <span style={{ padding: '3px 10px', border: `1px solid rgba(0,188,200,0.25)`, color: T.cyan, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '0.1em', borderRadius: '999px' }}>{session.type}</span>
-          </div>
-          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink2, marginBottom: '12px' }}>{session.sport}</div>
-          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '32px', color: T.ink, lineHeight: 1, letterSpacing: '-0.01em' }}>{session.time}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '6px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px' }}>
-            {session.type === 'REMOTE' ? <IconVideo /> : <IconMapPin />}
-            {session.location}
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-          <div style={{ width: 48, height: 48, borderRadius: '999px', background: T.cyanLight, border: `2px solid rgba(0,188,200,0.25)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.cyan }}>
-            {session.parentInitials}
-          </div>
-          <button style={{ padding: '12px 20px', minHeight: '44px', background: T.cyan, color: '#FFFFFF', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 500, fontSize: '14px', border: 'none', borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-            View Details
-          </button>
-        </div>
+    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '12px' }}>
+      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '11px', letterSpacing: '0.08em', color: T.ink, textTransform: 'uppercase' }}>
+        {children}
       </div>
-    </motion.div>
+      {seeAllHref && (
+        <Link href={seeAllHref} style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', fontWeight: 600, color: T.cyan, textDecoration: 'none' }}>
+          See all &gt;
+        </Link>
+      )}
+    </div>
   )
 }
 
-// ── Weekly schedule strip ──────────────────────────────────────────────────────
+// ── Sport filter pills ──────────────────────────────────────────────────────────
 
-function WeeklyStrip({ activeDay, onDaySelect, daysWithSessions }: { activeDay: string; onDaySelect: (d: string) => void; daysWithSessions: Set<string> }) {
+function SportPills({ sports, activeSport, onSelect }: { sports: string[]; activeSport: string; onSelect: (s: string) => void }) {
   return (
     <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' as const }}>
-      {DAYS.map((day) => {
-        const isActive = day === activeDay
-        const hasSessions = daysWithSessions.has(day)
+      {['All', ...sports].map((sport) => {
+        const isActive = sport === activeSport
         return (
           <button
-            key={day}
-            onClick={() => onDaySelect(day)}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', padding: '8px 14px', borderRadius: '999px', background: isActive ? T.cyan : 'rgba(255,255,255,0.85)', border: `1px solid ${isActive ? T.cyan : 'rgba(0,0,0,0.15)'}`, color: isActive ? '#FFFFFF' : '#374151', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '13px', letterSpacing: '0.04em', cursor: 'pointer', flexShrink: 0, minHeight: '44px', transition: 'background 0.15s, border-color 0.15s, color 0.15s' }}
+            key={sport}
+            onClick={() => onSelect(sport)}
+            style={{ padding: '8px 16px', borderRadius: T.radius.full, background: isActive ? T.cyan : '#FFFFFF', border: `1px solid ${isActive ? T.cyan : T.border}`, color: isActive ? '#FFFFFF' : T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '13px', cursor: 'pointer', flexShrink: 0, minHeight: '40px', whiteSpace: 'nowrap' }}
           >
-            {day}
-            {hasSessions ? (
-              <span style={{ width: '4px', height: '4px', borderRadius: '999px', background: T.cyan, flexShrink: 0 }} />
-            ) : (
-              <span style={{ width: '4px', height: '4px', flexShrink: 0 }} />
-            )}
+            {sport}
           </button>
         )
       })}
@@ -148,13 +116,11 @@ function WeeklyStrip({ activeDay, onDaySelect, daysWithSessions }: { activeDay: 
   )
 }
 
-// ── Session list card ──────────────────────────────────────────────────────────
+// ── Pending review card ──────────────────────────────────────────────────────────
 
-function SessionCard({ session, index, onMarkComplete }: { session: Session; index: number; onMarkComplete: (id: string) => Promise<void> }) {
+function PendingCard({ session, index, onMarkComplete }: { session: Session; index: number; onMarkComplete: (id: string) => Promise<void> }) {
   const [completing, setCompleting] = useState(false)
   const [completeError, setCompleteError] = useState<string | null>(null)
-
-  const isCompleted = session.status === 'completed'
 
   async function handleComplete() {
     setCompleting(true)
@@ -168,59 +134,52 @@ function SessionCard({ session, index, onMarkComplete }: { session: Session; ind
     }
   }
 
-  const badgeStyles: Record<string, { bg: string; color: string; border: string }> = {
-    'IN-PERSON': { bg: 'rgba(0,188,200,0.1)', color: T.cyan, border: '1px solid rgba(0,188,200,0.2)' },
-    REMOTE:      { bg: 'rgba(99,102,241,0.1)', color: '#6366F1', border: '1px solid rgba(99,102,241,0.2)' },
-  }
-  const badge = badgeStyles[session.type]
+  const dayLabel = formatDayLabel(session.sessionTime)
+  const isUrgent = dayLabel === 'Today'
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, delay: index * 0.06 }}
-      style={{ background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(8px)', border: `1px solid ${T.border}`, borderRadius: '14px', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}
+      transition={{ duration: 0.28, delay: index * 0.05 }}
+      style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: T.radius.md, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+      <div style={{ position: 'relative', height: '96px', background: T.surface2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.ink3 }}>
+        {session.type === 'REMOTE' ? <IconVideo /> : <IconMapPin />}
+        <span style={{ position: 'absolute', top: '10px', left: '10px', padding: '3px 10px', borderRadius: T.radius.full, background: isUrgent ? T.cyan : '#FFFFFF', border: `1px solid ${isUrgent ? T.cyan : T.border}`, color: isUrgent ? '#FFFFFF' : T.ink2, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          {dayLabel}
+        </span>
+      </div>
+
+      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
         <div>
-          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '18px', color: T.ink, letterSpacing: '0.01em', marginBottom: '4px' }}>{session.childName}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>{session.sport}</span>
-            <span style={{ padding: '3px 10px', background: badge.bg, color: badge.color, border: badge.border, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '11px', letterSpacing: '0.08em', borderRadius: '6px' }}>{session.type}</span>
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.ink, letterSpacing: '0.01em' }}>{session.childName}</div>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>{session.sport}</div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px' }}>
+            {session.type === 'REMOTE' ? <IconVideo /> : <IconMapPin />}
+            {formatFullDate(session.sessionTime)} &middot; {session.time}
           </div>
-        </div>
-        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '18px', color: T.ink, flexShrink: 0 }}>{session.time}</div>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px' }}>
-          {session.type === 'REMOTE' ? <IconVideo /> : <IconMapPin />}
-          {session.location}
-        </div>
-        <button style={{ width: '44px', height: '44px', borderRadius: '999px', background: 'transparent', border: `1px solid ${T.border}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-          <IconMessageCircle />
-        </button>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: `1px solid ${T.border}`, paddingTop: '12px' }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={handleComplete}
-            disabled={completing || isCompleted}
-            style={{ flex: 1, height: '44px', background: isCompleted ? '#E5E7EB' : T.cyan, border: 'none', color: isCompleted ? T.ink3 : '#FFFFFF', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', borderRadius: '8px', cursor: (completing || isCompleted) ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: completing ? 0.7 : 1 }}
-          >
-            <IconCheckCircle />
-            {isCompleted ? 'COMPLETED' : completing ? 'SAVING...' : 'MARK COMPLETE'}
-          </button>
           <Link
             href={`/dashboard/trainer/messages?withId=${session.parentProfileId}`}
-            style={{ flex: 1, height: '44px', background: 'transparent', border: '1px solid rgba(0,0,0,0.12)', color: '#374151', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+            style={{ width: '32px', height: '32px', borderRadius: T.radius.full, background: 'transparent', border: `1px solid ${T.border}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
           >
-            MESSAGE PARENT
+            <IconMessageCircle />
           </Link>
         </div>
+
+        <button
+          onClick={handleComplete}
+          disabled={completing}
+          style={{ width: '100%', height: '44px', background: T.cyan, border: 'none', color: '#FFFFFF', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '12px', letterSpacing: '0.08em', borderRadius: T.radius.sm, cursor: completing ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: completing ? 0.7 : 1, marginTop: 'auto' }}
+        >
+          <IconCheckCircle />
+          {completing ? 'SAVING...' : 'MARK COMPLETE'}
+        </button>
         {completeError && (
-          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: '#EF4444' }}>
+          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.danger }}>
             {completeError}
           </div>
         )}
@@ -229,56 +188,23 @@ function SessionCard({ session, index, onMarkComplete }: { session: Session; ind
   )
 }
 
-// ── Earnings card ──────────────────────────────────────────────────────────────
+// ── Completed row ────────────────────────────────────────────────────────────────
 
-function EarningsCard() {
-  const weeklyAmount = 340
-  const weeklyGoal = 500
-  const pending = 212
-  const progress = Math.min((weeklyAmount / weeklyGoal) * 100, 100)
-
+function CompletedRow({ session }: { session: Session }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.15 }}
-      style={{ background: 'rgba(255,255,255,0.90)', backdropFilter: 'blur(8px)', border: `1px solid ${T.border}`, borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}
-    >
-      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '22px', color: T.ink }}>Earnings</div>
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
-          <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>This week</span>
-          <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '22px', color: T.ink }}>
-            ${weeklyAmount}
-            <span style={{ fontSize: '13px', color: T.ink3, marginLeft: '4px', fontWeight: 400 }}>/ ${weeklyGoal}</span>
-          </span>
-        </div>
-        <div style={{ height: '6px', borderRadius: '999px', background: '#E5E7EB', overflow: 'hidden' }}>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.9, delay: 0.4, ease: 'easeOut' }}
-            style={{ height: '100%', borderRadius: '999px', background: T.cyan }}
-          />
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '12px 0', borderBottom: `1px solid ${T.border}` }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+        <span style={{ color: T.success, flexShrink: 0, display: 'flex' }}>
+          <IconCheckCircle />
+        </span>
+        <div style={{ minWidth: 0 }}>
+          <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '14px', color: T.ink }}>{session.childName}</span>
+          <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink3 }}> &middot; {session.sport}</span>
         </div>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${T.border}`, paddingTop: '14px' }}>
-        <div>
-          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, marginBottom: '2px' }}>Pending payout</div>
-          <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>Payouts coming soon</div>
-        </div>
-        <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '22px', color: T.ink }}>${pending}</span>
+      <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink3, flexShrink: 0 }}>
+        {formatFullDate(session.sessionTime)}
       </div>
-    </motion.div>
-  )
-}
-
-// ── Section label ──────────────────────────────────────────────────────────────
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '11px', letterSpacing: '0.08em', color: '#111827', textTransform: 'uppercase', marginBottom: '12px' }}>
-      {children}
     </div>
   )
 }
@@ -286,23 +212,34 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 // ── HomeView ───────────────────────────────────────────────────────────────────
 
 function HomeView({
-  activeDay,
-  onDaySelect,
-  nextSession,
-  filteredSessions,
-  daysWithSessions,
+  sessions,
   onMarkComplete,
   trainerFirstName,
 }: {
-  activeDay: string
-  onDaySelect: (d: string) => void
-  nextSession: Session | null
-  filteredSessions: Session[]
-  daysWithSessions: Set<string>
+  sessions: Session[]
   onMarkComplete: (id: string) => Promise<void>
   trainerFirstName: string
 }) {
   const router = useRouter()
+  const [activeSport, setActiveSport] = useState('All')
+
+  const now = new Date()
+  const pending = sessions.filter((s) => s.status !== 'completed')
+  const completed = sessions.filter((s) => s.status === 'completed')
+  const completedThisMonth = completed.filter((s) => isSameMonth(s.sessionTime, now)).length
+
+  const sports = Array.from(new Set(sessions.map((s) => s.sport).filter(Boolean))).sort()
+
+  const filteredPending = pending
+    .filter((s) => activeSport === 'All' || s.sport === activeSport)
+    .sort((a, b) => a.sessionTime.localeCompare(b.sessionTime))
+  const filteredCompleted = completed
+    .filter((s) => activeSport === 'All' || s.sport === activeSport)
+    .sort((a, b) => b.sessionTime.localeCompare(a.sessionTime))
+
+  // Pre-existing hardcoded weekly figure — presentation-only carryover, not new data.
+  const earnedThisWeek = 340
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -311,28 +248,28 @@ function HomeView({
     >
       <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div>
-          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '28px', color: '#111827' }}>
-            {getGreeting()}{trainerFirstName ? `, ${trainerFirstName}` : ''}.
+          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: T.fontSize['2xl'], color: T.ink }}>
+            Hello{trainerFirstName ? `, ${trainerFirstName}` : ''}
           </div>
-          <div style={{ fontSize: '14px', color: '#374151', marginTop: '4px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
-            Here&apos;s your day at a glance.
+          <div style={{ fontSize: T.fontSize.sm, color: T.ink2, marginTop: '4px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
+            {pending.length === 0 ? 'No sessions waiting for review' : `${pending.length} session${pending.length === 1 ? '' : 's'} waiting for review`}
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <MetricCard
-            value="7"
-            labelPrimary="Sessions"
-            labelSecondary="This Week"
-            icon="calendar"
+            value={String(pending.length)}
+            labelPrimary="Pending"
+            labelSecondary="Sessions"
+            icon="clock"
             actionLabel="View Schedule"
             background={T.metricTeal[1]}
             onActionClick={() => router.push('/dashboard/trainer/schedule')}
           />
           <MetricCard
-            value="$485"
+            value={`$${earnedThisWeek}`}
             valueColor={T.money}
-            labelPrimary="Earnings"
+            labelPrimary="Earned"
             labelSecondary="This Week"
             icon="trending-up"
             actionLabel="View Earnings"
@@ -340,47 +277,46 @@ function HomeView({
             onActionClick={() => router.push('/dashboard/trainer/earnings')}
           />
           <MetricCard
-            value="2"
-            labelPrimary="Sessions"
-            labelSecondary="Today"
-            icon="clock"
-            actionLabel="View Sessions"
+            value={String(completedThisMonth)}
+            labelPrimary="Completed"
+            labelSecondary="This Month"
+            icon="calendar"
+            actionLabel="View Schedule"
             background={T.metricTeal[3]}
             onActionClick={() => router.push('/dashboard/trainer/schedule')}
           />
-          <MetricCard
-            value="4.9"
-            valueSuffix="★"
-            labelPrimary="Average"
-            labelSecondary="Rating"
-            icon="star"
-            actionLabel="View Reviews"
-            background={T.metricTeal[4]}
-            onActionClick={() => router.push('/dashboard/trainer/profile')}
-          />
         </div>
 
+        {sports.length > 0 && (
+          <SportPills sports={sports} activeSport={activeSport} onSelect={setActiveSport} />
+        )}
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <SectionLabel>Next Session</SectionLabel>
-          <NextSessionCard session={nextSession} />
+          <SectionLabel>Pending Reviews</SectionLabel>
+          {filteredPending.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 20px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink3 }}>
+              No sessions pending
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredPending.map((session, i) => (
+                <PendingCard key={session.id} session={session} index={i} onMarkComplete={onMarkComplete} />
+              ))}
+            </div>
+          )}
 
-          <SectionLabel>Schedule</SectionLabel>
-          <WeeklyStrip activeDay={activeDay} onDaySelect={onDaySelect} daysWithSessions={daysWithSessions} />
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {filteredSessions.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '15px', color: T.ink3, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                No sessions on {activeDay}
-              </div>
-            ) : (
-              filteredSessions.map((session, i) => (
-                <SessionCard key={session.id} session={session} index={i} onMarkComplete={onMarkComplete} />
-              ))
-            )}
-          </div>
-
-          <SectionLabel>Summary</SectionLabel>
-          <EarningsCard />
+          <SectionLabel>Completed</SectionLabel>
+          {filteredCompleted.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 20px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink3 }}>
+              No completed sessions yet
+            </div>
+          ) : (
+            <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: T.radius.md, padding: '4px 16px' }}>
+              {filteredCompleted.map((session) => (
+                <CompletedRow key={session.id} session={session} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -392,10 +328,6 @@ function HomeView({
 export default function TrainerHomePage() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [trainerFirstName, setTrainerFirstName] = useState('')
-  const [activeDay, setActiveDay] = useState(() => {
-    const JS_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    return JS_DAYS[new Date().getDay()]
-  })
 
   useEffect(() => {
     async function fetchData() {
@@ -425,9 +357,6 @@ export default function TrainerHomePage() {
         .eq('trainer_id', trainerRow.id)
       if (!bookings) return
 
-      const JS_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-      const today = new Date()
-
       const mapped: Session[] = (bookings as any[]).map((b) => {
         const dt = new Date(b.session_time)
         const type: SessionType = b.format === 'Remote Video' ? 'REMOTE' : 'IN-PERSON'
@@ -441,10 +370,9 @@ export default function TrainerHomePage() {
           parentProfileId: b.parent_id ?? '',
           sport: b.athletes?.sport ?? '',
           type,
-          day: JS_DAYS[dt.getDay()],
+          sessionTime: b.session_time,
           time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
           location: type === 'REMOTE' ? 'Video Call' : 'In Person',
-          isToday: dt.toDateString() === today.toDateString(),
           status: b.status ?? 'pending',
         }
       })
@@ -464,17 +392,9 @@ export default function TrainerHomePage() {
     setSessions((prev) => prev.map((s) => s.id === sessionId ? { ...s, status: 'completed' } : s))
   }
 
-  const daysWithSessions = new Set(sessions.map((s) => s.day))
-  const nextSession = sessions.find((s) => s.isToday) ?? null
-  const filteredSessions = sessions.filter((s) => s.day === activeDay)
-
   return (
     <HomeView
-      activeDay={activeDay}
-      onDaySelect={setActiveDay}
-      nextSession={nextSession}
-      filteredSessions={filteredSessions}
-      daysWithSessions={daysWithSessions}
+      sessions={sessions}
       onMarkComplete={handleMarkComplete}
       trainerFirstName={trainerFirstName}
     />

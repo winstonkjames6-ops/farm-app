@@ -2,26 +2,27 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 
 import { T } from '@/lib/theme'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type NextSession = {
+type BookingItem = {
+  id: string
+  sessionTime: string
+  dateLabel: string
+  timeLabel: string
   trainerName: string
   trainerInitials: string
   sport: string
-  dateLabel: string
   format: string
+  status: string
+  isUpcoming: boolean
 }
 
-type RecentSession = {
-  id: string
-  dateLabel: string
-  trainerName: string
-  sport: string
-}
+type FilterKey = 'All' | 'Upcoming' | 'Past'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -47,13 +48,141 @@ const IconCalendar = ({ size = 14 }: { size?: number }) => (
   </svg>
 )
 
+const IconVideo = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="23 7 16 12 23 17 23 7" />
+    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+  </svg>
+)
+
+// ── Section label ──────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: T.ink, marginBottom: '12px' }}>
+      {children}
+    </div>
+  )
+}
+
+// ── Filter pills ─────────────────────────────────────────────────────────────────
+
+function FilterPills({ active, onSelect }: { active: FilterKey; onSelect: (f: FilterKey) => void }) {
+  const filters: FilterKey[] = ['All', 'Upcoming', 'Past']
+  return (
+    <div style={{ display: 'flex', gap: '8px' }}>
+      {filters.map((f) => {
+        const isActive = f === active
+        return (
+          <button
+            key={f}
+            onClick={() => onSelect(f)}
+            style={{ padding: '8px 16px', borderRadius: T.radius.full, background: isActive ? T.cyan : '#FFFFFF', border: `1px solid ${isActive ? T.cyan : T.border}`, color: isActive ? '#FFFFFF' : T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '13px', cursor: 'pointer', minHeight: '40px', whiteSpace: 'nowrap' }}
+          >
+            {f}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Next session banner ─────────────────────────────────────────────────────────
+
+function NextSessionBanner({ session }: { session: BookingItem | null }) {
+  if (!session) {
+    return (
+      <div style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: T.radius.md, padding: '24px', textAlign: 'center' }}>
+        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3 }}>
+          No upcoming sessions
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: T.radius.md, padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}
+    >
+      <div style={{ width: 48, height: 48, borderRadius: T.radius.full, background: T.cyanLight, border: `2px solid ${T.cyanBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '16px', color: T.cyan, flexShrink: 0 }}>
+        {session.trainerInitials}
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: '11px', letterSpacing: '0.08em', color: T.ink3, textTransform: 'uppercase', marginBottom: '2px' }}>
+          Next Session
+        </div>
+        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '16px', color: T.ink }}>{session.trainerName}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px' }}>
+          <IconCalendar size={13} />
+          {session.dateLabel} &middot; {session.timeLabel}
+          <span style={{ marginLeft: '4px', padding: '2px 8px', background: T.cyanDim, color: T.cyan, borderRadius: T.radius.full, fontSize: '11px', fontWeight: 600 }}>{session.format}</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+        <Link
+          href="/dashboard/athlete/messages"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: T.cyan, color: '#FFFFFF', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '13px', textDecoration: 'none', borderRadius: T.radius.sm, minHeight: '40px', padding: '0 16px' }}
+        >
+          Message trainer
+        </Link>
+      </div>
+    </motion.div>
+  )
+}
+
+// ── Session card ─────────────────────────────────────────────────────────────────
+
+function SessionCard({ booking, index }: { booking: BookingItem; index: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, delay: index * 0.05 }}
+      style={{ background: T.cardBg, border: `1px solid ${T.border}`, borderRadius: T.radius.md, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+    >
+      <div style={{ position: 'relative', height: '88px', background: T.surface2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.ink3 }}>
+        {booking.format === 'Remote' ? <IconVideo size={20} /> : <IconCalendar size={20} />}
+        <span style={{ position: 'absolute', top: '10px', left: '10px', padding: '3px 10px', borderRadius: T.radius.full, background: booking.isUpcoming ? T.cyan : '#FFFFFF', border: `1px solid ${booking.isUpcoming ? T.cyan : T.border}`, color: booking.isUpcoming ? '#FFFFFF' : T.ink2, fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          {booking.isUpcoming ? 'Upcoming' : booking.status === 'cancelled' ? 'Cancelled' : 'Past'}
+        </span>
+      </div>
+
+      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+        <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2 }}>
+          {booking.sport ? `${booking.sport} · ` : ''}{booking.dateLabel} &middot; {booking.timeLabel}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: 26, height: 26, borderRadius: T.radius.full, background: T.cyanLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '11px', color: T.cyan, flexShrink: 0 }}>
+            {booking.trainerInitials}
+          </div>
+          <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '14px', color: T.ink }}>{booking.trainerName}</span>
+        </div>
+
+        {booking.isUpcoming && (
+          <Link
+            href="/dashboard/athlete/messages"
+            style={{ width: '100%', height: '38px', background: T.cyan, color: '#FFFFFF', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '13px', textDecoration: 'none', borderRadius: T.radius.sm, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 'auto' }}
+          >
+            Message trainer
+          </Link>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AthletePage() {
   const [firstName, setFirstName] = useState('')
-  const [nextSession, setNextSession] = useState<NextSession | null>(null)
-  const [recentSessions, setRecentSessions] = useState<RecentSession[]>([])
+  const [bookings, setBookings] = useState<BookingItem[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('All')
 
   useEffect(() => {
     async function load() {
@@ -80,7 +209,7 @@ export default function AthletePage() {
 
       setFirstName(athleteName.split(' ')[0] ?? '')
 
-      const { data: bookings, error: bookingErr } = await supabase
+      const { data: rows, error: bookingErr } = await supabase
         .from('bookings')
         .select('id, format, session_time, status, trainers!trainer_id(profiles(name))')
         .eq('athlete_id', athleteId)
@@ -91,197 +220,76 @@ export default function AthletePage() {
         setLoadError(bookingErr.message)
         return
       }
-      if (!bookings) return
+      if (!rows) return
 
       const now = new Date().toISOString()
-      const rows = bookings as any[]
 
-      // Soonest future booking (not cancelled)
-      const upcomingRows = rows
-        .filter(b => b.session_time > now && b.status !== 'cancelled')
-        .sort((a, b) => a.session_time.localeCompare(b.session_time))
-
-      if (upcomingRows.length > 0) {
-        const b = upcomingRows[0]
+      const mapped: BookingItem[] = (rows as any[]).map((b) => {
         const dt = new Date(b.session_time)
         const trainerName: string = b.trainers?.profiles?.name ?? 'Trainer'
-        const dateLabel =
-          dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) +
-          ' · ' +
-          dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
-        setNextSession({
+        return {
+          id: b.id,
+          sessionTime: b.session_time,
+          dateLabel: dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          timeLabel: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
           trainerName,
           trainerInitials: getInitials(trainerName),
           sport: athleteSport,
-          dateLabel,
-          format: b.format === 'Remote Video' ? 'Remote' : (b.format ?? 'In-Person'),
-        })
-      }
+          format: b.format === 'Remote Video' ? 'Remote' : 'In-Person',
+          status: b.status ?? 'confirmed',
+          isUpcoming: b.session_time > now && b.status !== 'cancelled',
+        }
+      })
 
-      // Most recent past bookings (up to 3)
-      const pastRows = rows
-        .filter(b => b.session_time < now)
-        .sort((a, b) => b.session_time.localeCompare(a.session_time))
-        .slice(0, 3)
-
-      setRecentSessions(pastRows.map(b => ({
-        id: b.id,
-        dateLabel: new Date(b.session_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        trainerName: b.trainers?.profiles?.name ?? 'Trainer',
-        sport: athleteSport,
-      })))
+      setBookings(mapped)
     }
     load()
   }, [])
 
-  const glassCard: React.CSSProperties = {
-    background: 'rgba(255,255,255,0.85)',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
-    border: '1px solid rgba(255,255,255,0.5)',
-    borderRadius: '16px',
-    padding: '20px',
-    marginBottom: '16px',
-  }
+  const upcoming = bookings.filter((b) => b.isUpcoming).sort((a, b) => a.sessionTime.localeCompare(b.sessionTime))
+  const past = bookings.filter((b) => !b.isUpcoming && b.sessionTime < new Date().toISOString())
 
-  const sectionLabel: React.CSSProperties = {
-    fontFamily: "'Barlow Condensed', sans-serif",
-    fontWeight: 600,
-    fontSize: '11px',
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase',
-    color: T.ink3,
-    marginBottom: '16px',
-    display: 'block',
-  }
+  const nextSession = upcoming[0] ?? null
+
+  const visible = activeFilter === 'All' ? [...upcoming, ...past]
+    : activeFilter === 'Upcoming' ? upcoming
+    : past
 
   return (
     <div style={{ color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
-      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '32px 24px 80px' }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px 80px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {loadError && (
-          <div style={{ marginBottom: '16px', padding: '12px 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px', fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: '#DC2626' }}>
+          <div style={{ padding: '12px 16px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: T.radius.sm, fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.dangerDark }}>
             Error loading data: {loadError}
           </div>
         )}
 
-        {/* Section 1 — Greeting */}
-        <div style={glassCard}>
-          <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '32px', color: T.ink, margin: '0 0 6px', lineHeight: 1.1 }}>
+        <div>
+          <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: T.fontSize['2xl'], color: T.ink, margin: 0 }}>
             {getGreeting()}{firstName ? `, ${firstName}` : ''}
           </h1>
-          <p style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', color: T.ink3, margin: 0 }}>
-            Here&apos;s what&apos;s coming up
+          <p style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: T.fontSize.sm, color: T.ink2, margin: '4px 0 0' }}>
+            {nextSession ? `Next session ${nextSession.dateLabel} with ${nextSession.trainerName}` : 'No upcoming sessions'}
           </p>
         </div>
 
-        {/* Section 2 — Next session card */}
-        <div style={glassCard}>
-          <span style={sectionLabel}>NEXT SESSION</span>
+        <NextSessionBanner session={nextSession} />
 
-          {nextSession ? (
-            <>
-              {/* Trainer row */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                <div style={{ width: 40, height: 40, borderRadius: '999px', background: T.cyanLight, border: `2px solid ${T.cyanBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '14px', color: T.cyan, flexShrink: 0 }}>
-                  {nextSession.trainerInitials}
-                </div>
-                <div>
-                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '15px', color: T.ink, lineHeight: 1.2 }}>{nextSession.trainerName}</div>
-                  <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>{nextSession.sport} Trainer</div>
-                </div>
-              </div>
+        <FilterPills active={activeFilter} onSelect={setActiveFilter} />
 
-              {/* Date */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', color: T.ink2 }}>
-                <IconCalendar size={14} />
-                <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px' }}>{nextSession.dateLabel}</span>
-              </div>
-
-              {/* Type badge */}
-              <div style={{ marginBottom: '16px' }}>
-                <span style={{ display: 'inline-block', background: 'rgba(0,188,200,0.1)', color: '#00BCC8', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '12px', padding: '4px 12px', borderRadius: '999px' }}>
-                  {nextSession.format}
-                </span>
-              </div>
-
-              {/* Buttons */}
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <Link
-                  href="/dashboard/athlete/messages"
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#00BCC8', color: '#FFFFFF', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '14px', textDecoration: 'none', borderRadius: '10px', minHeight: '44px' }}
-                >
-                  View details
-                </Link>
-                <Link
-                  href="/dashboard/athlete/messages"
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', color: '#00BCC8', fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '14px', textDecoration: 'none', borderRadius: '10px', minHeight: '44px', border: '1.5px solid #00BCC8' }}
-                >
-                  Message trainer
-                </Link>
-              </div>
-            </>
-          ) : (
-            <div style={{ padding: '16px 0 4px', textAlign: 'center', color: T.ink3, fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
-              No upcoming sessions
-            </div>
-          )}
-        </div>
-
-        {/* Section 3 — Stats strip */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-          {[
-            { value: '12', label: 'Sessions'    },
-            { value: '—',  label: 'Avg Rating'  },
-            { value: '3',  label: 'Weeks active' },
-          ].map(({ value, label }) => (
-            <div
-              key={label}
-              style={{
-                background: 'rgba(255,255,255,0.85)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                border: '1px solid rgba(255,255,255,0.5)',
-                borderRadius: '16px',
-                padding: '16px 12px',
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: '#00BCC8', lineHeight: 1 }}>{value}</div>
-              <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3, marginTop: '4px' }}>{label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Section 4 — Recent sessions */}
-        <div style={{ ...glassCard, marginBottom: 0 }}>
-          <span style={sectionLabel}>RECENT SESSIONS</span>
-          {recentSessions.length === 0 ? (
-            <div style={{ padding: '8px 0 4px', textAlign: 'center', color: T.ink3, fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
-              No past sessions
+        <div>
+          <SectionLabel>Your Sessions</SectionLabel>
+          {visible.length === 0 ? (
+            <div style={{ padding: '32px 0', textAlign: 'center', color: T.ink3, fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
+              {bookings.length === 0 ? 'No sessions yet' : 'No sessions in this filter'}
             </div>
           ) : (
-            recentSessions.map((session, i) => (
-              <div
-                key={session.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '14px 0',
-                  borderBottom: i < recentSessions.length - 1 ? '1px solid rgba(0,0,0,0.06)' : 'none',
-                  minHeight: '44px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '13px', color: T.ink2, width: '48px', flexShrink: 0 }}>{session.dateLabel}</span>
-                  <div>
-                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '14px', fontWeight: 500, color: T.ink }}>{session.trainerName}</div>
-                    <div style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: '12px', color: T.ink3 }}>{session.sport}</div>
-                  </div>
-                </div>
-              </div>
-            ))
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {visible.map((booking, i) => (
+                <SessionCard key={booking.id} booking={booking} index={i} />
+              ))}
+            </div>
           )}
         </div>
 
