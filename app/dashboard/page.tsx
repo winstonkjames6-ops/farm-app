@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 import { notifyWaitlistOfOpening } from '@/lib/waitlist'
+import { DashboardHero } from '@/components/dashboard/DashboardHero'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -280,7 +281,9 @@ function EmptyState() {
 
 export default function DashboardPage() {
   const [parentName, setParentName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [bookings, setBookings] = useState<Booking[]>([])
+  const [athleteCount, setAthleteCount] = useState(0)
 
   useEffect(() => {
     const supabase = createClient()
@@ -289,11 +292,12 @@ export default function DashboardPage() {
 
       supabase
         .from('profiles')
-        .select('name')
+        .select('name, avatar_url')
         .eq('id', user.id)
         .single()
         .then(({ data }) => {
           if (data?.name) setParentName(data.name)
+          setAvatarUrl(data?.avatar_url ?? null)
         })
 
       supabase
@@ -326,6 +330,18 @@ export default function DashboardPage() {
           })
           setBookings(mapped)
         })
+
+      supabase
+        .from('athletes')
+        .select('id', { count: 'exact', head: true })
+        .eq('parent_id', user.id)
+        .then(({ count, error }) => {
+          if (error) {
+            console.error('athletes fetch error:', error)
+            return
+          }
+          setAthleteCount(count ?? 0)
+        })
     })
   }, [])
 
@@ -336,6 +352,14 @@ export default function DashboardPage() {
     .filter((b) => b.status === 'completed')
     .sort((a, b) => b.sessionTime.localeCompare(a.sessionTime))
   const isEmpty = bookings.length === 0
+
+  const now = new Date()
+  const spentThisMonth = bookings
+    .filter((b) => {
+      const d = new Date(b.sessionTime)
+      return b.status === 'completed' && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+    })
+    .reduce((sum, b) => sum + (b.totalPaid ?? 0), 0)
 
   async function cancelBooking(id: string) {
     const supabase = createClient()
@@ -363,23 +387,21 @@ export default function DashboardPage() {
       <div className="max-w-4xl mx-auto px-6 py-10 pb-24">
 
         {/* Header */}
-        <motion.div
-          id="tour-home-header"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1] }}
-          className="mb-8"
-        >
-          <h1
-            className="font-black text-[28px] leading-tight tracking-tight"
-            style={{ fontFamily: "'Archivo', sans-serif", color: T.ink, letterSpacing: '-.025em', margin: 0 }}
-          >
-            Hello{parentName ? `, ${parentName.split(' ')[0]}` : ''}
-          </h1>
-          <p className="text-[14px] mt-1" style={{ color: T.ink2 }}>
-            {subtitle}
-          </p>
-        </motion.div>
+        <div id="tour-home-header" className="mb-8">
+          <DashboardHero
+            name={parentName ? parentName.split(' ')[0] : ''}
+            subtitle={subtitle}
+            bannerImage="/dashboard/hero-banner.jpg"
+            avatarUrl={avatarUrl}
+            avatarInitials={parentName ? parentName[0]?.toUpperCase() ?? '' : ''}
+            tiles={[
+              { value: String(athleteCount), label: 'Athletes' },
+              { value: String(upcoming.length), label: 'Upcoming Sessions' },
+              { value: `$${spentThisMonth}`, label: 'Spent This Month' },
+              { value: String(past.length), label: 'Sessions Completed' },
+            ]}
+          />
+        </div>
 
         {isEmpty ? (
           <div style={{ background: T.card.background, border: T.card.border, borderRadius: T.radius.md }}>

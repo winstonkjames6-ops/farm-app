@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 
 import { T } from '@/lib/theme'
+import { DashboardHero } from '@/components/dashboard/DashboardHero'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -25,13 +26,6 @@ type BookingItem = {
 type FilterKey = 'All' | 'Upcoming' | 'Past'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
-function getGreeting() {
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
-}
 
 function getInitials(name: string): string {
   return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
@@ -180,15 +174,51 @@ function SessionCard({ booking, index }: { booking: BookingItem; index: number }
 
 export default function AthletePage() {
   const [firstName, setFirstName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [bookings, setBookings] = useState<BookingItem[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [activeFilter, setActiveFilter] = useState<FilterKey>('All')
+  const [clipsSubmitted, setClipsSubmitted] = useState(0)
+  const [awaitingReview, setAwaitingReview] = useState(0)
+  const [feedbackReady, setFeedbackReady] = useState(0)
 
   useEffect(() => {
     async function load() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => setAvatarUrl(data?.avatar_url ?? null))
+
+      supabase
+        .from('posts')
+        .select('id, feedback_requested, comments(count)')
+        .eq('author_id', user.id)
+        .eq('author_type', 'athlete')
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('[athlete home] posts fetch:', error.message)
+            return
+          }
+          if (!data) return
+          setClipsSubmitted(data.length)
+          let awaiting = 0
+          let ready = 0
+          for (const post of data as any[]) {
+            const commentCount = post.comments?.[0]?.count ?? 0
+            if (post.feedback_requested) {
+              if (commentCount > 0) ready++
+              else awaiting++
+            }
+          }
+          setAwaitingReview(awaiting)
+          setFeedbackReady(ready)
+        })
 
       const { data: athleteRow, error: athleteErr } = await supabase
         .from('athletes')
@@ -248,6 +278,7 @@ export default function AthletePage() {
 
   const upcoming = bookings.filter((b) => b.isUpcoming).sort((a, b) => a.sessionTime.localeCompare(b.sessionTime))
   const past = bookings.filter((b) => !b.isUpcoming && b.sessionTime < new Date().toISOString())
+  const sessionsCompleted = bookings.filter((b) => b.status === 'completed').length
 
   const nextSession = upcoming[0] ?? null
 
@@ -265,14 +296,19 @@ export default function AthletePage() {
           </div>
         )}
 
-        <div>
-          <h1 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: T.fontSize['2xl'], color: T.ink, margin: 0 }}>
-            {getGreeting()}{firstName ? `, ${firstName}` : ''}
-          </h1>
-          <p style={{ fontFamily: "'Hanken Grotesk', sans-serif", fontSize: T.fontSize.sm, color: T.ink2, margin: '4px 0 0' }}>
-            {nextSession ? `Next session ${nextSession.dateLabel} with ${nextSession.trainerName}` : 'No upcoming sessions'}
-          </p>
-        </div>
+        <DashboardHero
+          name={firstName}
+          subtitle={nextSession ? `Next session ${nextSession.dateLabel} with ${nextSession.trainerName}` : 'No upcoming sessions'}
+          bannerImage="/dashboard/hero-banner.jpg"
+          avatarUrl={avatarUrl}
+          avatarInitials={firstName ? firstName[0]?.toUpperCase() ?? '' : ''}
+          tiles={[
+            { value: String(clipsSubmitted), label: 'Clips Submitted' },
+            { value: String(awaitingReview), label: 'Awaiting Review' },
+            { value: String(feedbackReady), label: 'Feedback Ready' },
+            { value: String(sessionsCompleted), label: 'Sessions Completed' },
+          ]}
+        />
 
         <NextSessionBanner session={nextSession} />
 

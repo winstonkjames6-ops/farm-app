@@ -235,7 +235,7 @@ export default function ProfilePage() {
 
   return (
     <div style={{ color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}>
-      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '32px 24px 80px' }}>
+      <div style={{ maxWidth: '672px', margin: '0 auto', padding: '32px' }}>
 
         <ProfileCard
           themePreference={resolveThemeSetting(themePreference)}

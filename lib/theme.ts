@@ -29,7 +29,9 @@ export const T = {
     4: 'rgba(15, 163, 173, 0.4)',
   },
   // Money value color
-  money: '#8FE04A',
+  money: '#15171A',
+  // Verified/certified badge color
+  verified: '#7C3AED',
 
   // Typography scale — 6 sizes, 2 weights
   fontSize: {

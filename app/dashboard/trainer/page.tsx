@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
-import { MetricCard } from '@/components/dashboard/MetricCard'
+import { DashboardHero } from '@/components/dashboard/DashboardHero'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -24,14 +24,10 @@ type Session = {
   time: string
   location: string
   status: string
+  rate: number | null
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
-function isSameMonth(iso: string, ref: Date) {
-  const d = new Date(iso)
-  return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth()
-}
 
 function formatDayLabel(iso: string): string {
   const d = new Date(iso)
@@ -75,6 +71,17 @@ const IconCheckCircle = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
     <polyline points="22 4 12 14.01 9 11.01" />
+  </svg>
+)
+
+const IconStarSmall = () => (
+  <svg
+    style={{ width: 'clamp(12px, 2.211cqw, 21px)', height: 'clamp(12px, 2.211cqw, 21px)' }}
+    viewBox="0 0 24 24"
+    fill={T.cyan}
+    stroke="none"
+  >
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
   </svg>
 )
 
@@ -215,18 +222,28 @@ function HomeView({
   sessions,
   onMarkComplete,
   trainerFirstName,
+  avatarUrl,
+  sessionsThisWeek,
+  sessionsToday,
+  totalEarnings,
+  avgRating,
+  certificationApproved,
 }: {
   sessions: Session[]
   onMarkComplete: (id: string) => Promise<void>
   trainerFirstName: string
+  avatarUrl: string | null
+  sessionsThisWeek: number
+  sessionsToday: number
+  totalEarnings: number
+  avgRating: number | null
+  certificationApproved: boolean
 }) {
   const router = useRouter()
   const [activeSport, setActiveSport] = useState('All')
 
-  const now = new Date()
   const pending = sessions.filter((s) => s.status !== 'completed')
   const completed = sessions.filter((s) => s.status === 'completed')
-  const completedThisMonth = completed.filter((s) => isSameMonth(s.sessionTime, now)).length
 
   const sports = Array.from(new Set(sessions.map((s) => s.sport).filter(Boolean))).sort()
 
@@ -237,9 +254,6 @@ function HomeView({
     .filter((s) => activeSport === 'All' || s.sport === activeSport)
     .sort((a, b) => b.sessionTime.localeCompare(a.sessionTime))
 
-  // Pre-existing hardcoded weekly figure — presentation-only carryover, not new data.
-  const earnedThisWeek = 340
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -247,45 +261,20 @@ function HomeView({
       transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
     >
       <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <div>
-          <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: T.fontSize['2xl'], color: T.ink }}>
-            Hello{trainerFirstName ? `, ${trainerFirstName}` : ''}
-          </div>
-          <div style={{ fontSize: T.fontSize.sm, color: T.ink2, marginTop: '4px', fontFamily: "'Hanken Grotesk', sans-serif" }}>
-            {pending.length === 0 ? 'No sessions waiting for review' : `${pending.length} session${pending.length === 1 ? '' : 's'} waiting for review`}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <MetricCard
-            value={String(pending.length)}
-            labelPrimary="Pending"
-            labelSecondary="Sessions"
-            icon="clock"
-            actionLabel="View Schedule"
-            background={T.metricTeal[1]}
-            onActionClick={() => router.push('/dashboard/trainer/schedule')}
-          />
-          <MetricCard
-            value={`$${earnedThisWeek}`}
-            valueColor={T.money}
-            labelPrimary="Earned"
-            labelSecondary="This Week"
-            icon="trending-up"
-            actionLabel="View Earnings"
-            background={T.metricTeal[2]}
-            onActionClick={() => router.push('/dashboard/trainer/earnings')}
-          />
-          <MetricCard
-            value={String(completedThisMonth)}
-            labelPrimary="Completed"
-            labelSecondary="This Month"
-            icon="calendar"
-            actionLabel="View Schedule"
-            background={T.metricTeal[3]}
-            onActionClick={() => router.push('/dashboard/trainer/schedule')}
-          />
-        </div>
+        <DashboardHero
+          name={trainerFirstName}
+          subtitle={pending.length === 0 ? 'No sessions waiting for review' : `${pending.length} session${pending.length === 1 ? '' : 's'} waiting for review`}
+          bannerImage="/dashboard/hero-banner.jpg"
+          avatarUrl={avatarUrl}
+          avatarInitials={trainerFirstName ? trainerFirstName[0]?.toUpperCase() ?? '' : ''}
+          badge={{ label: 'Certified Trainer', show: certificationApproved }}
+          tiles={[
+            { value: String(sessionsThisWeek), label: 'Sessions This Week' },
+            { value: String(sessionsToday), label: 'Sessions Today' },
+            { value: `$${totalEarnings}`, label: 'Total Earnings' },
+            { value: avgRating != null ? avgRating.toFixed(1) : '—', label: 'Avg Rating', icon: <IconStarSmall /> },
+          ]}
+        />
 
         {sports.length > 0 && (
           <SportPills sports={sports} activeSport={activeSport} onSelect={setActiveSport} />
@@ -328,6 +317,9 @@ function HomeView({
 export default function TrainerHomePage() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [trainerFirstName, setTrainerFirstName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [avgRating, setAvgRating] = useState<number | null>(null)
+  const [certificationApproved, setCertificationApproved] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -337,23 +329,36 @@ export default function TrainerHomePage() {
 
       supabase
         .from('profiles')
-        .select('name')
+        .select('name, avatar_url')
         .eq('id', user.id)
         .single()
         .then(({ data }) => {
           if (data?.name) setTrainerFirstName(data.name.split(' ')[0])
+          setAvatarUrl(data?.avatar_url ?? null)
         })
 
       const { data: trainerRow } = await supabase
         .from('trainers')
-        .select('id')
+        .select('id, certification_status')
         .eq('profile_id', user.id)
         .single()
       if (!trainerRow) return
 
+      setCertificationApproved(trainerRow.certification_status === 'approved')
+
+      supabase
+        .from('reviews')
+        .select('rating')
+        .eq('trainer_id', trainerRow.id)
+        .then(({ data }) => {
+          if (!data || data.length === 0) return
+          const avg = data.reduce((sum, r) => sum + r.rating, 0) / data.length
+          setAvgRating(avg)
+        })
+
       const { data: bookings } = await supabase
         .from('bookings')
-        .select('id, format, session_time, status, parent_id, athletes!athlete_id(name, sport), profiles!parent_id(name)')
+        .select('id, format, session_time, status, rate, parent_id, athletes!athlete_id(name, sport), profiles!parent_id(name)')
         .eq('trainer_id', trainerRow.id)
       if (!bookings) return
 
@@ -374,6 +379,7 @@ export default function TrainerHomePage() {
           time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
           location: type === 'REMOTE' ? 'Video Call' : 'In Person',
           status: b.status ?? 'pending',
+          rate: b.rate ?? null,
         }
       })
 
@@ -392,11 +398,36 @@ export default function TrainerHomePage() {
     setSessions((prev) => prev.map((s) => s.id === sessionId ? { ...s, status: 'completed' } : s))
   }
 
+  const now = new Date()
+  const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay())
+  const endOfWeek = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate() + 7)
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const endOfToday = new Date(startOfToday.getFullYear(), startOfToday.getMonth(), startOfToday.getDate() + 1)
+
+  const activeSessions = sessions.filter((s) => s.status !== 'cancelled')
+  const sessionsThisWeek = activeSessions.filter((s) => {
+    const t = new Date(s.sessionTime).getTime()
+    return t >= startOfWeek.getTime() && t < endOfWeek.getTime()
+  }).length
+  const sessionsToday = activeSessions.filter((s) => {
+    const t = new Date(s.sessionTime).getTime()
+    return t >= startOfToday.getTime() && t < endOfToday.getTime()
+  }).length
+  const totalEarnings = sessions
+    .filter((s) => s.status === 'completed')
+    .reduce((sum, s) => sum + (s.rate ?? 0), 0)
+
   return (
     <HomeView
       sessions={sessions}
       onMarkComplete={handleMarkComplete}
       trainerFirstName={trainerFirstName}
+      avatarUrl={avatarUrl}
+      sessionsThisWeek={sessionsThisWeek}
+      sessionsToday={sessionsToday}
+      totalEarnings={totalEarnings}
+      avgRating={avgRating}
+      certificationApproved={certificationApproved}
     />
   )
 }

@@ -1929,7 +1929,7 @@ export default function ParentProfilePage() {
 
   return (
     <div style={{ position: 'relative', zIndex: 2 }}>
-      <div style={{ maxWidth: '672px', margin: '0 auto', padding: '32px 24px' }}>
+      <div style={{ maxWidth: '672px', margin: '0 auto', padding: '32px' }}>
         <motion.div
           key={isEditing ? 'edit' : 'view'}
           initial={{ opacity: 0, y: 12 }}
