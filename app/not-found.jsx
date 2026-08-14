@@ -20,7 +20,7 @@ export default function NotFound() {
         {/* Logo */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '48px' }}>
           <span style={{
-            width: '30px', height: '30px', borderRadius: '8px', background: '#22C55E',
+            width: '30px', height: '30px', borderRadius: '8px', background: '#00BCC8',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: "'Archivo', sans-serif", fontWeight: 900, fontSize: '16px', color: '#000',
           }}>F</span>
@@ -80,7 +80,7 @@ export default function NotFound() {
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               padding: '13px 24px', borderRadius: '12px', textDecoration: 'none',
-              background: '#22C55E', color: '#000',
+              background: '#00BCC8', color: '#000',
               fontWeight: 700, fontSize: '15px',
               fontFamily: "'Hanken Grotesk', sans-serif",
               transition: 'filter .15s ease',

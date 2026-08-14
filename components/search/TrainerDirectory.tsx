@@ -291,7 +291,8 @@ export default function TrainerDirectory() {
     Promise.all([
       supabase
         .from('trainers')
-        .select('id, profile_id, specialty, bio, rate, location, is_certified, active_preset_id, profiles(name, avatar_url)'),
+        .select('id, profile_id, specialty, bio, rate, location, is_certified, active_preset_id, profiles(name, avatar_url)')
+        .eq('certification_status', 'approved'),
       supabase.from('reviews').select('trainer_id, rating'),
       supabase.from('trainer_tags').select('trainer_id, tags(name)'),
     ]).then(([{ data }, { data: reviewData }, { data: tagData }]) => {
