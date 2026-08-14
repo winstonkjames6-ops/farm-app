@@ -33,11 +33,6 @@ export async function middleware(request: NextRequest) {
 
   const gatedPrefixes = [
     '/dashboard',
-    '/onboarding-athlete-preview-tmp',
-    '/onboarding-parent-preview-tmp',
-    '/onboarding-preview-tmp',
-    '/pc-preview-tmp',
-    '/settings-preview-tmp',
   ]
 
   if (gatedPrefixes.some((prefix) => pathname.startsWith(prefix)) && !user) {
