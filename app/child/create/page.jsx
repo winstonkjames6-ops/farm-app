@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import { createClient } from '@/utils/supabase/client'
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
@@ -69,6 +71,8 @@ function Field({ label, optional, children }) {
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CreateChildPage() {
+  const router = useRouter()
+  const [authChecked, setAuthChecked] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
@@ -79,6 +83,17 @@ export default function CreateChildPage() {
     username: '', pin: '',
   })
   const [focusedField, setFocusedField] = useState(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.replace('/login')
+        return
+      }
+      setAuthChecked(true)
+    })
+  }, [router])
 
   const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
 
@@ -123,10 +138,15 @@ export default function CreateChildPage() {
   const isValid = form.firstName.trim() && form.lastName.trim() && form.sport && form.skillLevel
     && /^[a-z0-9]+$/.test(form.username.trim().toLowerCase())
     && /^\d{4,6}$/.test(form.pin)
+    && (age === null || age < 13)
 
   const focusStyle = (name) => focusedField === name
     ? { borderColor: '#00BCC8', boxShadow: '0 0 0 3px rgba(0,188,200,0.12)' }
     : {}
+
+  if (!authChecked) {
+    return null
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8F8F8', color: '#111827', fontFamily: "'Hanken Grotesk', sans-serif" }}>
@@ -235,6 +255,11 @@ export default function CreateChildPage() {
                 {age !== null && (
                   <p style={{ margin: '7px 0 0', fontSize: '13px', color: '#9CA3AF' }}>
                     Age: <strong style={{ color: '#374151' }}>{age}</strong>
+                  </p>
+                )}
+                {age !== null && age >= 13 && (
+                  <p style={{ margin: '7px 0 0', fontSize: '13px', color: '#DC2626' }}>
+                    Athletes 13 and older set up their own account. Add them from your dashboard to get an invite code.
                   </p>
                 )}
               </Field>
