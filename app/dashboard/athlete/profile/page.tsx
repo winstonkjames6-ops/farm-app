@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import { Loader2 } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 import { T } from '@/lib/theme'
 import { ProfileCard } from '@/components/profile/ProfileCard'
@@ -9,6 +11,14 @@ import { AppearanceSection } from '@/components/profile/AppearanceSection'
 import { ActivityList } from '@/components/profile/ActivityList'
 import { getProfileCardTokens, resolveThemeSetting } from '@/components/profile/theme'
 import type { ActivityItem, BackgroundMode, ThemeSetting } from '@/components/profile/types'
+
+const BANNER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const BANNER_MAX_BYTES = 5 * 1024 * 1024 // matches the banners bucket's own file_size_limit
+const BANNER_EXTENSION_BY_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -65,6 +75,9 @@ export default function ProfilePage() {
   const [messages, setMessages] = useState<MessageRow[]>([])
   const [activeTab, setActiveTab] = useState('activity')
   const [loading, setLoading] = useState(true)
+  const [bannerUploading, setBannerUploading] = useState(false)
+  const [bannerError, setBannerError] = useState('')
+  const bannerFileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     async function load() {
@@ -167,6 +180,55 @@ export default function ProfilePage() {
     if (updates.background_mode) setBackgroundMode(updates.background_mode)
   }
 
+  function handleBannerFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setBannerError('')
+
+    if (!userId) {
+      setBannerError('Not authenticated. Please refresh and try again.')
+      return
+    }
+    if (!BANNER_ALLOWED_TYPES.includes(file.type)) {
+      setBannerError('Please upload a JPEG, PNG, or WEBP image.')
+      return
+    }
+    if (file.size > BANNER_MAX_BYTES) {
+      setBannerError('Image must be under 5MB.')
+      return
+    }
+
+    uploadBanner(file)
+  }
+
+  async function uploadBanner(file: File) {
+    if (!userId) return
+    setBannerUploading(true)
+    const supabase = createClient()
+    const extension = BANNER_EXTENSION_BY_TYPE[file.type] ?? 'jpg'
+    const path = `${userId}/${Date.now()}.${extension}`
+
+    const { error: uploadErr } = await supabase.storage.from('banners').upload(path, file, { contentType: file.type })
+    if (uploadErr) {
+      setBannerError(uploadErr.message)
+      setBannerUploading(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('banners').getPublicUrl(path)
+    const { error: updateErr } = await supabase.from('profiles').update({ banner_image_url: publicUrl }).eq('id', userId)
+    if (updateErr) {
+      setBannerError(updateErr.message)
+      setBannerUploading(false)
+      return
+    }
+
+    setBannerImageUrl(publicUrl)
+    setBannerUploading(false)
+  }
+
   const initials = name ? getInitials(name) : '?'
   const age = dob ? computeAge(dob) : null
   const isMinor = age !== null && age < 18
@@ -260,6 +322,47 @@ export default function ProfilePage() {
           onOpenSettings={() => document.getElementById('athlete-appearance')?.scrollIntoView({ behavior: 'smooth' })}
           profileLabel="My profile"
         />
+
+        {age !== null && age >= 13 && (
+          <div style={{ marginTop: '16px', background: cardTokens.card, border: `1px solid ${cardTokens.border}`, borderRadius: '14px', padding: '24px' }}>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: cardTokens.ink3, marginBottom: '16px' }}>
+              Banner image
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', width: '200px', height: '75px', borderRadius: '10px', overflow: 'hidden', background: cardTokens.surface2, flexShrink: 0 }}>
+                {bannerImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={bannerImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: cardTokens.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                    No banner set
+                  </div>
+                )}
+                {bannerUploading && (
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }}>
+                      <Loader2 size={22} color={T.cyan} />
+                    </motion.div>
+                  </div>
+                )}
+              </div>
+              <div>
+                <input
+                  ref={bannerFileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
+                  onChange={handleBannerFileChange} style={{ display: 'none' }}
+                />
+                <button
+                  onClick={() => bannerFileInputRef.current?.click()}
+                  disabled={bannerUploading}
+                  style={{ height: '40px', padding: '0 18px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: bannerUploading ? 'default' : 'pointer', opacity: bannerUploading ? 0.7 : 1 }}
+                >{bannerUploading ? 'Uploading…' : bannerImageUrl ? 'Change banner' : 'Upload banner'}</button>
+                {bannerError && (
+                  <div style={{ fontSize: '13px', color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{bannerError}</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div id="athlete-appearance" style={{ marginTop: '16px', scrollMarginTop: '24px' }}>
           <AppearanceSection

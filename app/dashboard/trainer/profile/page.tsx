@@ -112,6 +112,14 @@ const TRAVEL_OPTIONS = ['No travel', 'Up to 5 miles', 'Up to 10 miles', 'Up to 2
 const AVATAR_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024 // matches the avatars bucket's own file_size_limit
 
+const BANNER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const BANNER_MAX_BYTES = 5 * 1024 * 1024 // matches the banners bucket's own file_size_limit
+const BANNER_EXTENSION_BY_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+}
+
 const VERIFICATION_DOC_ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
 
 // verification-docs paths are `${userId}/${epochMs}-${originalFilename}` (see
@@ -245,7 +253,7 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: () => void }) {
 // ── Section: Profile photo ─────────────────────────────────────────────────────
 
 function ProfilePhotoSection({
-  fullName, sport, userId, avatarUrl, onAvatarChange, profileItems,
+  fullName, sport, userId, avatarUrl, onAvatarChange, profileItems, bannerImageUrl, onBannerChange,
 }: {
   fullName: string
   sport: string
@@ -253,6 +261,8 @@ function ProfilePhotoSection({
   avatarUrl: string | null
   onAvatarChange: (url: string) => void
   profileItems: typeof PROFILE_ITEMS
+  bannerImageUrl: string | null
+  onBannerChange: (url: string) => void
 }) {
   const profileStrength = profileItems.filter((i) => i.completed).reduce((sum, i) => sum + parseInt(i.boost), 0)
   const [strengthExpanded, setStrengthExpanded] = useState(false)
@@ -261,6 +271,10 @@ function ProfilePhotoSection({
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const initials = getInitials(fullName)
+
+  const [bannerUploading, setBannerUploading] = useState(false)
+  const [bannerError, setBannerError] = useState('')
+  const bannerFileInputRef = useRef<HTMLInputElement>(null)
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -308,6 +322,54 @@ function ProfilePhotoSection({
 
     onAvatarChange(publicUrl)
     setUploading(false)
+  }
+
+  function handleBannerFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setBannerError('')
+
+    if (!userId) {
+      setBannerError('Not authenticated. Please refresh and try again.')
+      return
+    }
+    if (!BANNER_ALLOWED_TYPES.includes(file.type)) {
+      setBannerError('Please upload a JPEG, PNG, or WEBP image.')
+      return
+    }
+    if (file.size > BANNER_MAX_BYTES) {
+      setBannerError('Image must be under 5MB.')
+      return
+    }
+
+    uploadBanner(file)
+  }
+
+  async function uploadBanner(file: File) {
+    setBannerUploading(true)
+    const supabase = createClient()
+    const extension = BANNER_EXTENSION_BY_TYPE[file.type] ?? 'jpg'
+    const path = `${userId}/${Date.now()}.${extension}`
+
+    const { error: uploadErr } = await supabase.storage.from('banners').upload(path, file, { contentType: file.type })
+    if (uploadErr) {
+      setBannerError(uploadErr.message)
+      setBannerUploading(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('banners').getPublicUrl(path)
+    const { error: updateErr } = await supabase.from('profiles').update({ banner_image_url: publicUrl }).eq('id', userId)
+    if (updateErr) {
+      setBannerError(updateErr.message)
+      setBannerUploading(false)
+      return
+    }
+
+    onBannerChange(publicUrl)
+    setBannerUploading(false)
   }
 
   return (
@@ -406,6 +468,43 @@ function ProfilePhotoSection({
           style={{ height: '44px', padding: '0 20px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: uploading ? 'default' : 'pointer', opacity: uploading ? 0.7 : 1 }}
         >{uploading ? 'Uploading…' : 'Upload photo'}</button>
         <button style={{ height: '44px', padding: '0 20px', background: 'transparent', color: T.ink2, border: '1px solid rgba(0,0,0,0.12)', borderRadius: '8px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer' }}>Remove photo</button>
+      </div>
+
+      <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+        <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '10px' }}>Banner image</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', width: '200px', height: '75px', borderRadius: '10px', overflow: 'hidden', background: T.surface2, flexShrink: 0 }}>
+            {bannerImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={bannerImageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                No banner set
+              </div>
+            )}
+            {bannerUploading && (
+              <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }}>
+                  <Loader2 size={22} color={T.cyan} />
+                </motion.div>
+              </div>
+            )}
+          </div>
+          <div>
+            <input
+              ref={bannerFileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
+              onChange={handleBannerFileChange} style={{ display: 'none' }}
+            />
+            <button
+              onClick={() => bannerFileInputRef.current?.click()}
+              disabled={bannerUploading}
+              style={{ height: '40px', padding: '0 18px', background: T.cyan, color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '13px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: bannerUploading ? 'default' : 'pointer', opacity: bannerUploading ? 0.7 : 1 }}
+            >{bannerUploading ? 'Uploading…' : bannerImageUrl ? 'Change banner' : 'Upload banner'}</button>
+            {bannerError && (
+              <div style={{ fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px' }}>{bannerError}</div>
+            )}
+          </div>
+        </div>
       </div>
 
       {pendingFile && (
@@ -1579,7 +1678,7 @@ export default function TrainerProfilePage() {
                 style={{ border: '1px solid rgba(0,0,0,0.12)', color: T.ink2, background: 'transparent', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px', flexShrink: 0 }}
               >← Done editing</button>
             </div>
-            <ProfilePhotoSection fullName={initName} sport={sport} userId={userId ?? ''} avatarUrl={avatarUrl} onAvatarChange={setAvatarUrl} profileItems={profileItems} />
+            <ProfilePhotoSection fullName={initName} sport={sport} userId={userId ?? ''} avatarUrl={avatarUrl} onAvatarChange={setAvatarUrl} profileItems={profileItems} bannerImageUrl={bannerImageUrl} onBannerChange={setBannerImageUrl} />
             <BasicInfoSection
               fullName={draftFullName}
               onFullNameChange={setDraftFullName}

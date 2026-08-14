@@ -175,6 +175,7 @@ function SessionCard({ booking, index }: { booking: BookingItem; index: number }
 export default function AthletePage() {
   const [firstName, setFirstName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null)
   const [bookings, setBookings] = useState<BookingItem[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [activeFilter, setActiveFilter] = useState<FilterKey>('All')
@@ -190,10 +191,13 @@ export default function AthletePage() {
 
       supabase
         .from('profiles')
-        .select('avatar_url')
+        .select('avatar_url, banner_image_url')
         .eq('id', user.id)
         .single()
-        .then(({ data }) => setAvatarUrl(data?.avatar_url ?? null))
+        .then(({ data }) => {
+          setAvatarUrl(data?.avatar_url ?? null)
+          setBannerImageUrl(data?.banner_image_url ?? null)
+        })
 
       supabase
         .from('posts')
@@ -299,7 +303,7 @@ export default function AthletePage() {
         <DashboardHero
           name={firstName}
           subtitle={nextSession ? `Next session ${nextSession.dateLabel} with ${nextSession.trainerName}` : 'No upcoming sessions'}
-          bannerImage="/dashboard/hero-banner.jpg"
+          bannerImage={bannerImageUrl ?? '/dashboard/hero-banner.jpg'}
           avatarUrl={avatarUrl}
           avatarInitials={firstName ? firstName[0]?.toUpperCase() ?? '' : ''}
           tiles={[

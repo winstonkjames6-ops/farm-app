@@ -223,6 +223,7 @@ function HomeView({
   onMarkComplete,
   trainerFirstName,
   avatarUrl,
+  bannerImageUrl,
   sessionsThisWeek,
   sessionsToday,
   totalEarnings,
@@ -233,6 +234,7 @@ function HomeView({
   onMarkComplete: (id: string) => Promise<void>
   trainerFirstName: string
   avatarUrl: string | null
+  bannerImageUrl: string | null
   sessionsThisWeek: number
   sessionsToday: number
   totalEarnings: number
@@ -264,7 +266,7 @@ function HomeView({
         <DashboardHero
           name={trainerFirstName}
           subtitle={pending.length === 0 ? 'No sessions waiting for review' : `${pending.length} session${pending.length === 1 ? '' : 's'} waiting for review`}
-          bannerImage="/dashboard/hero-banner.jpg"
+          bannerImage={bannerImageUrl ?? '/dashboard/hero-banner.jpg'}
           avatarUrl={avatarUrl}
           avatarInitials={trainerFirstName ? trainerFirstName[0]?.toUpperCase() ?? '' : ''}
           badge={{ label: 'Certified Trainer', show: certificationApproved }}
@@ -318,6 +320,7 @@ export default function TrainerHomePage() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [trainerFirstName, setTrainerFirstName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null)
   const [avgRating, setAvgRating] = useState<number | null>(null)
   const [certificationApproved, setCertificationApproved] = useState(false)
 
@@ -329,12 +332,13 @@ export default function TrainerHomePage() {
 
       supabase
         .from('profiles')
-        .select('name, avatar_url')
+        .select('name, avatar_url, banner_image_url')
         .eq('id', user.id)
         .single()
         .then(({ data }) => {
           if (data?.name) setTrainerFirstName(data.name.split(' ')[0])
           setAvatarUrl(data?.avatar_url ?? null)
+          setBannerImageUrl(data?.banner_image_url ?? null)
         })
 
       const { data: trainerRow } = await supabase
@@ -423,6 +427,7 @@ export default function TrainerHomePage() {
       onMarkComplete={handleMarkComplete}
       trainerFirstName={trainerFirstName}
       avatarUrl={avatarUrl}
+      bannerImageUrl={bannerImageUrl}
       sessionsThisWeek={sessionsThisWeek}
       sessionsToday={sessionsToday}
       totalEarnings={totalEarnings}

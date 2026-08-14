@@ -282,6 +282,7 @@ function EmptyState() {
 export default function DashboardPage() {
   const [parentName, setParentName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null)
   const [bookings, setBookings] = useState<Booking[]>([])
   const [athleteCount, setAthleteCount] = useState(0)
 
@@ -292,12 +293,13 @@ export default function DashboardPage() {
 
       supabase
         .from('profiles')
-        .select('name, avatar_url')
+        .select('name, avatar_url, banner_image_url')
         .eq('id', user.id)
         .single()
         .then(({ data }) => {
           if (data?.name) setParentName(data.name)
           setAvatarUrl(data?.avatar_url ?? null)
+          setBannerImageUrl(data?.banner_image_url ?? null)
         })
 
       supabase
@@ -390,7 +392,7 @@ export default function DashboardPage() {
           <DashboardHero
             name={parentName ? parentName.split(' ')[0] : ''}
             subtitle={subtitle}
-            bannerImage="/dashboard/hero-banner.jpg"
+            bannerImage={bannerImageUrl ?? '/dashboard/hero-banner.jpg'}
             avatarUrl={avatarUrl}
             avatarInitials={parentName ? parentName[0]?.toUpperCase() ?? '' : ''}
             tiles={[

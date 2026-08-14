@@ -45,6 +45,7 @@ interface AthleteRow {
   waiver_signed_at: string | null
   profile_id: string | null
   comments_enabled: boolean
+  banner_image_url: string | null
 }
 
 // ── Static data ────────────────────────────────────────────────────────────────
@@ -66,6 +67,14 @@ const PROFILE_ITEMS = [
 
 const AVATAR_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024 // matches the avatars bucket's own file_size_limit
+
+const BANNER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const BANNER_MAX_BYTES = 5 * 1024 * 1024 // matches the banners bucket's own file_size_limit
+const BANNER_EXTENSION_BY_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+}
 
 const NOTIF_ROWS = [
   { key: 'sessionReminder', label: 'Session reminders',    desc: '1 hour before each session' },
@@ -871,6 +880,62 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
   const [setupLoginError, setSetupLoginError] = useState<Record<string, string | null>>({})
   const [setupLoginResult, setSetupLoginResult] = useState<Record<string, string | null>>({})
 
+  // Banner upload — per athlete, under-13 linked athletes only.
+  const [bannerUploading, setBannerUploading] = useState<Record<string, boolean>>({})
+  const [bannerError, setBannerError] = useState<Record<string, string | null>>({})
+  const bannerFileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+
+  function handleBannerFileChange(athlete: AthleteRow, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setBannerError((prev) => ({ ...prev, [athlete.id]: null }))
+
+    if (!athlete.profile_id) {
+      setBannerError((prev) => ({ ...prev, [athlete.id]: 'This athlete is not linked yet.' }))
+      return
+    }
+    if (!BANNER_ALLOWED_TYPES.includes(file.type)) {
+      setBannerError((prev) => ({ ...prev, [athlete.id]: 'Please upload a JPEG, PNG, or WEBP image.' }))
+      return
+    }
+    if (file.size > BANNER_MAX_BYTES) {
+      setBannerError((prev) => ({ ...prev, [athlete.id]: 'Image must be under 5MB.' }))
+      return
+    }
+
+    uploadAthleteBanner(athlete, file)
+  }
+
+  async function uploadAthleteBanner(athlete: AthleteRow, file: File) {
+    const profileId = athlete.profile_id
+    if (!profileId) return
+
+    setBannerUploading((prev) => ({ ...prev, [athlete.id]: true }))
+    const supabase = createClient()
+    const extension = BANNER_EXTENSION_BY_TYPE[file.type] ?? 'jpg'
+    const path = `${profileId}/${Date.now()}.${extension}`
+
+    const { error: uploadErr } = await supabase.storage.from('banners').upload(path, file, { contentType: file.type })
+    if (uploadErr) {
+      setBannerError((prev) => ({ ...prev, [athlete.id]: uploadErr.message }))
+      setBannerUploading((prev) => ({ ...prev, [athlete.id]: false }))
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('banners').getPublicUrl(path)
+    const { error: updateErr } = await supabase.from('profiles').update({ banner_image_url: publicUrl }).eq('id', profileId)
+    if (updateErr) {
+      setBannerError((prev) => ({ ...prev, [athlete.id]: updateErr.message }))
+      setBannerUploading((prev) => ({ ...prev, [athlete.id]: false }))
+      return
+    }
+
+    setAthletes((prev) => prev.map((a) => a.id === athlete.id ? { ...a, banner_image_url: publicUrl } : a))
+    setBannerUploading((prev) => ({ ...prev, [athlete.id]: false }))
+  }
+
   function handleChange(id: string, field: string, value: string | number) {
     setAthletes((prev) =>
       prev.map((a) => a.id === id ? { ...a, [field]: value } : a)
@@ -1337,6 +1402,49 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
                             fontFamily: "'Hanken Grotesk', sans-serif", padding: 0,
                           }}
                         >View invite code</button>
+                      </div>
+                    )}
+
+                    {athlete.profile_id && athlete.age !== null && athlete.age < 13 && (
+                      <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <div style={{ position: 'relative', width: '96px', height: '36px', borderRadius: '6px', overflow: 'hidden', background: T.surface2, flexShrink: 0 }}>
+                          {athlete.banner_image_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={athlete.banner_image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                              No banner
+                            </div>
+                          )}
+                          {bannerUploading[athlete.id] && (
+                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.9, ease: 'linear' }}>
+                                <Loader2 size={14} color={T.cyan} />
+                              </motion.div>
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          ref={(el) => { bannerFileInputRefs.current[athlete.id] = el }}
+                          type="file" accept="image/jpeg,image/png,image/webp"
+                          onChange={(e) => handleBannerFileChange(athlete, e)}
+                          style={{ display: 'none' }}
+                        />
+                        <button
+                          onClick={() => bannerFileInputRefs.current[athlete.id]?.click()}
+                          disabled={bannerUploading[athlete.id]}
+                          style={{
+                            background: 'transparent', border: 'none', cursor: bannerUploading[athlete.id] ? 'default' : 'pointer',
+                            color: T.cyan, fontSize: '12px', fontWeight: 600,
+                            fontFamily: "'Hanken Grotesk', sans-serif", padding: 0,
+                            opacity: bannerUploading[athlete.id] ? 0.7 : 1,
+                          }}
+                        >{bannerUploading[athlete.id] ? 'Uploading…' : athlete.banner_image_url ? 'Change banner' : 'Upload banner'}</button>
+                      </div>
+                    )}
+                    {bannerError[athlete.id] && (
+                      <div style={{ marginTop: '4px', fontSize: '12px', color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+                        {bannerError[athlete.id]}
                       </div>
                     )}
 
@@ -1856,7 +1964,7 @@ export default function ParentProfilePage() {
 
       const { data: athleteData } = await supabase
         .from('athletes')
-        .select('id, name, dob, sport, waiver_signed_at, profile_id, comments_enabled')
+        .select('id, name, dob, sport, waiver_signed_at, profile_id, comments_enabled, profiles!profile_id(banner_image_url)')
         .eq('parent_id', user.id)
 
       setAthletes(
@@ -1870,6 +1978,7 @@ export default function ParentProfilePage() {
           waiver_signed_at: a.waiver_signed_at as string | null,
           profile_id: a.profile_id as string | null,
           comments_enabled: !!a.comments_enabled,
+          banner_image_url: (a as any).profiles?.banner_image_url ?? null,
         }))
       )
 
