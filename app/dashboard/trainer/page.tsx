@@ -260,7 +260,7 @@ function HomeView({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.2, 0.7, 0.2, 1] }}
     >
-      <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px 80px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <DashboardHero
           name={trainerFirstName}
           subtitle={pending.length === 0 ? 'No sessions waiting for review' : `${pending.length} session${pending.length === 1 ? '' : 's'} waiting for review`}

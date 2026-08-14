@@ -41,19 +41,19 @@ export type DashboardHeroProps = {
 // since those hold at any size with no reference width needed.
 const px = (desktopPx: number) => (desktopPx / 950) * 100
 
-const AVATAR_WIDTH_PCT = 19 // % of banner width — numerically equal to cqw here
+const AVATAR_WIDTH_PCT = 25 // % of banner width — numerically equal to cqw here
 const AVATAR_OVERLAP_FRACTION = 0.4 // fraction of the avatar's own height below the banner edge
 const AVATAR_OVERHANG_CQW = AVATAR_WIDTH_PCT * AVATAR_OVERLAP_FRACTION // 7.6cqw
 // The badge must start below the avatar's lowest point, with room to spare, so the two
 // can never visually collide regardless of container width or how wide the badge's label is.
-const BADGE_TOP_OFFSET_CQW = AVATAR_OVERHANG_CQW + px(20)
+const BADGE_TOP_OFFSET_CQW = AVATAR_OVERHANG_CQW + px(-70)
 const BADGE_HEIGHT_ESTIMATE_CQW = px(44)
 
 function Tile({ tile }: { tile: DashboardHeroTile }) {
   return (
     <div
       style={{
-        width: `clamp(84px, ${px(118)}cqw, 118px)`,
+        width: `clamp(84px, ${px(110)}cqw, 118px)`,
         aspectRatio: '1 / 2.15',
         borderRadius: `clamp(11px, ${px(26)}cqw, 26px)`,
         background: 'rgba(255,255,255,0.22)',
@@ -213,7 +213,7 @@ export function DashboardHero({
               style={{
                 fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 700,
-                fontSize: `clamp(14px, ${px(42)}cqw, 42px)`,
+                fontSize: `clamp(14px, ${px(100)}cqw, 100px)`,
                 color: T.cyan,
               }}
             >
@@ -228,7 +228,7 @@ export function DashboardHero({
             style={{
               position: 'absolute',
               top: `calc(100% + ${BADGE_TOP_OFFSET_CQW}cqw)`,
-              right: `clamp(12px, ${px(64)}cqw, 64px)`,
+              right: `clamp(12px, ${px(150)}cqw, 150px)`,
             }}
           >
             <span

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
+import { Card } from '@/components/shared/Card'
 
 const barlow = "'Barlow Condensed', sans-serif"
 const hanken = "'Hanken Grotesk', sans-serif"
@@ -77,18 +78,13 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
         </div>
 
         {trainers.length === 0 ? (
-          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: T.radius.lg, textAlign: 'center', padding: '80px 24px' }}>
+          <Card style={{ textAlign: 'center' }}>
             <p style={{ fontFamily: hanken, fontSize: T.fontSize.md, color: T.ink3, margin: 0 }}>No pending certification requests</p>
-          </div>
+          </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {trainers.map((t) => (
-              <div
-                key={t.id}
-                style={{
-                  background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: T.radius.lg, padding: '20px',
-                }}
-              >
+              <Card key={t.id}>
                 <p style={{ fontFamily: hanken, fontSize: T.fontSize.sm, color: T.ink, margin: '0 0 4px', fontWeight: 700 }}>
                   {t.name}
                 </p>
@@ -179,7 +175,7 @@ export default function AdminCertifications({ initialTrainers }: { initialTraine
                     Reject
                   </button>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}

@@ -863,6 +863,14 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
   const [inviteCodeError, setInviteCodeError] = useState<Record<string, string | null>>({})
   const [inviteCodeCopied, setInviteCodeCopied] = useState<Record<string, boolean>>({})
 
+  // Under-13 login setup — per athlete, opened via "Set up their login".
+  const [setupLoginOpen, setSetupLoginOpen] = useState<Record<string, boolean>>({})
+  const [setupLoginUsername, setSetupLoginUsername] = useState<Record<string, string>>({})
+  const [setupLoginPin, setSetupLoginPin] = useState<Record<string, string>>({})
+  const [setupLoginSubmitting, setSetupLoginSubmitting] = useState<Record<string, boolean>>({})
+  const [setupLoginError, setSetupLoginError] = useState<Record<string, string | null>>({})
+  const [setupLoginResult, setSetupLoginResult] = useState<Record<string, string | null>>({})
+
   function handleChange(id: string, field: string, value: string | number) {
     setAthletes((prev) =>
       prev.map((a) => a.id === id ? { ...a, [field]: value } : a)
@@ -922,6 +930,45 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
       setInviteCodeCopied((prev) => ({ ...prev, [athleteId]: true }))
       setTimeout(() => setInviteCodeCopied((prev) => ({ ...prev, [athleteId]: false })), 2000)
     })
+  }
+
+  function openSetupLogin(athleteId: string) {
+    setSetupLoginOpen((prev) => ({ ...prev, [athleteId]: true }))
+  }
+
+  function closeSetupLogin(athleteId: string) {
+    setSetupLoginOpen((prev) => ({ ...prev, [athleteId]: false }))
+  }
+
+  async function handleSetupLoginSubmit(athlete: AthleteRow) {
+    const username = setupLoginUsername[athlete.id] ?? ''
+    const pin = setupLoginPin[athlete.id] ?? ''
+    setSetupLoginSubmitting((prev) => ({ ...prev, [athlete.id]: true }))
+    setSetupLoginError((prev) => ({ ...prev, [athlete.id]: null }))
+
+    const spaceIdx = athlete.name.indexOf(' ')
+    const firstName = spaceIdx >= 0 ? athlete.name.slice(0, spaceIdx) : athlete.name
+    const lastName = spaceIdx >= 0 ? athlete.name.slice(spaceIdx + 1) : ''
+
+    try {
+      const res = await fetch('/api/create-athlete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName, lastName, dob: athlete.dob, sport: athlete.sport, username, pin,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setSetupLoginError((prev) => ({ ...prev, [athlete.id]: data.error ?? 'Failed to create login.' }))
+        return
+      }
+      setSetupLoginResult((prev) => ({ ...prev, [athlete.id]: username.trim().toLowerCase() }))
+    } catch {
+      setSetupLoginError((prev) => ({ ...prev, [athlete.id]: 'Failed to create login.' }))
+    } finally {
+      setSetupLoginSubmitting((prev) => ({ ...prev, [athlete.id]: false }))
+    }
   }
 
   // Persists the messaging waiver (sign or revoke) and only flips the toggle
@@ -1261,6 +1308,21 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
                         marginTop: '4px', fontSize: '12px', fontWeight: 600, color: '#10B981',
                         fontFamily: "'Hanken Grotesk', sans-serif",
                       }}>Linked</div>
+                    ) : athlete.age !== null && athlete.age < 13 ? (
+                      <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{
+                          fontSize: '12px', fontWeight: 600, color: T.ink3,
+                          fontFamily: "'Hanken Grotesk', sans-serif",
+                        }}>Not yet linked</span>
+                        <button
+                          onClick={() => openSetupLogin(athlete.id)}
+                          style={{
+                            background: 'transparent', border: 'none', cursor: 'pointer',
+                            color: T.cyan, fontSize: '12px', fontWeight: 600,
+                            fontFamily: "'Hanken Grotesk', sans-serif", padding: 0,
+                          }}
+                        >Set up their login</button>
+                      </div>
                     ) : (
                       <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <span style={{
@@ -1323,6 +1385,99 @@ function AthletesSection({ initialAthletes }: { initialAthletes: AthleteRow[] })
                                 fontFamily: "'Hanken Grotesk', sans-serif", padding: 0,
                               }}
                             >Close</button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <AnimatePresence>
+                      {setupLoginOpen[athlete.id] && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          style={{ overflow: 'hidden' }}
+                        >
+                          <div style={{
+                            marginTop: '8px', background: T.surface2, borderRadius: '8px', padding: '12px',
+                          }}>
+                            {setupLoginResult[athlete.id] ? (
+                              <div style={{
+                                fontSize: '13px', color: T.ink2, lineHeight: 1.5,
+                                fontFamily: "'Hanken Grotesk', sans-serif",
+                              }}>
+                                Login created — username{' '}
+                                <code style={{ fontFamily: "'Courier New', monospace", fontWeight: 700, color: T.ink }}>
+                                  {setupLoginResult[athlete.id]}
+                                </code>
+                                . Your child signs in with this username and their PIN.
+                              </div>
+                            ) : (
+                              <>
+                                <div style={{ marginBottom: '10px' }}>
+                                  <FieldLabel>Username</FieldLabel>
+                                  <input
+                                    style={inputBase}
+                                    value={setupLoginUsername[athlete.id] ?? ''}
+                                    onChange={(e) => setSetupLoginUsername((prev) => ({ ...prev, [athlete.id]: e.target.value }))}
+                                    placeholder="e.g. jsmith23"
+                                    disabled={setupLoginSubmitting[athlete.id]}
+                                  />
+                                  <div style={{
+                                    fontSize: '12px', color: T.ink3, marginTop: '4px',
+                                    fontFamily: "'Hanken Grotesk', sans-serif",
+                                  }}>
+                                    Lowercase letters and numbers only, no spaces or symbols.
+                                  </div>
+                                </div>
+                                <div style={{ marginBottom: '10px' }}>
+                                  <FieldLabel>PIN</FieldLabel>
+                                  <input
+                                    style={inputBase}
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={setupLoginPin[athlete.id] ?? ''}
+                                    onChange={(e) => setSetupLoginPin((prev) => ({ ...prev, [athlete.id]: e.target.value }))}
+                                    placeholder="4 to 6 digits"
+                                    disabled={setupLoginSubmitting[athlete.id]}
+                                  />
+                                </div>
+                                {setupLoginError[athlete.id] && (
+                                  <div style={{
+                                    fontSize: '13px', color: T.danger, marginBottom: '10px',
+                                    fontFamily: "'Hanken Grotesk', sans-serif",
+                                  }}>
+                                    {setupLoginError[athlete.id]}
+                                  </div>
+                                )}
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                  <button
+                                    onClick={() => handleSetupLoginSubmit(athlete)}
+                                    disabled={setupLoginSubmitting[athlete.id]}
+                                    style={{
+                                      height: '36px', padding: '0 16px',
+                                      background: T.cyan, color: '#FFFFFF',
+                                      border: 'none', borderRadius: '8px', fontSize: '13px',
+                                      fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600,
+                                      cursor: setupLoginSubmitting[athlete.id] ? 'not-allowed' : 'pointer',
+                                      opacity: setupLoginSubmitting[athlete.id] ? 0.7 : 1,
+                                    }}
+                                  >{setupLoginSubmitting[athlete.id] ? 'Creating…' : 'Create login'}</button>
+                                  <button
+                                    onClick={() => closeSetupLogin(athlete.id)}
+                                    disabled={setupLoginSubmitting[athlete.id]}
+                                    style={{
+                                      height: '36px', padding: '0 16px',
+                                      background: 'transparent', color: T.ink2,
+                                      border: '1px solid rgba(0,0,0,0.12)',
+                                      borderRadius: '8px', fontSize: '13px',
+                                      fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer',
+                                    }}
+                                  >Cancel</button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </motion.div>
                       )}

@@ -56,9 +56,9 @@ export function MetricCard({
         aria-hidden="true"
         style={{
           position: 'absolute',
-          width: '160px',
-          height: '160px',
-          top: '64.5%',
+          width: '190px',
+          height: '190px',
+          top: '58.5%',
           transform: 'translateY(-50%)',
           right: '1px',
           opacity: 1,

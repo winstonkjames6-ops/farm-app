@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
+import { Card } from '@/components/shared/Card'
 
 const barlow = "'Barlow Condensed', sans-serif"
 const hanken = "'Hanken Grotesk', sans-serif"
@@ -157,23 +158,17 @@ export default function AdminReports() {
         </h2>
 
         {loading ? (
-          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+          <Card style={{ textAlign: 'center' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Loading reports&hellip;</p>
-          </div>
+          </Card>
         ) : reports.length === 0 ? (
-          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+          <Card style={{ textAlign: 'center' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No reports</p>
-          </div>
+          </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {reports.map((report) => (
-              <div
-                key={report.id}
-                style={{
-                  display: 'flex', gap: '16px',
-                  background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', padding: '16px',
-                }}
-              >
+              <Card key={report.id} variant="compact" style={{ display: 'flex', gap: '16px' }}>
                 {report.postVideoUrl ? (
                   <a
                     href={report.postVideoUrl}
@@ -224,7 +219,7 @@ export default function AdminReports() {
                 >
                   Dismiss
                 </button>
-              </div>
+              </Card>
             ))}
           </div>
         )}
@@ -237,23 +232,17 @@ export default function AdminReports() {
         </h2>
 
         {loading ? (
-          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+          <Card style={{ textAlign: 'center' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>Loading reports&hellip;</p>
-          </div>
+          </Card>
         ) : commentReports.length === 0 ? (
-          <div style={{ background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', textAlign: 'center', padding: '80px 24px' }}>
+          <Card style={{ textAlign: 'center' }}>
             <p style={{ fontFamily: hanken, fontSize: '14px', color: T.ink3, margin: 0 }}>No reports</p>
-          </div>
+          </Card>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {commentReports.map((report) => (
-              <div
-                key={report.id}
-                style={{
-                  display: 'flex', gap: '16px',
-                  background: T.cardBg, border: `1px solid ${T.line}`, borderRadius: '16px', padding: '16px',
-                }}
-              >
+              <Card key={report.id} variant="compact" style={{ display: 'flex', gap: '16px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontFamily: hanken, fontSize: '13px', color: T.ink2, margin: '0 0 4px' }}>
                     Reported by <strong style={{ color: T.ink }}>{report.reporterName}</strong>
@@ -288,7 +277,7 @@ export default function AdminReports() {
                 >
                   Dismiss
                 </button>
-              </div>
+              </Card>
             ))}
           </div>
         )}

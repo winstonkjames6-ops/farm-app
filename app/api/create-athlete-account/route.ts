@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 
+type AdminClient = ReturnType<typeof createAdminClient>
+
 const USERNAME_RE = /^[a-z0-9]+$/
 const PIN_RE = /^\d{4,6}$/
 
@@ -27,6 +29,15 @@ function isRateLimited(userId: string): boolean {
   return false
 }
 
+// Cleanup for any failure after createUser() succeeds. The profiles row is
+// deleted first because profiles.id references auth.users(id) with no
+// ON DELETE CASCADE — deleting the auth user while that row still exists
+// would fail on the foreign key.
+async function cleanupAuthUser(admin: AdminClient, userId: string) {
+  await admin.from('profiles').delete().eq('id', userId)
+  await admin.auth.admin.deleteUser(userId)
+}
+
 export async function POST(request: NextRequest) {
   // Step 1: verify the session belongs to an authenticated parent
   const supabase = await createClient()
@@ -42,6 +53,9 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  let newUserId: string | undefined
+  let admin: AdminClient | undefined
+
   try {
     // Step 2: read body
     const body = await request.json()
@@ -50,10 +64,11 @@ export async function POST(request: NextRequest) {
       position, goals, sessionFormat, username, pin,
     } = body
 
-    // Step 3: validate dob — server-side minimum age floor (13), UTC-based to
-    // mirror compute_athlete_is_minor's `dob > (current_date - interval 'N years')`
-    // comparison. This route is the only account-creation path with no equivalent
-    // server-side check; app/signup/page.tsx's under-13 gate is client-side only.
+    // Step 3: validate dob — this route is the under-13 path (parent-created,
+    // username + PIN, synthetic email). Athletes 13+ create their own account
+    // via invite code at app/onboarding/athlete, so reject anyone 13 or older
+    // here. UTC-based to mirror compute_athlete_is_minor's
+    // `dob > (current_date - interval 'N years')` comparison.
     if (typeof dob !== 'string' || dob.trim() === '') {
       return NextResponse.json(
         { error: 'Date of birth is required.' },
@@ -69,9 +84,9 @@ export async function POST(request: NextRequest) {
     }
     const now = new Date()
     const thirteenYearsAgoUTC = new Date(Date.UTC(now.getUTCFullYear() - 13, now.getUTCMonth(), now.getUTCDate()))
-    if (birthDate.getTime() > thirteenYearsAgoUTC.getTime()) {
+    if (birthDate.getTime() <= thirteenYearsAgoUTC.getTime()) {
       return NextResponse.json(
-        { error: 'FARM requires athletes to be at least 13 years old.' },
+        { error: 'Athletes 13 and older set up their own account with an invite code.' },
         { status: 400 },
       )
     }
@@ -91,7 +106,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const admin = createAdminClient()
+    admin = createAdminClient()
 
     // Step 5: check username uniqueness
     const { data: existingProfile } = await admin
@@ -119,21 +134,27 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       )
     }
-    const newUserId = authData.user.id
+    newUserId = authData.user.id
 
-    // Step 8: insert into profiles
-    const { error: profileError } = await admin.from('profiles').insert({
-      id: newUserId,
-      role: 'athlete',
-      name: `${firstName} ${lastName}`.trim(),
-      username: cleanUsername,
-    })
+    // Step 8: update the profiles row the handle_new_user() trigger already
+    // inserted for this auth user — not an insert, the row is guaranteed to exist.
+    const { error: profileError } = await admin
+      .from('profiles')
+      .update({
+        role: 'athlete',
+        name: `${firstName} ${lastName}`.trim(),
+        username: cleanUsername,
+      })
+      .eq('id', newUserId)
     if (profileError) {
-      await admin.auth.admin.deleteUser(newUserId)
+      await cleanupAuthUser(admin, newUserId)
       return NextResponse.json({ error: profileError.message }, { status: 400 })
     }
 
-    // Step 9: insert into athletes
+    // Step 9: insert into athletes. The handle_new_user() trigger only auto-creates
+    // an athletes row when raw_user_meta_data.role is 'athlete' at createUser() time;
+    // this route never sets that metadata, so the trigger takes no athletes action
+    // here and this insert cannot collide with it.
     const { error: athleteError } = await admin.from('athletes').insert({
       parent_id: parentUser.id,
       profile_id: newUserId,
@@ -146,14 +167,16 @@ export async function POST(request: NextRequest) {
       session_format: sessionFormat || null,
     })
     if (athleteError) {
-      await admin.from('profiles').delete().eq('id', newUserId)
-      await admin.auth.admin.deleteUser(newUserId)
+      await cleanupAuthUser(admin, newUserId)
       return NextResponse.json({ error: athleteError.message }, { status: 400 })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('create-athlete-account error:', error)
+    if (newUserId && admin) {
+      await cleanupAuthUser(admin, newUserId)
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown server error' },
       { status: 500 },

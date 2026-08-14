@@ -384,10 +384,9 @@ export default function DashboardPage() {
       className="min-h-screen antialiased"
       style={{ color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif" }}
     >
-      <div className="max-w-4xl mx-auto px-6 py-10 pb-24">
+      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px 80px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-        {/* Header */}
-        <div id="tour-home-header" className="mb-8">
+        <div id="tour-home-header">
           <DashboardHero
             name={parentName ? parentName.split(' ')[0] : ''}
             subtitle={subtitle}
