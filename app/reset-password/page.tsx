@@ -1,8 +1,9 @@
 ﻿'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
+import { createClient } from '@/utils/supabase/client'
 
 function EyeIcon({ open }: { open: boolean }) {
   return open ? (
@@ -101,14 +102,33 @@ export default function ResetPasswordPage() {
   const [confirmFocus, setConfirmFocus] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [mismatch, setMismatch] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [hasSession, setHasSession] = useState<boolean | null>(null)
 
-  function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setHasSession(!!session)
+    })
+  }, [])
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (newPassword !== confirmPassword) {
       setMismatch(true)
       return
     }
     setMismatch(false)
+    setSaving(true)
+    setSaveError('')
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setSaving(false)
+    if (error) {
+      setSaveError(error.message)
+      return
+    }
     setSubmitted(true)
   }
 
@@ -140,7 +160,49 @@ export default function ResetPasswordPage() {
       {/* Centered card */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px 80px' }}>
         <AnimatePresence mode="wait">
-          {!submitted ? (
+          {!submitted && hasSession === false ? (
+            <motion.div
+              key="expired"
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              style={{
+                width: '100%', maxWidth: '420px',
+                background: 'rgba(255,255,255,0.04)',
+                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255,255,255,0.09)',
+                borderRadius: '18px', padding: '36px 32px',
+                textAlign: 'center',
+              }}
+            >
+              <h1 style={{
+                fontFamily: "'Archivo', sans-serif", fontWeight: 900,
+                fontSize: '26px', margin: '0 0 10px', letterSpacing: '-.025em', lineHeight: 1.1,
+              }}>
+                This reset link has expired or is invalid.
+              </h1>
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '15px', margin: '0 0 28px', lineHeight: 1.6 }}>
+                Request a new link to reset your password.
+              </p>
+
+              <Link
+                href="/forgot-password"
+                style={{
+                  display: 'block', width: '100%', padding: '14px', borderRadius: '11px',
+                  background: '#00BCC8', color: '#000',
+                  fontSize: '14px', fontWeight: 700, textDecoration: 'none',
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  letterSpacing: '.06em', textTransform: 'uppercase',
+                  textAlign: 'center', boxSizing: 'border-box',
+                  transition: 'filter .15s ease',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.filter = 'brightness(0.92)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.filter = 'none' }}
+              >
+                Request new link
+              </Link>
+            </motion.div>
+          ) : !submitted ? (
             <motion.div
               key="form"
               variants={cardVariants}
@@ -195,8 +257,15 @@ export default function ResetPasswordPage() {
                   )}
                 </Field>
 
+                {saveError && (
+                  <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#ff5a5a', fontWeight: 500 }}>
+                    {saveError}
+                  </p>
+                )}
+
                 <button
                   type="submit"
+                  disabled={saving}
                   style={{
                     width: '100%', padding: '14px', borderRadius: '11px', border: 'none',
                     background: '#00BCC8', color: '#000',

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
+import { createClient } from '@/utils/supabase/client'
 
 const inputBase: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box',
@@ -40,15 +41,38 @@ export default function ForgotPasswordPage() {
   const [emailFocus, setEmailFocus] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [resent, setResent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState('')
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSubmitted(true)
-    setResent(false)
+  async function sendResetEmail() {
+    setSending(true)
+    setSendError('')
+    const supabase = createClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    })
+    setSending(false)
+    if (error) {
+      setSendError(error.message)
+      return false
+    }
+    return true
   }
 
-  function handleResend() {
-    setResent(true)
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const ok = await sendResetEmail()
+    if (ok) {
+      setSubmitted(true)
+      setResent(false)
+    }
+  }
+
+  async function handleResend() {
+    const ok = await sendResetEmail()
+    if (ok) {
+      setResent(true)
+    }
   }
 
   return (
@@ -124,8 +148,15 @@ export default function ForgotPasswordPage() {
                   />
                 </Field>
 
+                {sendError && (
+                  <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#ff5a5a', fontWeight: 500 }}>
+                    {sendError}
+                  </p>
+                )}
+
                 <button
                   type="submit"
+                  disabled={sending}
                   style={{
                     width: '100%', padding: '14px', borderRadius: '11px', border: 'none',
                     background: '#00BCC8', color: '#09090B',

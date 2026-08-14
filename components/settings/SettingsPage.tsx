@@ -36,6 +36,12 @@ const dangerBtnStyle: React.CSSProperties = {
   fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer',
 }
 
+const primaryBtnStyle: React.CSSProperties = {
+  height: '36px', padding: '0 16px', borderRadius: T.radius.md, border: '1px solid transparent',
+  background: T.cyan, color: '#FFFFFF', fontSize: T.fontSize.sm, fontWeight: 700,
+  fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer',
+}
+
 const errorTextStyle: React.CSSProperties = {
   fontSize: T.fontSize.xs, color: T.danger, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '8px',
 }
@@ -415,7 +421,10 @@ function AccountSection({
                 value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
               />
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ ...pendingTextStyle, marginTop: 0 }}>{savingPassword ? 'Saving…' : 'Press Enter to save'}</span>
+                {savingPassword && <span style={{ ...pendingTextStyle, marginTop: 0 }}>Saving…</span>}
+                <button type="submit" disabled={savingPassword} style={primaryBtnStyle}>
+                  Save
+                </button>
                 <button
                   type="button"
                   onClick={() => {
