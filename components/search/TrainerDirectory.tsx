@@ -126,6 +126,10 @@ function SportIcon({ sport, size = 12, color = 'currentColor' }: { sport: string
 // ── TrainerCard ───────────────────────────────────────────────────────────────
 
 function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
+  const specialties = trainer.sport ? trainer.sport.split(', ').filter(Boolean) : []
+  const shownSpecialties = specialties.slice(0, 2)
+  const hiddenSpecialtyCount = specialties.length - shownSpecialties.length
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 28 }}
@@ -154,15 +158,15 @@ function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
                 src={trainer.avatarUrl}
                 alt=""
                 style={{
-                  width: '48px', height: '48px', flexShrink: 0,
-                  borderRadius: '12px', objectFit: 'cover',
+                  width: '56px', height: '56px', flexShrink: 0,
+                  borderRadius: '50%', objectFit: 'cover',
                 }}
               />
             ) : (
               <div style={{
-                width: '48px', height: '48px', flexShrink: 0,
+                width: '56px', height: '56px', flexShrink: 0,
                 background: 'linear-gradient(140deg, #00BCC8 0%, #00D4E2 100%)',
-                borderRadius: '12px',
+                borderRadius: '50%',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: barlow, fontWeight: 800, fontSize: '17px',
                 color: '#FFFFFF',
@@ -176,18 +180,6 @@ function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
                 <span style={{ fontFamily: barlow, fontWeight: 700, fontSize: '18px', color: '#1A1A1A', lineHeight: 1.2 }}>
                   {trainer.name}
                 </span>
-                {trainer.sport && (
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '4px',
-                    fontFamily: barlow, fontSize: '11px', fontWeight: 700,
-                    letterSpacing: '.1em', textTransform: 'uppercase',
-                    background: 'rgba(0,188,200,0.10)', color: '#00BCC8',
-                    border: '1px solid rgba(0,188,200,0.20)', padding: '2px 8px',
-                  }}>
-                    <SportIcon sport={trainer.sport} size={11} color="#00BCC8" />
-                    {trainer.sport}
-                  </span>
-                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px' }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.40)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
@@ -195,6 +187,31 @@ function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
                 </svg>
                 <span style={{ fontFamily: hanken, fontSize: '13px', color: T.ink3 }}>{trainer.location}</span>
               </div>
+              {shownSpecialties.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center', marginTop: '8px' }}>
+                  {shownSpecialties.map((s) => (
+                    <span key={s} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '4px',
+                      fontFamily: barlow, fontSize: '10px', fontWeight: 700,
+                      letterSpacing: '.1em', textTransform: 'uppercase',
+                      background: 'rgba(0,188,200,0.10)', color: '#00BCC8',
+                      border: '1px solid rgba(0,188,200,0.20)', padding: '3px 8px',
+                    }}>
+                      {SPORTS.includes(s) && <SportIcon sport={s} size={11} color="#00BCC8" />}
+                      {s}
+                    </span>
+                  ))}
+                  {hiddenSpecialtyCount > 0 && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center',
+                      fontFamily: barlow, fontSize: '10px', fontWeight: 700,
+                      letterSpacing: '.1em', textTransform: 'uppercase',
+                      background: 'rgba(0,188,200,0.10)', color: '#00BCC8',
+                      border: '1px solid rgba(0,188,200,0.20)', padding: '3px 8px',
+                    }}>+{hiddenSpecialtyCount}</span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div style={{ flexShrink: 0, textAlign: 'right' }}>
@@ -228,7 +245,7 @@ function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
                 Verified
               </span>
             )}
-            {trainer.hasActivePreset ? (
+            {trainer.hasActivePreset && (
               <span style={{
                 fontFamily: hanken, fontSize: '12px', fontWeight: 600,
                 padding: '4px 10px',
@@ -236,11 +253,6 @@ function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
                 border: '1px solid rgba(0,188,200,0.20)',
                 color: '#00838C',
               }}>Open slots this week</span>
-            ) : (
-              <span style={{
-                fontFamily: hanken, fontSize: '12px', fontWeight: 600, padding: '4px 10px',
-                border: '1px solid rgba(0,0,0,0.10)', color: T.ink3,
-              }}>Availability not set</span>
             )}
           </div>
 
@@ -250,6 +262,10 @@ function TrainerCard({ trainer, index }: { trainer: Trainer; index: number }) {
               fontFamily: hanken, fontSize: '13px', color: T.ink3,
               margin: 0, lineHeight: 1.45,
               paddingTop: '10px', borderTop: '1px solid rgba(0,0,0,0.08)',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
             }}>
               {trainer.bio}
             </p>
@@ -626,7 +642,7 @@ export default function TrainerDirectory() {
                   </button>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px' }}>
                   {filtered.map((trainer, i) => (
                     <div key={trainer.id} id={i === 0 ? 'tour-search-first-card' : undefined}>
                       <TrainerCard trainer={trainer} index={i} />

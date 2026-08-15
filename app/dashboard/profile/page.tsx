@@ -439,6 +439,10 @@ function PhotoSection({
         }}>Remove photo</button>
       </div>
 
+      <p style={{ margin: '10px 0 0', fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+        Square image, 400x400 or larger. You can crop after uploading.
+      </p>
+
       {pendingFile && (
         <AvatarCropModal
           file={pendingFile}

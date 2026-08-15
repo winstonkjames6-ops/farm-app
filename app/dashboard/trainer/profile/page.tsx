@@ -470,6 +470,10 @@ function ProfilePhotoSection({
         <button style={{ height: '44px', padding: '0 20px', background: 'transparent', color: T.ink2, border: '1px solid rgba(0,0,0,0.12)', borderRadius: '8px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer' }}>Remove photo</button>
       </div>
 
+      <p style={{ margin: '10px 0 0', fontSize: '12px', color: T.ink3, fontFamily: "'Hanken Grotesk', sans-serif" }}>
+        Square image, 400x400 or larger. You can crop after uploading.
+      </p>
+
       <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
         <div style={{ fontSize: '14px', fontWeight: 500, color: T.ink, fontFamily: "'Hanken Grotesk', sans-serif", marginBottom: '10px' }}>Banner image</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>

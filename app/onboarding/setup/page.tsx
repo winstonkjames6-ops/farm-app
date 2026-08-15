@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Globe, MapPin, Users } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
+import { AvatarCropModal } from '@/components/profile/AvatarCropModal'
 import { ProfileCard } from '@/components/profile/ProfileCard'
 import type { ContactRow, StatItem } from '@/components/profile/types'
 import { T } from '@/lib/theme'
@@ -15,6 +16,25 @@ const TOTAL_STEPS = 6
 
 const LANGUAGES = ['English', 'Spanish', 'French', 'Mandarin', 'Portuguese', 'Arabic', 'Other']
 const REFERRAL_SOURCES = ['Instagram', 'Friend/family', 'Search engine', 'Other']
+
+const BIO_MAX_LENGTH = 500
+const BIO_MIN_LENGTH = 40
+
+const BANNER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const BANNER_MAX_BYTES = 5 * 1024 * 1024 // matches the banners bucket's own file_size_limit
+const BANNER_EXTENSION_BY_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+}
+
+// Geometry ratios mirrored from components/dashboard/DashboardHero.tsx (not imported —
+// that component expects dashboard-only props). Ratio-only relationships hold at any
+// container size via aspect-ratio / % / cqw, with no reference width needed.
+const BANNER_ASPECT_RATIO = '3.6 / 1'
+const AVATAR_WIDTH_PCT = 25 // % of banner width
+const AVATAR_OVERLAP_FRACTION = 0.4 // fraction of the avatar's own height below the banner edge
+const AVATAR_OVERHANG_CQW = AVATAR_WIDTH_PCT * AVATAR_OVERLAP_FRACTION // 10cqw
 
 const inputStyle: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box',
@@ -93,7 +113,13 @@ export default function TrainerSetupPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [avatarPublicUrl, setAvatarPublicUrl] = useState<string | null>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null)
+  const bannerInputRef = useRef<HTMLInputElement | null>(null)
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null)
+  const [bannerUploading, setBannerUploading] = useState(false)
+  const [bannerError, setBannerError] = useState('')
   const [yearsExperience, setYearsExperience] = useState('')
+  const [bio, setBio] = useState('')
 
   // 2 — Tags
   const [tags, setTags] = useState<Tag[]>([])
@@ -167,14 +193,14 @@ export default function TrainerSetupPage() {
     await loadTags()
   }
 
-  async function handleAvatarUpload(file: File | undefined) {
-    if (!file || !userId) return
+  async function handleAvatarUpload(blob: Blob) {
+    if (!userId) return
+    setPendingAvatarFile(null)
     setAvatarUploading(true)
     setError(null)
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-    const filename = `${userId}/${Date.now()}.${ext}`
+    const filename = `${userId}/${Date.now()}.jpg`
     const { error: uploadError } = await supabase.storage
-      .from('avatars').upload(filename, file, { upsert: true, contentType: file.type })
+      .from('avatars').upload(filename, blob, { upsert: true, contentType: blob.type })
     if (uploadError) {
       console.error('Avatar upload failed:', uploadError)
       setError(`Could not upload that photo: ${uploadError.message}`)
@@ -183,8 +209,56 @@ export default function TrainerSetupPage() {
     }
     const { data } = supabase.storage.from('avatars').getPublicUrl(filename)
     setAvatarPublicUrl(data.publicUrl)
-    setAvatarPreview(URL.createObjectURL(file))
+    setAvatarPreview(URL.createObjectURL(blob))
     setAvatarUploading(false)
+  }
+
+  function handleBannerFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setBannerError('')
+
+    if (!userId) {
+      setBannerError('Not authenticated. Please refresh and try again.')
+      return
+    }
+    if (!BANNER_ALLOWED_TYPES.includes(file.type)) {
+      setBannerError('Please upload a JPEG, PNG, or WEBP image.')
+      return
+    }
+    if (file.size > BANNER_MAX_BYTES) {
+      setBannerError('Image must be under 5MB.')
+      return
+    }
+
+    uploadBanner(file)
+  }
+
+  async function uploadBanner(file: File) {
+    if (!userId) return
+    setBannerUploading(true)
+    const extension = BANNER_EXTENSION_BY_TYPE[file.type] ?? 'jpg'
+    const path = `${userId}/${Date.now()}.${extension}`
+
+    const { error: uploadErr } = await supabase.storage.from('banners').upload(path, file, { contentType: file.type })
+    if (uploadErr) {
+      setBannerError(uploadErr.message)
+      setBannerUploading(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('banners').getPublicUrl(path)
+    const { error: updateErr } = await supabase.from('profiles').update({ banner_image_url: publicUrl }).eq('id', userId)
+    if (updateErr) {
+      setBannerError(updateErr.message)
+      setBannerUploading(false)
+      return
+    }
+
+    setBannerPreview(publicUrl)
+    setBannerUploading(false)
   }
 
   async function handleDocUpload(file: File | undefined) {
@@ -218,6 +292,8 @@ export default function TrainerSetupPage() {
 
     if (!trainer) { setError('Trainer record not found.'); setSaving(false); return }
 
+    const specialty = tags.filter(t => selected.includes(t.id)).map(t => t.name).join(', ')
+
     await supabase.from('trainers').update({
       location, rate: parseFloat(rate),
       years_experience: yearsExperience ? parseInt(yearsExperience, 10) : null,
@@ -226,6 +302,8 @@ export default function TrainerSetupPage() {
       languages: selectedLanguages,
       travel_radius_miles: travelRadius ? parseInt(travelRadius, 10) : null,
       id_verification_url: verificationPath,
+      bio: bio.trim(),
+      specialty,
     }).eq('id', trainer.id)
 
     await supabase.from('profiles').update({
@@ -246,7 +324,7 @@ export default function TrainerSetupPage() {
   }
 
   const canContinue =
-    step === 1 ? Boolean(firstName.trim() && lastName.trim())
+    step === 1 ? Boolean(firstName.trim() && lastName.trim() && bio.trim().length >= BIO_MIN_LENGTH)
     : step === 2 ? selected.length >= 3 && selected.length <= 5
     : step === 5 ? termsAccepted
     : true
@@ -319,31 +397,84 @@ export default function TrainerSetupPage() {
             <h1 style={headingStyle}>Tell us about yourself.</h1>
             <p style={subStyle}>Parents will see this on your profile.</p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', marginBottom: '32px' }}>
-              <button
-                onClick={() => photoInputRef.current?.click()}
-                style={{
-                  width: '104px', height: '104px', borderRadius: '50%', padding: 0,
-                  border: avatarPreview ? `2px solid ${T.cyan}` : '2px dashed #D1D5DB',
-                  background: avatarPreview ? `center / cover no-repeat url(${avatarPreview})` : '#F9FAFB',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  overflow: 'hidden',
-                }}
-              >
-                {!avatarPreview && (
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 7h4l2-3h6l2 3h4v13H3z" /><circle cx="12" cy="13" r="4" />
-                  </svg>
-                )}
-              </button>
-              <input
-                ref={photoInputRef} type="file" accept="image/*" hidden
-                onChange={e => handleAvatarUpload(e.target.files?.[0])}
-              />
-              <span style={{ fontSize: '13px', color: '#9CA3AF', fontWeight: 500 }}>
-                {avatarUploading ? 'Uploading…' : avatarPreview ? 'Change photo' : 'Add photo'}
-              </span>
+            <div style={{ marginBottom: '32px' }}>
+              <div style={{ position: 'relative', containerType: 'inline-size' } as React.CSSProperties}>
+                {/* Banner */}
+                <button
+                  onClick={() => bannerInputRef.current?.click()}
+                  style={{
+                    width: '100%', aspectRatio: BANNER_ASPECT_RATIO, borderRadius: '14px', padding: 0,
+                    border: bannerPreview ? `2px solid ${T.cyan}` : '2px dashed #D1D5DB',
+                    background: bannerPreview ? `center / cover no-repeat url(${bannerPreview})` : '#F9FAFB',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {!bannerPreview && (
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="8.5" cy="10.5" r="1.5" /><path d="M21 15l-5-5L5 19" />
+                    </svg>
+                  )}
+                </button>
+                <input
+                  ref={bannerInputRef} type="file" accept="image/jpeg,image/png,image/webp" hidden
+                  onChange={handleBannerFileChange}
+                />
+
+                {/* Avatar — overlaps the banner's bottom edge by 40% of its own height */}
+                <button
+                  onClick={() => photoInputRef.current?.click()}
+                  style={{
+                    position: 'absolute', left: '50%', bottom: `-${AVATAR_OVERHANG_CQW}cqw`,
+                    transform: 'translateX(-50%)', zIndex: 1,
+                    width: `${AVATAR_WIDTH_PCT}%`, aspectRatio: '1 / 1', borderRadius: '50%', padding: 0,
+                    border: avatarPreview ? `2px solid ${T.cyan}` : '2px dashed #D1D5DB',
+                    background: avatarPreview ? `center / cover no-repeat url(${avatarPreview})` : '#F9FAFB',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {!avatarPreview && (
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 7h4l2-3h6l2 3h4v13H3z" /><circle cx="12" cy="13" r="4" />
+                    </svg>
+                  )}
+                </button>
+                <input
+                  ref={photoInputRef} type="file" accept="image/*" hidden
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    e.target.value = ''
+                    if (file) setPendingAvatarFile(file)
+                  }}
+                />
+              </div>
+
+              {/* Clears the avatar's overhang, which is position:absolute and out of flow */}
+              <div style={{ height: `calc(${AVATAR_OVERHANG_CQW}cqw + 10px)` }} />
+
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: '13px', color: '#9CA3AF', fontWeight: 500 }}>
+                  {avatarUploading ? 'Uploading photo…' : bannerUploading ? 'Uploading banner…' : 'Tap the photo or banner to upload'}
+                </span>
+              </div>
+              <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#9CA3AF', textAlign: 'center' }}>
+                Photo: square, 400x400 or larger — you can crop after uploading. Banner: landscape, 3.6:1.
+              </p>
+              {bannerError && (
+                <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#EF4444', fontFamily: "'Hanken Grotesk', sans-serif", textAlign: 'center' }}>
+                  {bannerError}
+                </p>
+              )}
             </div>
+
+            {pendingAvatarFile && (
+              <AvatarCropModal
+                file={pendingAvatarFile}
+                onSave={handleAvatarUpload}
+                onCancel={() => setPendingAvatarFile(null)}
+              />
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '22px' }}>
               <div>
@@ -374,6 +505,26 @@ export default function TrainerSetupPage() {
                 onFocus={() => setFocused('years')} onBlur={() => setFocused(null)}
                 style={{ ...inputStyle, ...focusStyle('years') }}
               />
+            </div>
+
+            <div style={{ marginTop: '22px' }}>
+              <label style={labelStyle}>About you</label>
+              <textarea
+                value={bio}
+                onChange={e => setBio(e.target.value.slice(0, BIO_MAX_LENGTH))}
+                onFocus={() => setFocused('bio')} onBlur={() => setFocused(null)}
+                placeholder="Tell parents how you coach, who you work with, and what they can expect from a session."
+                rows={4}
+                style={{ ...inputStyle, ...focusStyle('bio'), resize: 'vertical' }}
+              />
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '13px', color: '#9CA3AF' }}>{bio.length} / {BIO_MAX_LENGTH}</span>
+              </div>
+              {bio.trim().length < BIO_MIN_LENGTH && (
+                <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#9CA3AF' }}>
+                  A little more — at least 40 characters.
+                </p>
+              )}
             </div>
           </div>
         )}
