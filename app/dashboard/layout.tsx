@@ -64,13 +64,6 @@ const IconSearch = ({ size = 22 }: { size?: number }) => (
   </svg>
 )
 
-const IconUser = ({ size = 22 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-)
-
 const IconSettings = ({ size = 22 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="3" />
@@ -110,7 +103,6 @@ const NAV_ITEMS = [
   { key: 'search',   label: 'Search',   Icon: IconSearch,    badge: false },
   { key: 'calendar', label: 'Calendar', Icon: IconCalendar,  badge: false },
   { key: 'messages', label: 'Messages', Icon: MessageSquare, badge: true  },
-  { key: 'profile',  label: 'Profile',  Icon: IconUser,      badge: false },
   { key: 'settings', label: 'Settings', Icon: IconSettings,  badge: false },
 ]
 
@@ -120,7 +112,6 @@ const NAV_HREFS: Record<string, string> = {
   search:   '/dashboard/search',
   calendar: '/dashboard/calendar',
   messages: '/dashboard/messages',
-  profile:  '/dashboard/profile',
   settings: '/dashboard/settings',
 }
 
@@ -142,10 +133,6 @@ const PAGE_HELP: Record<string, { title: string; body: string }> = {
   '/dashboard/messages': {
     title: 'Messages',
     body: "Chat directly with your trainers here. Messages are tied to your account — trainers can only message parents unless you've enabled athlete messaging in permissions.",
-  },
-  '/dashboard/profile': {
-    title: 'Your Profile',
-    body: "Manage your account info, athlete profiles, notification preferences, and athlete permissions. Permissions control what trainers can do with your athlete's data.",
   },
   '/dashboard/settings': {
     title: 'Settings',
@@ -641,7 +628,6 @@ function ParentDashboardLayout({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith('/dashboard/search')) return 'search'
     if (pathname.startsWith('/dashboard/calendar')) return 'calendar'
     if (pathname.startsWith('/dashboard/messages')) return 'messages'
-    if (pathname.startsWith('/dashboard/profile')) return 'profile'
     if (pathname.startsWith('/dashboard/settings')) return 'settings'
     return 'home'
   }

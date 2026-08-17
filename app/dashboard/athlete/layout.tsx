@@ -39,13 +39,6 @@ const IconHome = ({ size = 22 }: { size?: number }) => (
   </svg>
 )
 
-const IconUser = ({ size = 22 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-)
-
 const IconCalendar = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -77,7 +70,6 @@ const NAV_ITEMS = [
   { key: 'discover', label: 'Discover', Icon: Compass,       badge: false },
   { key: 'sessions', label: 'Sessions', Icon: IconCalendar,  badge: false },
   { key: 'messages', label: 'Messages', Icon: MessageSquare, badge: true  },
-  { key: 'profile',  label: 'Profile',  Icon: IconUser,      badge: false },
 ]
 
 const NAV_HREFS: Record<string, string> = {
@@ -85,7 +77,6 @@ const NAV_HREFS: Record<string, string> = {
   discover: '/dashboard/athlete/discover',
   sessions: '/dashboard/athlete/sessions',
   messages: '/dashboard/athlete/messages',
-  profile:  '/dashboard/athlete/profile',
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
@@ -419,7 +410,6 @@ export default function AthleteLayout({ children }: { children: React.ReactNode 
     if (pathname.startsWith('/dashboard/athlete/discover')) return 'discover'
     if (pathname.startsWith('/dashboard/athlete/sessions')) return 'sessions'
     if (pathname.startsWith('/dashboard/athlete/messages')) return 'messages'
-    if (pathname.startsWith('/dashboard/athlete/profile')) return 'profile'
     return 'home'
   }
   const activeNav = getActiveNav()

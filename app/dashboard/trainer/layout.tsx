@@ -66,13 +66,6 @@ const IconDollarSign = ({ size = 22 }: { size?: number }) => (
   </svg>
 )
 
-const IconUser = ({ size = 22 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-)
-
 const IconSettings = ({ size = 22 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="3" />
@@ -103,7 +96,6 @@ const NAV_ITEMS = [
   { key: 'schedule', label: 'Schedule', Icon: IconCalendar,   badge: false },
   { key: 'earnings', label: 'Earnings', Icon: IconDollarSign, badge: false },
   { key: 'messages', label: 'Messages', Icon: MessageSquare,  badge: true  },
-  { key: 'profile',  label: 'Profile',  Icon: IconUser,       badge: false },
   { key: 'settings', label: 'Settings', Icon: IconSettings,   badge: false },
 ]
 
@@ -113,7 +105,6 @@ const NAV_HREFS: Record<string, string> = {
   schedule: '/dashboard/trainer/schedule',
   earnings: '/dashboard/trainer/earnings',
   messages: '/dashboard/trainer/messages',
-  profile:  '/dashboard/trainer/profile',
   settings: '/dashboard/trainer/settings',
 }
 
@@ -402,10 +393,6 @@ const PAGE_HELP: Record<string, { title: string; body: string }> = {
     title: 'Messages',
     body: 'Chat with parents who have booked or are considering booking you. Keep communication on-platform to stay protected.',
   },
-  '/dashboard/trainer/profile': {
-    title: 'Your Profile',
-    body: 'Update your bio, credentials, hourly rate, and session formats. A complete profile gets significantly more bookings.',
-  },
   '/dashboard/trainer/settings': {
     title: 'Settings',
     body: 'Control your notification preferences and manage your account. Payout method setup via Stripe will be available here soon.',
@@ -580,7 +567,6 @@ function TrainerDashboardInner({ children }: { children: React.ReactNode }) {
     if (pathname.includes('/schedule')) return 'schedule'
     if (pathname.includes('/earnings')) return 'earnings'
     if (pathname.includes('/messages')) return 'messages'
-    if (pathname.includes('/profile')) return 'profile'
     if (pathname.includes('/settings')) return 'settings'
     return 'home'
   }

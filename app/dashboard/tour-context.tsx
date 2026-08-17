@@ -83,7 +83,7 @@ const PARENT_TOUR_STEPS: TourStep[] = [
     title: 'Manage your athletes',
     body: 'Edit athlete profiles, add new children, and control what trainers can see and do.',
     position: 'bottom',
-    route: '/dashboard/profile',
+    route: '/dashboard',
   },
   {
     id: 'profile-notifications',
@@ -91,7 +91,7 @@ const PARENT_TOUR_STEPS: TourStep[] = [
     title: 'Notification settings',
     body: 'Choose how and when FARM contacts you — session reminders, trainer messages, and more.',
     position: 'bottom',
-    route: '/dashboard/profile',
+    route: '/dashboard',
   },
   {
     id: 'profile-permissions',
@@ -99,7 +99,7 @@ const PARENT_TOUR_STEPS: TourStep[] = [
     title: 'Athlete permissions',
     body: 'Fine-grained controls for what trainers can do with your athlete. You\'re always in control.',
     position: 'top',
-    route: '/dashboard/profile',
+    route: '/dashboard',
   },
   {
     id: 'settings-overview',
