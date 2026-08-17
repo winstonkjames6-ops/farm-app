@@ -7,25 +7,9 @@ import { motion } from 'framer-motion'
 import { createClient } from '@/utils/supabase/client'
 import { T } from '@/lib/theme'
 import { DashboardHero } from '@/components/dashboard/DashboardHero'
-
-// ── Types ──────────────────────────────────────────────────────────────────────
-
-type SessionType = 'IN-PERSON' | 'REMOTE'
-
-type Session = {
-  id: string
-  childName: string
-  parentName: string
-  parentInitials: string
-  parentProfileId: string
-  sport: string
-  type: SessionType
-  sessionTime: string
-  time: string
-  location: string
-  status: string
-  rate: number | null
-}
+import { ActivityList } from '@/components/profile/ActivityList'
+import { getProfileCardTokens } from '@/components/profile/theme'
+import type { ActivityItem } from '@/components/profile/types'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -46,6 +30,17 @@ function formatFullDate(iso: string): string {
 }
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
+
+const IconStarSmall = () => (
+  <svg
+    style={{ width: 'clamp(12px, 2.211cqw, 21px)', height: 'clamp(12px, 2.211cqw, 21px)' }}
+    viewBox="0 0 24 24"
+    fill={T.cyan}
+    stroke="none"
+  >
+    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
+  </svg>
+)
 
 const IconMapPin = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -71,17 +66,6 @@ const IconCheckCircle = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
     <polyline points="22 4 12 14.01 9 11.01" />
-  </svg>
-)
-
-const IconStarSmall = () => (
-  <svg
-    style={{ width: 'clamp(12px, 2.211cqw, 21px)', height: 'clamp(12px, 2.211cqw, 21px)' }}
-    viewBox="0 0 24 24"
-    fill={T.cyan}
-    stroke="none"
-  >
-    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" />
   </svg>
 )
 
@@ -216,6 +200,41 @@ function CompletedRow({ session }: { session: Session }) {
   )
 }
 
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+type SessionType = 'IN-PERSON' | 'REMOTE'
+type TrainerTabKey = 'activity' | 'bookings' | 'reviews'
+
+type Session = {
+  id: string
+  childName: string
+  parentName: string
+  parentInitials: string
+  parentProfileId: string
+  sport: string
+  type: SessionType
+  sessionTime: string
+  time: string
+  location: string
+  status: string
+  rate: number | null
+}
+
+interface TrainerBookingRow {
+  id: string
+  session_time: string
+  status: string
+  athleteName: string | null
+}
+
+interface TrainerReviewRow {
+  id: string
+  rating: number
+  body: string | null
+  parentName: string | null
+  session_time: string
+}
+
 // ── HomeView ───────────────────────────────────────────────────────────────────
 
 function HomeView({
@@ -228,7 +247,15 @@ function HomeView({
   sessionsToday,
   totalEarnings,
   avgRating,
-  certificationApproved,
+  certified,
+  reviewCount,
+  rate,
+  activeTab,
+  onTabChange,
+  tabContent,
+  onEditProfile,
+  onOpenSettings,
+  onBecomeCertified,
 }: {
   sessions: Session[]
   onMarkComplete: (id: string) => Promise<void>
@@ -239,9 +266,16 @@ function HomeView({
   sessionsToday: number
   totalEarnings: number
   avgRating: number | null
-  certificationApproved: boolean
+  certified: boolean
+  reviewCount: number
+  rate: number | null
+  activeTab: TrainerTabKey
+  onTabChange: (tab: TrainerTabKey) => void
+  tabContent: React.ReactNode
+  onEditProfile: () => void
+  onOpenSettings: () => void
+  onBecomeCertified: () => void
 }) {
-  const router = useRouter()
   const [activeSport, setActiveSport] = useState('All')
 
   const pending = sessions.filter((s) => s.status !== 'completed')
@@ -269,14 +303,23 @@ function HomeView({
           bannerImage={bannerImageUrl ?? '/dashboard/hero-banner.jpg'}
           avatarUrl={avatarUrl}
           avatarInitials={trainerFirstName ? trainerFirstName[0]?.toUpperCase() ?? '' : ''}
-          badge={{ label: 'Certified Trainer', show: certificationApproved }}
           tiles={[
             { value: String(sessionsThisWeek), label: 'Sessions This Week' },
             { value: String(sessionsToday), label: 'Sessions Today' },
             { value: `$${totalEarnings}`, label: 'Total Earnings' },
             { value: avgRating != null ? avgRating.toFixed(1) : '—', label: 'Avg Rating', icon: <IconStarSmall /> },
           ]}
+          certified={certified}
+          reviewCount={reviewCount}
+          rate={rate}
+          activeTab={activeTab}
+          onTabChange={(key) => onTabChange(key as TrainerTabKey)}
+          onEditProfile={onEditProfile}
+          onOpenSettings={onOpenSettings}
+          onBecomeCertified={onBecomeCertified}
         />
+
+        {tabContent}
 
         {sports.length > 0 && (
           <SportPills sports={sports} activeSport={activeSport} onSelect={setActiveSport} />
@@ -317,12 +360,19 @@ function HomeView({
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function TrainerHomePage() {
+  const router = useRouter()
+
   const [sessions, setSessions] = useState<Session[]>([])
   const [trainerFirstName, setTrainerFirstName] = useState('')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null)
   const [avgRating, setAvgRating] = useState<number | null>(null)
   const [certificationApproved, setCertificationApproved] = useState(false)
+  const [trainerRate, setTrainerRate] = useState<number | null>(null)
+  const [bookings, setBookings] = useState<TrainerBookingRow[]>([])
+  const [reviews, setReviews] = useState<TrainerReviewRow[]>([])
+  const [reviewCount, setReviewCount] = useState(0)
+  const [activeTab, setActiveTab] = useState<TrainerTabKey>('activity')
 
   useEffect(() => {
     async function fetchData() {
@@ -343,12 +393,13 @@ export default function TrainerHomePage() {
 
       const { data: trainerRow } = await supabase
         .from('trainers')
-        .select('id, certification_status')
+        .select('id, certification_status, rate')
         .eq('profile_id', user.id)
         .single()
       if (!trainerRow) return
 
       setCertificationApproved(trainerRow.certification_status === 'approved')
+      setTrainerRate(trainerRow.rate ?? null)
 
       supabase
         .from('reviews')
@@ -360,34 +411,70 @@ export default function TrainerHomePage() {
           setAvgRating(avg)
         })
 
-      const { data: bookings } = await supabase
+      const { data: bookingsData } = await supabase
         .from('bookings')
         .select('id, format, session_time, status, rate, parent_id, athletes!athlete_id(name, sport), profiles!parent_id(name)')
         .eq('trainer_id', trainerRow.id)
-      if (!bookings) return
+      if (bookingsData) {
+        const mapped: Session[] = (bookingsData as any[]).map((b) => {
+          const dt = new Date(b.session_time)
+          const type: SessionType = b.format === 'Remote Video' ? 'REMOTE' : 'IN-PERSON'
+          const parentName: string = b.profiles?.name ?? 'Unknown'
+          const parentInitials = parentName.split(' ').map((n: string) => n[0] ?? '').join('').slice(0, 2).toUpperCase()
+          return {
+            id: b.id,
+            childName: b.athletes?.name ?? 'Unknown',
+            parentName,
+            parentInitials,
+            parentProfileId: b.parent_id ?? '',
+            sport: b.athletes?.sport ?? '',
+            type,
+            sessionTime: b.session_time,
+            time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+            location: type === 'REMOTE' ? 'Video Call' : 'In Person',
+            status: b.status ?? 'pending',
+            rate: b.rate ?? null,
+          }
+        })
+        setSessions(mapped)
+      }
 
-      const mapped: Session[] = (bookings as any[]).map((b) => {
-        const dt = new Date(b.session_time)
-        const type: SessionType = b.format === 'Remote Video' ? 'REMOTE' : 'IN-PERSON'
-        const parentName: string = b.profiles?.name ?? 'Unknown'
-        const parentInitials = parentName.split(' ').map((n: string) => n[0] ?? '').join('').slice(0, 2).toUpperCase()
-        return {
+      const { data: profileBookingData } = await supabase
+        .from('bookings')
+        .select('id, session_time, status, athletes!athlete_id(name)')
+        .eq('trainer_id', trainerRow.id)
+        .order('session_time', { ascending: false })
+        .limit(20)
+
+      setBookings(
+        (profileBookingData ?? []).map((b: any) => ({
           id: b.id,
-          childName: b.athletes?.name ?? 'Unknown',
-          parentName,
-          parentInitials,
-          parentProfileId: b.parent_id ?? '',
-          sport: b.athletes?.sport ?? '',
-          type,
-          sessionTime: b.session_time,
-          time: dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-          location: type === 'REMOTE' ? 'Video Call' : 'In Person',
-          status: b.status ?? 'pending',
-          rate: b.rate ?? null,
-        }
-      })
+          session_time: b.session_time,
+          status: b.status,
+          athleteName: b.athletes?.name ?? null,
+        }))
+      )
 
-      setSessions(mapped)
+      // reviews.parent_id is a direct FK to profiles — no need to go through bookings
+      // for the reviewer's name, and reviews has no session_time column of its own,
+      // so created_at is the timestamp used for activity/review ordering.
+      const { data: reviewData } = await supabase
+        .from('reviews')
+        .select('id, rating, body, created_at, profiles!parent_id(name)')
+        .eq('trainer_id', trainerRow.id)
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      setReviewCount(reviewData?.length ?? 0)
+      setReviews(
+        (reviewData ?? []).map((r: any) => ({
+          id: r.id,
+          rating: r.rating,
+          body: r.body,
+          parentName: r.profiles?.name ?? null,
+          session_time: r.created_at ?? new Date().toISOString(),
+        }))
+      )
     }
     fetchData()
   }, [])
@@ -421,6 +508,53 @@ export default function TrainerHomePage() {
     .filter((s) => s.status === 'completed')
     .reduce((sum, s) => sum + (s.rate ?? 0), 0)
 
+  const cardTokens = getProfileCardTokens('light')
+
+  const activityItems: ActivityItem[] = [
+    ...bookings.map((b) => ({
+      id: `b-${b.id}`,
+      title: `Session with ${b.athleteName ?? 'athlete'}`,
+      subtitle: b.status,
+      timestamp: b.session_time,
+    })),
+    ...reviews.map((r) => ({
+      id: `r-${r.id}`,
+      title: `New review from ${r.parentName ?? 'a parent'}`,
+      subtitle: r.body ? r.body.slice(0, 64) : `${r.rating} star${r.rating === 1 ? '' : 's'}`,
+      meta: '★'.repeat(r.rating),
+      timestamp: r.session_time,
+    })),
+  ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 8)
+
+  // Bookings tab is scoped to upcoming/confirmed sessions only — pending and completed
+  // sessions already have their own dedicated sections below, so this avoids showing
+  // the same sessions twice on screen.
+  const upcomingBookingItems: ActivityItem[] = bookings
+    .filter((b) => b.status !== 'pending' && b.status !== 'completed')
+    .map((b) => ({
+      id: `bk-${b.id}`,
+      title: `Session with ${b.athleteName ?? 'athlete'}`,
+      meta: b.status,
+      timestamp: b.session_time,
+    }))
+
+  const reviewItems: ActivityItem[] = reviews.map((r) => ({
+    id: `rv-${r.id}`,
+    title: r.parentName ?? 'Parent',
+    subtitle: r.body ?? undefined,
+    meta: '★'.repeat(r.rating),
+    timestamp: r.session_time,
+  }))
+
+  let tabContent: React.ReactNode
+  if (activeTab === 'bookings') {
+    tabContent = <ActivityList items={upcomingBookingItems} tokens={cardTokens} emptyLabel="No upcoming sessions" />
+  } else if (activeTab === 'reviews') {
+    tabContent = <ActivityList items={reviewItems} tokens={cardTokens} emptyLabel="No reviews yet" />
+  } else {
+    tabContent = <ActivityList items={activityItems} tokens={cardTokens} emptyLabel="No recent activity" />
+  }
+
   return (
     <HomeView
       sessions={sessions}
@@ -432,7 +566,15 @@ export default function TrainerHomePage() {
       sessionsToday={sessionsToday}
       totalEarnings={totalEarnings}
       avgRating={avgRating}
-      certificationApproved={certificationApproved}
+      certified={certificationApproved}
+      reviewCount={reviewCount}
+      rate={trainerRate}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      tabContent={tabContent}
+      onEditProfile={() => router.push('/dashboard/trainer/profile')}
+      onOpenSettings={() => router.push('/dashboard/trainer/settings')}
+      onBecomeCertified={() => router.push('/dashboard/trainer/profile')}
     />
   )
 }

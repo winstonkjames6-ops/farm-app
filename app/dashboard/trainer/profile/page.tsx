@@ -33,6 +33,7 @@ import { AppearanceSection } from '@/components/profile/AppearanceSection'
 import { ActivityList } from '@/components/profile/ActivityList'
 import { getProfileCardTokens, resolveThemeSetting } from '@/components/profile/theme'
 import type { ActivityItem, BackgroundMode, ThemeSetting } from '@/components/profile/types'
+import TrainerPublicProfile from '@/app/trainer/[slug]/page'
 
 const IconInstagram = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E1306C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1380,6 +1381,7 @@ export default function TrainerProfilePage() {
   const [paused, setPaused] = useState(false)
   const { primarySport, setPrimarySport } = useTrainerSport()
   const [isEditing, setIsEditing] = useState(false)
+  const [previewMode, setPreviewMode] = useState(false)
 
   const [userId, setUserId] = useState<string | null>(null)
   const [trainerId, setTrainerId] = useState<string | null>(null)
@@ -1662,26 +1664,41 @@ export default function TrainerProfilePage() {
   }
 
   return (
-    <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '672px', margin: '0 auto' }}>
+    <div style={{ padding: previewMode ? '0' : '32px', display: 'flex', flexDirection: 'column', gap: previewMode ? 0 : '24px', maxWidth: previewMode ? undefined : '672px', margin: previewMode ? undefined : '0 auto' }}>
 
       <motion.div
-        key={isEditing ? 'edit' : 'view'}
+        key={isEditing ? (previewMode ? 'preview' : 'edit') : 'view'}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: [0.2, 0.7, 0.2, 1] }}
       >
         {isEditing ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ padding: previewMode ? '32px 32px 0' : 0, maxWidth: previewMode ? '672px' : undefined, width: previewMode ? '100%' : undefined, margin: previewMode ? '0 auto' : undefined, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
               <div>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: T.ink }}>Edit profile</div>
-                <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px' }}>Your changes are saved together from the button below</div>
+                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '28px', color: T.ink }}>
+                  {previewMode ? 'Profile preview' : 'Edit profile'}
+                </div>
+                <div style={{ fontSize: '14px', color: T.ink2, fontFamily: "'Hanken Grotesk', sans-serif", marginTop: '4px' }}>
+                  {previewMode ? 'Exactly what athletes see when they view your profile' : 'Your changes are saved together from the button below'}
+                </div>
               </div>
-              <button
-                onClick={() => setIsEditing(false)}
-                style={{ border: '1px solid rgba(0,0,0,0.12)', color: T.ink2, background: 'transparent', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px', flexShrink: 0 }}
-              >← Done editing</button>
+              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                <button
+                  onClick={() => setPreviewMode((v) => !v)}
+                  style={{ border: `1px solid ${T.cyan}`, color: T.cyan, background: 'transparent', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px', flexShrink: 0 }}
+                >{previewMode ? 'Edit' : 'Preview'}</button>
+                <button
+                  onClick={() => { setIsEditing(false); setPreviewMode(false) }}
+                  style={{ border: '1px solid rgba(0,0,0,0.12)', color: T.ink2, background: 'transparent', borderRadius: '8px', padding: '8px 16px', fontSize: '14px', fontFamily: "'Hanken Grotesk', sans-serif", cursor: 'pointer', minHeight: '44px', flexShrink: 0 }}
+                >← Done editing</button>
+              </div>
             </div>
+
+            {previewMode ? (
+              userId && <TrainerPublicProfile params={{ slug: userId }} />
+            ) : (
+              <>
             <ProfilePhotoSection fullName={initName} sport={sport} userId={userId ?? ''} avatarUrl={avatarUrl} onAvatarChange={setAvatarUrl} profileItems={profileItems} bannerImageUrl={bannerImageUrl} onBannerChange={setBannerImageUrl} />
             <BasicInfoSection
               fullName={draftFullName}
@@ -1725,6 +1742,8 @@ export default function TrainerProfilePage() {
             <SessionSetupSection />
             <NotificationsSection />
             <DangerZoneSection paused={paused} setPaused={setPaused} />
+              </>
+            )}
           </div>
         ) : (
           <ProfileCard

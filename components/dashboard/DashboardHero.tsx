@@ -16,11 +16,6 @@ export type DashboardHeroTile = {
   icon?: React.ReactNode
 }
 
-export type DashboardHeroBadge = {
-  label: string
-  show: boolean
-}
-
 export type DashboardHeroProps = {
   /** First name, e.g. "Winston" — combined with a time-of-day greeting. */
   name: string
@@ -31,7 +26,17 @@ export type DashboardHeroProps = {
   avatarUrl?: string | null
   avatarInitials: string
   bannerImage: string
-  badge?: DashboardHeroBadge
+  // Trainer-specific footer panel — all optional so non-trainer heroes (parent/athlete
+  // dashboards) keep rendering banner + tiles + avatar only, with no footer at all.
+  // Provide `onEditProfile` to opt in to the full footer.
+  certified?: boolean
+  reviewCount?: number
+  rate?: number | null
+  activeTab?: string
+  onTabChange?: (key: string) => void
+  onEditProfile?: () => void
+  onOpenSettings?: () => void
+  onBecomeCertified?: () => void
 }
 
 // All measurements below are cqw (1cqw = 1% of the hero's own rendered width),
@@ -44,10 +49,17 @@ const px = (desktopPx: number) => (desktopPx / 950) * 100
 const AVATAR_WIDTH_PCT = 25 // % of banner width — numerically equal to cqw here
 const AVATAR_OVERLAP_FRACTION = 0.4 // fraction of the avatar's own height below the banner edge
 const AVATAR_OVERHANG_CQW = AVATAR_WIDTH_PCT * AVATAR_OVERLAP_FRACTION // 7.6cqw
-// The badge must start below the avatar's lowest point, with room to spare, so the two
-// can never visually collide regardless of container width or how wide the badge's label is.
-const BADGE_TOP_OFFSET_CQW = AVATAR_OVERHANG_CQW + px(-70)
-const BADGE_HEIGHT_ESTIMATE_CQW = px(44)
+// Intentionally less than the full overhang — the action row overlaps the avatar's
+// overhang band, sitting beside its lower portion rather than fully below it, the way
+// the banner and avatar already overlap. The avatar is centered and the buttons sit at
+// the left/right edges, so they don't collide.
+const FOOTER_TOP_PADDING_CQW = AVATAR_OVERHANG_CQW * 0.15
+
+const TABS = [
+  { key: 'activity', label: 'Activity' },
+  { key: 'bookings', label: 'Bookings' },
+  { key: 'reviews', label: 'Reviews' },
+]
 
 function Tile({ tile }: { tile: DashboardHeroTile }) {
   return (
@@ -104,6 +116,42 @@ const IconCheck = () => (
   </svg>
 )
 
+const IconGear = () => (
+  <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+)
+
+function ActionPillButton({
+  onClick, children,
+}: {
+  onClick?: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        height: `clamp(36px, ${px(44)}cqw, 44px)`,
+        padding: `0 clamp(14px, ${px(20)}cqw, 20px)`,
+        borderRadius: T.radius.full,
+        border: 'none',
+        background: '#FFFFFF',
+        color: T.ink2,
+        fontFamily: "'Hanken Grotesk', sans-serif",
+        fontWeight: 600,
+        fontSize: `clamp(12px, ${px(14)}cqw, 14px)`,
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
 export function DashboardHero({
   name,
   subtitle,
@@ -111,18 +159,21 @@ export function DashboardHero({
   avatarUrl,
   avatarInitials,
   bannerImage,
-  badge,
+  certified = false,
+  reviewCount = 0,
+  rate = null,
+  activeTab = 'activity',
+  onTabChange,
+  onEditProfile,
+  onOpenSettings,
+  onBecomeCertified,
 }: DashboardHeroProps) {
   const greeting = `${getTimeOfDayGreeting()}${name ? `, ${name}` : ''}`
-
-  // Spacer below the wrapper must clear whichever hangs lower: the badge (when shown) or the avatar.
-  const clearanceCqw = badge?.show
-    ? BADGE_TOP_OFFSET_CQW + BADGE_HEIGHT_ESTIMATE_CQW
-    : AVATAR_OVERHANG_CQW
+  const showFooter = onEditProfile !== undefined
 
   return (
     <div style={{ containerType: 'inline-size' } as React.CSSProperties}>
-      <div style={{ marginBottom: `clamp(10px, ${px(15)}cqw, 15px)` }}>
+      <div style={{ marginBottom: '4px' }}>
         <h1
           style={{
             fontFamily: "'Barlow Condensed', sans-serif",
@@ -140,21 +191,23 @@ export function DashboardHero({
             fontWeight: 600,
             fontSize: `clamp(12px, ${px(16)}cqw, 16px)`,
             color: T.ink2,
-            margin: `clamp(2px, ${px(5)}cqw, 5px) 0 0`,
+            margin: '2px 0 0',
           }}
         >
           {subtitle}
         </p>
       </div>
 
-      {/* Wrapper exists only so the avatar and badge can escape the banner's bottom edge —
-          the banner itself is normal flow, so it always matches the surrounding container's width and left edge. */}
+      {/* Banner wrapper exists only so the avatar can escape the banner's bottom edge —
+          the banner itself is normal flow, so it always matches the surrounding container's width and left edge.
+          The footer panel is a true sibling directly below, so there is no gap between the two. */}
       <div style={{ position: 'relative' }}>
         <div
           style={{
             width: '100%',
             aspectRatio: '3.6 / 1',
-            borderRadius: T.radius.lg,
+            borderTopLeftRadius: T.radius.lg,
+            borderTopRightRadius: T.radius.lg,
             backgroundImage: `url(${bannerImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
@@ -187,7 +240,9 @@ export function DashboardHero({
           </div>
         </div>
 
-        {/* Avatar, centered in the gap, ~40% of its height below the banner's bottom edge */}
+        {/* Avatar, centered in the gap, ~40% of its height below the banner's bottom edge.
+            It stays position:absolute (not position:relative/z-indexed) so it naturally
+            paints above the static-positioned footer panel below, per normal stacking order. */}
         <div
           style={{
             position: 'absolute',
@@ -221,40 +276,154 @@ export function DashboardHero({
             </span>
           )}
         </div>
-
-        {/* Badge — below the banner, right-aligned, positioned to clear the avatar's overhang */}
-        {badge?.show && (
-          <div
-            style={{
-              position: 'absolute',
-              top: `calc(100% + ${BADGE_TOP_OFFSET_CQW}cqw)`,
-              right: `clamp(12px, ${px(150)}cqw, 150px)`,
-            }}
-          >
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: `clamp(5px, ${px(9)}cqw, 9px)`,
-                padding: `clamp(8px, ${px(12)}cqw, 12px) clamp(14px, ${px(24)}cqw, 24px)`,
-                borderRadius: T.radius.full,
-                background: `color-mix(in srgb, ${T.verified} 12%, transparent)`,
-                color: T.verified,
-                fontFamily: "'Hanken Grotesk', sans-serif",
-                fontWeight: 700,
-                fontSize: `clamp(12px, ${px(17)}cqw, 17px)`,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <IconCheck />
-              {badge.label}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Spacer so following content clears the overhanging avatar/badge */}
-      <div style={{ height: `calc(${clearanceCqw}cqw + 12px)` }} />
+      {showFooter ? (
+        <div
+          style={{
+            background: T.surface2,
+            borderBottomLeftRadius: T.radius.lg,
+            borderBottomRightRadius: T.radius.lg,
+            paddingTop: `clamp(20px, ${FOOTER_TOP_PADDING_CQW}cqw, 36px)`,
+            paddingLeft: `clamp(12px, ${px(16)}cqw, 16px)`,
+            paddingRight: `clamp(12px, ${px(16)}cqw, 16px)`,
+            paddingBottom: `clamp(16px, ${px(24)}cqw, 24px)`,
+          }}
+        >
+          {/* Action row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: `clamp(6px, ${px(8)}cqw, 8px)` }}>
+              <button
+                onClick={onOpenSettings}
+                aria-label="Settings"
+                style={{
+                  width: `clamp(36px, ${px(44)}cqw, 44px)`,
+                  height: `clamp(36px, ${px(44)}cqw, 44px)`,
+                  borderRadius: T.radius.full,
+                  border: 'none',
+                  background: '#FFFFFF',
+                  color: T.ink2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: `clamp(14px, ${px(18)}cqw, 18px)`,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  padding: 0,
+                }}
+              >
+                <IconGear />
+              </button>
+              <ActionPillButton onClick={onEditProfile}>Edit profile</ActionPillButton>
+            </div>
+
+            {certified ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: `clamp(5px, ${px(7)}cqw, 7px)`,
+                  height: `clamp(36px, ${px(44)}cqw, 44px)`,
+                  padding: `0 clamp(14px, ${px(20)}cqw, 20px)`,
+                  borderRadius: T.radius.full,
+                  background: '#FFFFFF',
+                  color: T.verified,
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontWeight: 700,
+                  fontSize: `clamp(12px, ${px(14)}cqw, 14px)`,
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                <IconCheck />
+                Certified Trainer
+              </span>
+            ) : (
+              <button
+                onClick={onBecomeCertified}
+                style={{
+                  height: `clamp(36px, ${px(44)}cqw, 44px)`,
+                  padding: `0 clamp(14px, ${px(20)}cqw, 20px)`,
+                  borderRadius: T.radius.full,
+                  border: 'none',
+                  background: '#FFFFFF',
+                  color: T.verified,
+                  fontFamily: "'Hanken Grotesk', sans-serif",
+                  fontWeight: 700,
+                  fontSize: `clamp(12px, ${px(14)}cqw, 14px)`,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                Become Certified
+              </button>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div
+            style={{
+              height: '1px',
+              width: '100%',
+              background: T.border,
+              marginTop: `clamp(24px, ${px(40)}cqw, 40px)`,
+            }}
+          />
+
+          {/* Meta line */}
+          <p
+            style={{
+              textAlign: 'center',
+              fontFamily: "'Hanken Grotesk', sans-serif",
+              fontWeight: 500,
+              fontSize: `clamp(13px, ${px(16)}cqw, 16px)`,
+              color: T.ink3,
+              margin: `clamp(10px, ${px(14)}cqw, 14px) 0 0`,
+            }}
+          >
+            {reviewCount} Reviews{rate != null ? ` · $${rate} Rate` : ''}
+          </p>
+
+          {/* Tab bar */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              gap: `clamp(6px, ${px(10)}cqw, 10px)`,
+              marginTop: `clamp(10px, ${px(14)}cqw, 14px)`,
+            }}
+          >
+            {TABS.map((tab) => {
+              const isActive = tab.key === activeTab
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => onTabChange?.(tab.key)}
+                  style={{
+                    height: `clamp(30px, ${px(36)}cqw, 36px)`,
+                    padding: `0 clamp(14px, ${px(20)}cqw, 20px)`,
+                    borderRadius: T.radius.full,
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: "'Hanken Grotesk', sans-serif",
+                    fontSize: `clamp(12px, ${px(13)}cqw, 13px)`,
+                    fontWeight: isActive ? 700 : 600,
+                    background: isActive ? T.cyan : '#FFFFFF',
+                    color: isActive ? '#FFFFFF' : T.ink2,
+                  }}
+                >
+                  {tab.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        // No footer opted in (e.g. parent/athlete dashboards) — just clear the avatar overhang.
+        <div style={{ height: `calc(${AVATAR_OVERHANG_CQW}cqw + 12px)` }} />
+      )}
     </div>
   )
 }
