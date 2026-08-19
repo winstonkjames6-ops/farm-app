@@ -25,7 +25,11 @@ export type DashboardHeroProps = {
   tiles: [DashboardHeroTile, DashboardHeroTile, DashboardHeroTile, DashboardHeroTile]
   avatarUrl?: string | null
   avatarInitials: string
-  bannerImage: string
+  /** Required when showBanner is true (the default); unused otherwise. */
+  bannerImage?: string
+  /** Set false to drop the banner image entirely — the avatar then sits in normal
+   *  flow on the page background instead of overlapping a banner. Defaults to true. */
+  showBanner?: boolean
   // Trainer-specific footer panel — all optional so non-trainer heroes (parent/athlete
   // dashboards) keep rendering banner + tiles + avatar only, with no footer at all.
   // Provide `onEditProfile` to opt in to the full footer.
@@ -61,17 +65,20 @@ const TABS = [
   { key: 'reviews', label: 'Reviews' },
 ]
 
-function Tile({ tile }: { tile: DashboardHeroTile }) {
+function Tile({ tile, translucent = true }: { tile: DashboardHeroTile; translucent?: boolean }) {
   return (
     <div
       style={{
         width: `clamp(84px, ${px(110)}cqw, 118px)`,
         aspectRatio: '1 / 2.15',
         borderRadius: `clamp(11px, ${px(26)}cqw, 26px)`,
-        background: 'rgba(255,255,255,0.22)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,255,255,0.35)',
+        // translucent=true (default, used over the banner photo) reproduces the exact
+        // original glass styling. translucent=false (no-banner case) swaps it for a
+        // plain surface — the blur/glass treatment only makes sense over a photo.
+        background: translucent ? 'rgba(255,255,255,0.22)' : T.surface2,
+        backdropFilter: translucent ? 'blur(12px)' : undefined,
+        WebkitBackdropFilter: translucent ? 'blur(12px)' : undefined,
+        border: translucent ? '1px solid rgba(255,255,255,0.35)' : `1px solid ${T.border}`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -88,7 +95,7 @@ function Tile({ tile }: { tile: DashboardHeroTile }) {
           fontFamily: "'Barlow Condensed', sans-serif",
           fontWeight: 800,
           fontSize: `clamp(16px, ${px(38)}cqw, 38px)`,
-          color: '#FFFFFF',
+          color: translucent ? '#FFFFFF' : T.ink,
           lineHeight: 1,
         }}
       >
@@ -100,7 +107,7 @@ function Tile({ tile }: { tile: DashboardHeroTile }) {
           fontWeight: 700,
           fontSize: `clamp(10px, ${px(13)}cqw, 13px)`,
           textTransform: 'uppercase',
-          color: '#FFFFFF',
+          color: translucent ? '#FFFFFF' : T.ink2,
           lineHeight: 1.05,
         }}
       >
@@ -159,6 +166,7 @@ export function DashboardHero({
   avatarUrl,
   avatarInitials,
   bannerImage,
+  showBanner = true,
   certified = false,
   reviewCount = 0,
   rate = null,
@@ -198,85 +206,136 @@ export function DashboardHero({
         </p>
       </div>
 
-      {/* Banner wrapper exists only so the avatar can escape the banner's bottom edge —
-          the banner itself is normal flow, so it always matches the surrounding container's width and left edge.
-          The footer panel is a true sibling directly below, so there is no gap between the two. */}
-      <div style={{ position: 'relative' }}>
-        <div
-          style={{
-            width: '100%',
-            aspectRatio: '3.6 / 1',
-            borderTopLeftRadius: T.radius.lg,
-            borderTopRightRadius: T.radius.lg,
-            backgroundImage: `url(${bannerImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
+      {showBanner ? (
+        /* Banner wrapper exists only so the avatar can escape the banner's bottom edge —
+           the banner itself is normal flow, so it always matches the surrounding container's width and left edge.
+           The footer panel is a true sibling directly below, so there is no gap between the two. */
+        <div style={{ position: 'relative' }}>
+          <div
+            style={{
+              width: '100%',
+              aspectRatio: '3.6 / 1',
+              borderTopLeftRadius: T.radius.lg,
+              borderTopRightRadius: T.radius.lg,
+              backgroundImage: `url(${bannerImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
 
-          {/* Tiles */}
+            {/* Tiles */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: `0 clamp(9px, ${px(30)}cqw, 30px)`,
+              }}
+            >
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', gap: `clamp(8px, ${px(30)}cqw, 30px)` }}>
+                <Tile tile={tiles[0]} />
+                <Tile tile={tiles[1]} />
+              </div>
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', gap: `clamp(8px, ${px(30)}cqw, 30px)` }}>
+                <Tile tile={tiles[2]} />
+                <Tile tile={tiles[3]} />
+              </div>
+            </div>
+          </div>
+
+          {/* Avatar, centered in the gap, ~40% of its height below the banner's bottom edge.
+              It stays position:absolute (not position:relative/z-indexed) so it naturally
+              paints above the static-positioned footer panel below, per normal stacking order. */}
           <div
             style={{
               position: 'absolute',
-              inset: 0,
-              zIndex: 1,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              bottom: `-${AVATAR_OVERHANG_CQW}cqw`,
+              width: `${AVATAR_WIDTH_PCT}%`,
+              aspectRatio: '1 / 1',
+              borderRadius: T.radius.full,
+              border: `clamp(6px, ${px(11)}cqw, 11px) solid #FFFFFF`,
+              background: T.surface2,
+              overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: `0 clamp(9px, ${px(30)}cqw, 30px)`,
+              justifyContent: 'center',
             }}
           >
-            <div style={{ display: 'flex', height: '100%', alignItems: 'center', gap: `clamp(8px, ${px(30)}cqw, 30px)` }}>
-              <Tile tile={tiles[0]} />
-              <Tile tile={tiles[1]} />
-            </div>
-            <div style={{ display: 'flex', height: '100%', alignItems: 'center', gap: `clamp(8px, ${px(30)}cqw, 30px)` }}>
-              <Tile tile={tiles[2]} />
-              <Tile tile={tiles[3]} />
-            </div>
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 700,
+                  fontSize: `clamp(14px, ${px(100)}cqw, 100px)`,
+                  color: T.cyan,
+                }}
+              >
+                {avatarInitials}
+              </span>
+            )}
           </div>
         </div>
+      ) : (
+        /* No banner — the avatar sits in normal flow on the page background instead of
+           overlapping anything (no absolute positioning or overhang math), centered
+           above a plain row of the same tiles, de-glossed since there's no photo to sit on. */
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: `clamp(12px, ${px(20)}cqw, 20px)` }}>
+          <div
+            style={{
+              width: `${AVATAR_WIDTH_PCT}%`,
+              aspectRatio: '1 / 1',
+              borderRadius: T.radius.full,
+              border: `clamp(6px, ${px(11)}cqw, 11px) solid #FFFFFF`,
+              background: T.surface2,
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 700,
+                  fontSize: `clamp(14px, ${px(100)}cqw, 100px)`,
+                  color: T.cyan,
+                }}
+              >
+                {avatarInitials}
+              </span>
+            )}
+          </div>
 
-        {/* Avatar, centered in the gap, ~40% of its height below the banner's bottom edge.
-            It stays position:absolute (not position:relative/z-indexed) so it naturally
-            paints above the static-positioned footer panel below, per normal stacking order. */}
-        <div
-          style={{
-            position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            bottom: `-${AVATAR_OVERHANG_CQW}cqw`,
-            width: `${AVATAR_WIDTH_PCT}%`,
-            aspectRatio: '1 / 1',
-            borderRadius: T.radius.full,
-            border: `clamp(6px, ${px(11)}cqw, 11px) solid #FFFFFF`,
-            background: T.surface2,
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <span
-              style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 700,
-                fontSize: `clamp(14px, ${px(100)}cqw, 100px)`,
-                color: T.cyan,
-              }}
-            >
-              {avatarInitials}
-            </span>
-          )}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              gap: `clamp(8px, ${px(16)}cqw, 16px)`,
+            }}
+          >
+            <Tile tile={tiles[0]} translucent={false} />
+            <Tile tile={tiles[1]} translucent={false} />
+            <Tile tile={tiles[2]} translucent={false} />
+            <Tile tile={tiles[3]} translucent={false} />
+          </div>
         </div>
-      </div>
+      )}
 
       {showFooter ? (
         <div
@@ -284,7 +343,7 @@ export function DashboardHero({
             background: T.surface2,
             borderBottomLeftRadius: T.radius.lg,
             borderBottomRightRadius: T.radius.lg,
-            paddingTop: `clamp(20px, ${FOOTER_TOP_PADDING_CQW}cqw, 36px)`,
+            paddingTop: showBanner ? `clamp(20px, ${FOOTER_TOP_PADDING_CQW}cqw, 36px)` : '16px',
             paddingLeft: `clamp(12px, ${px(16)}cqw, 16px)`,
             paddingRight: `clamp(12px, ${px(16)}cqw, 16px)`,
             paddingBottom: `clamp(16px, ${px(24)}cqw, 24px)`,
@@ -421,8 +480,9 @@ export function DashboardHero({
           </div>
         </div>
       ) : (
-        // No footer opted in (e.g. parent/athlete dashboards) — just clear the avatar overhang.
-        <div style={{ height: `calc(${AVATAR_OVERHANG_CQW}cqw + 12px)` }} />
+        // No footer opted in (e.g. parent/athlete dashboards) — just clear the avatar overhang,
+        // or a small fixed gap when there's no banner for the avatar to overhang from.
+        <div style={{ height: showBanner ? `calc(${AVATAR_OVERHANG_CQW}cqw + 12px)` : '16px' }} />
       )}
     </div>
   )

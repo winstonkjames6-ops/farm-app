@@ -28,7 +28,6 @@ Auth column reports what `middleware.ts` + layouts + in-page code actually enfor
 | `/dashboard/calendar` | `app/dashboard/calendar/page.tsx` | page | middleware: auth + role `parent` | parent |
 | `/dashboard/discover` | `app/dashboard/discover/page.tsx` | page | middleware: auth + role `parent` | parent |
 | `/dashboard/messages` | `app/dashboard/messages/page.tsx` | page | middleware: auth + role `parent` | parent |
-| `/dashboard/profile` | `app/dashboard/profile/page.tsx` | page | middleware: auth + role `parent` | parent |
 | `/dashboard/saved` | `app/dashboard/saved/page.tsx` | page (redirector → `/dashboard/discover?tab=saved`) | middleware: auth + role `parent` | parent |
 | `/dashboard/search` | `app/dashboard/search/page.jsx` | page | middleware: auth + role `parent` | parent |
 | `/dashboard/settings` | `app/dashboard/settings/page.tsx` | page | middleware: auth + role `parent` | parent |
@@ -97,12 +96,11 @@ Grouped by source file. Query-string/hash-only variants of an otherwise-matching
 | `app/dashboard/admin/AdminShell.tsx` | `/dashboard/admin/certifications`, `/dashboard/admin/reports`, `/dashboard` |
 | `components/admin/AdminCertifications.tsx` | `/dashboard/admin/reports` |
 | `components/admin/AdminReports.tsx` | `/dashboard/admin/certifications` |
-| `app/dashboard/layout.tsx` | `/dashboard`, `/dashboard/discover`, `/dashboard/search`, `/dashboard/calendar`, `/dashboard/messages`, `/dashboard/profile`, `/dashboard/settings`, `/dashboard/admin/certifications`, `/onboarding/parent` |
+| `app/dashboard/layout.tsx` | `/dashboard`, `/dashboard/discover`, `/dashboard/search`, `/dashboard/calendar`, `/dashboard/messages`, `/dashboard/settings`, `/dashboard/admin/certifications`, `/onboarding/parent` |
 | `app/dashboard/trainer/layout.tsx` | `/dashboard/trainer`, `/dashboard/trainer/discover`, `/dashboard/trainer/schedule`, `/dashboard/trainer/earnings`, `/dashboard/trainer/messages`, `/dashboard/trainer/profile`, `/dashboard/trainer/settings`, `/dashboard/admin/certifications`, `/onboarding/setup` |
 | `app/dashboard/athlete/layout.tsx` | `/dashboard/athlete`, `/dashboard/athlete/discover`, `/dashboard/athlete/sessions`, `/dashboard/athlete/messages`, `/dashboard/athlete/profile` |
-| `app/dashboard/tour-context.tsx` | `/dashboard`, `/dashboard/search`, `/dashboard/messages`, `/dashboard/profile`, `/dashboard/settings` |
-| `app/dashboard/page.tsx` | `/dashboard/calendar`, `/dashboard/messages`, `/dashboard/search`, `/child/create`, `/review?bookingId=` |
-| `app/dashboard/profile/page.tsx` | `/child/create`, `/dashboard/settings`, `/login` |
+| `app/dashboard/tour-context.tsx` | `/dashboard`, `/dashboard/search`, `/dashboard/messages`, `/dashboard/settings` |
+| `app/dashboard/page.tsx` | `/dashboard/calendar`, `/dashboard/messages`, `/dashboard/search`, `/child/create`, `/review?bookingId=`, `/dashboard/settings`, `/login` |
 | `app/dashboard/trainer/page.tsx` | `/dashboard/trainer/messages?withId=` |
 | `app/dashboard/trainer/profile/page.tsx` | `/dashboard/trainer/settings` |
 | `app/dashboard/trainer/schedule/page.tsx` | `/dashboard/trainer/messages?withId=`, `/review?bookingId=` |

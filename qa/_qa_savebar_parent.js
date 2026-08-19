@@ -14,7 +14,7 @@ const PASSWORD = 'TestPass123!';
   await page.click('button:has-text("Sign in")');
   await page.waitForURL(/\/dashboard/, { timeout: 20000 });
 
-  await page.goto('http://localhost:3000/dashboard/profile');
+  await page.goto('http://localhost:3000/dashboard');
   await page.waitForTimeout(1500);
 
   const editBtn = page.locator('button, a').filter({ hasText: /Edit profile/i }).first();

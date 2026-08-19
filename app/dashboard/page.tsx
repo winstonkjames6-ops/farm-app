@@ -5,18 +5,18 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
-import { ChevronDown, CheckCircle, Circle, Camera, Loader2, Mail, Phone } from 'lucide-react'
+import { ChevronDown, CheckCircle, Circle, Camera, Loader2, Mail, Settings } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
 import { T } from '@/lib/theme'
 import { notifyWaitlistOfOpening } from '@/lib/waitlist'
-import { DashboardHero } from '@/components/dashboard/DashboardHero'
 import { AvatarCropModal } from '@/components/profile/AvatarCropModal'
-import { ProfileCard } from '@/components/profile/ProfileCard'
+import { Chip } from '@/components/profile/Chip'
+import { PillTabBar } from '@/components/profile/PillTabBar'
 import { AppearanceSection } from '@/components/profile/AppearanceSection'
 import { ActivityList } from '@/components/profile/ActivityList'
 import { getProfileCardTokens, resolveThemeSetting } from '@/components/profile/theme'
-import type { ActivityItem, BackgroundMode, ThemeSetting } from '@/components/profile/types'
+import type { ActivityItem, BackgroundMode, TabItem, ThemeSetting } from '@/components/profile/types'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -66,6 +66,19 @@ interface MessageRow {
 }
 
 // ── Static data ────────────────────────────────────────────────────────────────
+
+function getTimeOfDayGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
+const PARENT_TABS: TabItem[] = [
+  { key: 'activity', label: 'Activity' },
+  { key: 'athletes', label: 'Athletes' },
+  { key: 'payments', label: 'Payments' },
+]
 
 const SPORTS = [
   'Soccer','Basketball','Tennis','Volleyball',
@@ -279,8 +292,8 @@ function ToggleSwitch({ on, onChange, disabled }: { on: boolean; onChange: () =>
 }
 
 // ── Section: Profile strength + photo upload ───────────────────────────────────
-// Avatar is already shown via DashboardHero above — this section only surfaces
-// what DashboardHero doesn't: the strength meter and the upload controls.
+// Avatar is already shown in the dashboard header above — this section only
+// surfaces what that doesn't: the strength meter and the upload controls.
 
 function PhotoSection({
   userId, avatarUrl, onAvatarChange,
@@ -2127,7 +2140,6 @@ export default function DashboardPage() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [verified, setVerified] = useState(false)
   const [themePreference, setThemePreference] = useState<ThemeSetting>('light')
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>('full')
   const [athletes, setAthletes] = useState<AthleteRow[]>([])
@@ -2152,7 +2164,7 @@ export default function DashboardPage() {
 
       supabase
         .from('profiles')
-        .select('name, avatar_url, banner_image_url, phone, verified, theme_preference, background_mode')
+        .select('name, avatar_url, banner_image_url, phone, theme_preference, background_mode')
         .eq('id', user.id)
         .single()
         .then(({ data }) => {
@@ -2168,7 +2180,6 @@ export default function DashboardPage() {
           setAvatarUrl(data?.avatar_url ?? null)
           setBannerImageUrl(data?.banner_image_url ?? null)
           setPhone(data?.phone ?? '')
-          setVerified(data?.verified ?? false)
           setThemePreference((data?.theme_preference as ThemeSetting) ?? 'light')
           setBackgroundMode((data?.background_mode as BackgroundMode) ?? 'full')
 
@@ -2285,14 +2296,6 @@ export default function DashboardPage() {
     .sort((a, b) => b.sessionTime.localeCompare(a.sessionTime))
   const isEmpty = bookings.length === 0
 
-  const now = new Date()
-  const spentThisMonth = bookings
-    .filter((b) => {
-      const d = new Date(b.sessionTime)
-      return b.status === 'completed' && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
-    })
-    .reduce((sum, b) => sum + (b.totalPaid ?? 0), 0)
-
   async function cancelBooking(id: string) {
     const supabase = createClient()
     const cancelled = bookings.find((b) => b.id === id)
@@ -2371,9 +2374,13 @@ export default function DashboardPage() {
       ? 'No upcoming sessions scheduled'
       : 'Book your first session to get started'
 
-  const displayName = `${firstName} ${lastName}`.trim()
   const sportsCount = new Set(athletes.map((a) => a.sport).filter(Boolean)).size
   const cardTokens = getProfileCardTokens(themePreference)
+  const isDarkTheme = resolveThemeSetting(themePreference) === 'dark'
+  const activityCardBg = isDarkTheme ? 'rgba(255,255,255,0.06)' : cardTokens.card
+  const activityCardBorder = isDarkTheme ? 'rgba(255,255,255,0.12)' : cardTokens.border
+
+  const greeting = `${getTimeOfDayGreeting()}${parentName ? `, ${parentName.split(' ')[0]}` : ''}`
 
   const basicDirty = draftFirstName !== firstName || draftLastName !== lastName || draftPhone !== phone || draftEmail !== email
   const showSaveBar = isEditing && (basicDirty || saveBarStatus === 'saving' || saveBarStatus === 'saved')
@@ -2445,19 +2452,96 @@ export default function DashboardPage() {
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px 24px 80px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         <div id="tour-home-header">
-          <DashboardHero
-            name={parentName ? parentName.split(' ')[0] : ''}
-            subtitle={subtitle}
-            bannerImage={bannerImageUrl ?? '/dashboard/hero-banner.jpg'}
-            avatarUrl={avatarUrl}
-            avatarInitials={parentName ? parentName[0]?.toUpperCase() ?? '' : ''}
-            tiles={[
-              { value: String(athleteCount), label: 'Athletes' },
-              { value: String(upcoming.length), label: 'Upcoming Sessions' },
-              { value: `$${spentThisMonth}`, label: 'Spent This Month' },
-              { value: String(past.length), label: 'Sessions Completed' },
-            ]}
-          />
+          <div style={{ marginBottom: '20px' }}>
+            <h1 style={{
+              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800,
+              fontSize: '34px', color: T.ink, margin: 0,
+            }}>
+              {greeting}
+            </h1>
+            <p style={{
+              fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600,
+              fontSize: '16px', color: T.ink2, margin: '2px 0 0',
+            }}>
+              {subtitle}
+            </p>
+          </div>
+
+          <div className="dash-header-row">
+            <div className="dash-header-avatar-wrap" style={{ containerType: 'inline-size' } as React.CSSProperties}>
+              <div style={{
+                width: '100%', aspectRatio: '1 / 1', borderRadius: T.radius.full,
+                border: '8px solid #FFFFFF', background: T.surface2,
+                overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{
+                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                    fontSize: 'clamp(14px, 38cqw, 90px)', color: T.cyan,
+                  }}>
+                    {parentName ? parentName[0]?.toUpperCase() ?? '' : ''}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div style={{
+              flex: 1, minWidth: 0, background: T.card.background, border: T.card.border,
+              borderRadius: T.radius.md, padding: '16px 20px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => {
+                    setIsEditing(true)
+                    setTimeout(() => document.getElementById('section-appearance')?.scrollIntoView({ behavior: 'smooth' }), 100)
+                  }}
+                  aria-label="Settings"
+                  style={{
+                    width: '40px', height: '40px', borderRadius: T.radius.full,
+                    border: '1.5px solid rgba(0,0,0,0.12)', background: '#FFFFFF', color: T.ink2,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', flexShrink: 0, padding: 0,
+                  }}
+                >
+                  <Settings size={16} />
+                </button>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  style={{
+                    height: '40px', padding: '0 18px', borderRadius: T.radius.full,
+                    border: '1.5px solid rgba(0,0,0,0.12)', background: '#FFFFFF', color: T.ink2,
+                    fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 700, fontSize: '13px',
+                    cursor: 'pointer', flexShrink: 0,
+                  }}
+                >
+                  Edit profile
+                </button>
+                <span style={{ marginLeft: 'auto' }}>
+                  <Chip icon={<Mail size={14} />} label={email} tokens={cardTokens} />
+                </span>
+              </div>
+
+              <div style={{
+                textAlign: 'center', marginTop: '18px',
+                fontFamily: "'Hanken Grotesk', sans-serif", fontWeight: 600, fontSize: '14px', color: T.ink2,
+              }}>
+                {athleteCount} {athleteCount === 1 ? 'Athlete' : 'Athletes'} · {sportsCount} {sportsCount === 1 ? 'Sport' : 'Sports'}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ height: '1px', width: '100%', background: T.border, margin: '20px 0' }} />
+
+          <PillTabBar tabs={PARENT_TABS} active={activeTab} onChange={setActiveTab} tokens={cardTokens} />
+
+          <div style={{
+            background: activityCardBg, borderRadius: '16px', border: `1px solid ${activityCardBorder}`,
+          }}>
+            {tabContent}
+          </div>
         </div>
 
         {isEmpty ? (
@@ -2528,14 +2612,15 @@ export default function DashboardPage() {
           </Link>
         </motion.section>
 
-        {/* Profile (merged from app/dashboard/profile/page.tsx) */}
-        <motion.div
-          key={isEditing ? 'edit' : 'view'}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: [0.2, 0.7, 0.2, 1] }}
-        >
-          {isEditing ? (
+        {/* Profile edit mode (merged from app/dashboard/profile/page.tsx) — the view-mode
+            identity/tabs card now lives in the header above, so this only renders when editing. */}
+        {isEditing && (
+          <motion.div
+            key="edit"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: [0.2, 0.7, 0.2, 1] }}
+          >
             <EditMode
               onBack={() => setIsEditing(false)}
               firstName={draftFirstName}
@@ -2557,40 +2642,8 @@ export default function DashboardPage() {
               avatarUrl={avatarUrl}
               onAvatarChange={handleAvatarChange}
             />
-          ) : (
-            <ProfileCard
-              themePreference={resolveThemeSetting(themePreference)}
-              backgroundMode={backgroundMode}
-              bannerImageUrl={bannerImageUrl}
-              avatarUrl={avatarUrl}
-              name={displayName}
-              verified={verified}
-              verifiedLabel="Verified Parent"
-              stats={[
-                { value: String(athletes.length), label: athletes.length === 1 ? 'Athlete' : 'Athletes' },
-                { value: String(sportsCount), label: 'Sports' },
-              ]}
-              contactRows={[
-                ...(phone ? [{ key: 'phone', icon: <Phone size={14} />, label: phone }] : []),
-                { key: 'email', icon: <Mail size={14} />, label: email },
-              ]}
-              tabs={[
-                { key: 'activity', label: 'Activity' },
-                { key: 'athletes', label: 'Athletes' },
-                { key: 'payments', label: 'Payments' },
-              ]}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              tabContent={tabContent}
-              onEditProfile={() => setIsEditing(true)}
-              onOpenSettings={() => {
-                setIsEditing(true)
-                setTimeout(() => document.getElementById('section-appearance')?.scrollIntoView({ behavior: 'smooth' }), 100)
-              }}
-              hideIdentity
-            />
-          )}
-        </motion.div>
+          </motion.div>
+        )}
       </div>
 
       <AnimatePresence>
@@ -2600,6 +2653,24 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       <style>{`
+        .dash-header-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 20px;
+        }
+        .dash-header-avatar-wrap {
+          width: 30%;
+          flex-shrink: 0;
+        }
+        @media (max-width: 700px) {
+          .dash-header-row {
+            flex-direction: column;
+            align-items: center;
+          }
+          .dash-header-avatar-wrap {
+            width: 140px;
+          }
+        }
         @media (max-width: 480px) {
           .dash-card-row {
             flex-wrap: wrap;
